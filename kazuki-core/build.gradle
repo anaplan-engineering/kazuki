@@ -1,0 +1,19 @@
+plugins {
+    id 'kazuki.kotlin-conventions'
+    id 'kazuki.jar-publishing-conventions'
+}
+
+dependencies {
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            pom {
+                name = 'Kazuki'
+                description = 'The core library of the Kazuki specification framework'
+            }
+        }
+    }
+}

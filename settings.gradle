@@ -1,0 +1,6 @@
+include(
+        "kazuki-core",
+        "kazuki-ksp",
+        "tictactoe",
+)
+includeBuild("build-conventions")
