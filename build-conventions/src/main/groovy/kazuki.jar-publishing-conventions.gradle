@@ -1,0 +1,51 @@
+plugins {
+    id 'kazuki.publishing-conventions'
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                url = 'https://github.com/anaplan-engineering/kazuki'
+
+                scm {
+                    connection = 'scm:git:git://github.com/anaplan-engineering/kazuki.git'
+                    developerConnection = 'scm:git:git@github.com:anaplan-engineering/kazuki.git'
+                    url = 'https://github.com/anaplan-engineering/kazuki'
+                }
+
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://github.com/anaplan-engineering/kazuki/blob/main/LICENCE.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'sifraser'
+                        name = 'Simon Fraser'
+                        email = 'simon.fraser@anaplan.com'
+                        url = "https://github.com/sifraser"
+                        organization = "Anaplan Ltd"
+                        organizationUrl = "http://www.anaplan.com"
+                        roles = ['architect', 'senior principal engineer']
+                    }
+                }
+            }
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.mavenJava
+}
+
+
+

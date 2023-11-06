@@ -1,0 +1,29 @@
+plugins {
+    id 'kazuki.kotlin-conventions'
+    id 'kazuki.jar-publishing-conventions'
+    id 'com.anaplan.engineering.kazuki-generation'
+}
+
+dependencies {
+}
+
+compileKotlin {
+    dependsOn generateFunctions
+    dependsOn generateTuples
+}
+
+// TODO - figure out how to do this from the plugin ?!
+sourceSets {
+    main.kotlin.srcDirs "$buildDir/generated/kazuki/main/kotlin"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            pom {
+                name = 'Kazuki'
+                description = 'The core library of the Kazuki specification framework'
+            }
+        }
+    }
+}
