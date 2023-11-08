@@ -1,6 +1,7 @@
 package com.anaplan.engineering.kazuki.tictactoe
 
 import com.anaplan.engineering.kazuki.core.*
+import com.anaplan.engineering.kazuki.tictactoe.XO_Module.mk_Position
 
 // TODO -- invariants should include message
 // TODO -- is_<Moves>() and as_<Moves>
@@ -24,7 +25,7 @@ object XO {
     }
 
     @PrimitiveInvariant(name = "Coord", base = Int::class)
-    fun coordInvariant(c: Int) = c in 1 .. Size
+    fun coordInvariant(c: Int) = c in 1..Size
 
     // A legal game play sequence
     interface Moves : Sequence1<Position> {
@@ -50,85 +51,88 @@ object XO {
     }
 
     val S: Set<nat1> = mk_Set(1..Size)
-//
-//    val winningLines = dunion(
-//        set(
-//            set<nat1, VSet<Position>>(selector = { r: nat1 ->
-//                set<nat1, Position>(selector = { c: nat1 ->
-//                    Position(r,
-//                        c)
-//                }, S)
-//            }, S),
-//            set<nat1, VSet<Position>>(selector = { c: nat1 ->
-//                set<nat1, Position>(selector = { r: nat1 ->
-//                    Position(r,
-//                        c)
-//                }, S)
-//            }, S),
-//            set<VSet<Position>>(set<nat1, Position>(selector = { x: nat1 -> Position(x, x) }, S)),
-//            set<VSet<Position>>(set<nat1, Position>(selector = { x: nat1 -> Position(x, Size.toNat1() - x + 1) }, S)),
-//        ))
-//
-//    @RecordType
-//    data class Game(
-//        val board: Map<Position, Player>,
-//        val order: PlayOrder
-//    ) {
-//
-//        override fun isValid() =
-//            (XO.moveCountLeft(this) >= 0) and
-//                    forall(order.inds - order.len) { i ->
-//                        val current = order[i]
-//                        val next = order[i + 1]
-//                        XO.movesForPlayer(this, current).card - XO.movesForPlayer(this, next).card in set<nat>(0, 1)
-//                    }
-//    }
-//
-//    val hasWon = function(
-//        command = { g: Game, p: Player ->
-//            val moves = XO.movesForPlayer(g, p)
-//            exists(winningLines) { line -> line subset moves }.toBool()
-//        }
-//    )
-//
-//    val hasLost = function(
-//        command = { g: Game, p: Player ->
-//            XO.hasWon(g, p).not
-//        }
-//    )
-//
-//    val whoWon = function(
-//        command = { g: Game -> iota(Players) { p -> XO.hasWon(g, p).toBoolean() } },
-//        pre = { g: Game -> XO.isWon(g).toBoolean() }
-//    )
-//
-//    val isWon = function(
-//        command = { g: Game -> exists1(Players) { p -> XO.hasWon(g, p).toBoolean() }.toBool() },
-//    )
-//
-//    val isDraw = function(
-//        command = { g: Game -> (not(XO.isWon(g)) and (XO.moveCountLeft(g) == 0).toBool()).toBool() },
-//    )
-//
-//    val isUnfinished = function(
-//        command = { g: Game -> (not(XO.isWon(g)) and not(XO.isDraw(g))).toBool() },
-//    )
-//
-//    val movesSoFar = function(
-//        command = { g: Game -> g.board.dom }
-//    )
-//
-//    val moveCountSoFar = function(
-//        command = { g: Game -> XO.movesSoFar(g).card }
-//    )
-//
-//    val moveCountLeft = function(
-//        command = { g: Game -> MaxMoves.toNat() - XO.moveCountSoFar(g) }
-//    )
-//
-//    val movesForPlayer = function(
-//        command = { g: Game, p: Player -> (g.board rrt set(p)).dom }
-//    )
+
+    val winningLines: Set<Set<Position>> = dunion(
+        set<nat1, Set<Position>>(selector = { r: nat1 ->
+            set<nat1, Position>(selector = { c: nat1 ->
+                mk_Position(r,
+                    c)
+            }, S)
+        }, S),
+        set<nat1, Set<Position>>(selector = { c: nat1 ->
+            set<nat1, Position>(selector = { r: nat1 ->
+                mk_Position(r,
+                    c)
+            }, S)
+        }, S),
+        mk_Set(
+            mk_Set(set<nat1, Position>(selector = { x: nat1 -> mk_Position(x, x) }, S)),
+            mk_Set(set<nat1, Position>(selector = { x: nat1 -> mk_Position(x, Size - x + 1) }, S))
+        ),
+    )
+
+    data class Game(
+        val board: Map<Position, Player>,
+        val order: PlayOrder
+    ) {
+
+        @Invariant
+        fun cantHaveMoreThanMaxMoves() = moveCountLeft(this) >= 0
+
+        @Invariant
+        fun noPlayerMoreThanOneMoveAhead() =
+            forall(order.inds - order.len) { i ->
+                val current = order[i]
+                val next = order[i + 1]
+                movesForPlayer(this, current).card - movesForPlayer(this, next).card in mk_Set(0, 1)
+            }
+    }
+
+    val hasWon = function(
+        command = { g: Game, p: Player ->
+            val moves = movesForPlayer(g, p)
+            exists(winningLines) { line -> line subset moves }
+        }
+    )
+
+    val hasLost = function(
+        command = { g: Game, p: Player ->
+            !hasWon(g, p)
+        }
+    )
+
+    val whoWon = function(
+        command = { g: Game -> iota(Players) { p -> hasWon(g, p) } },
+        pre = { g: Game -> isWon(g) }
+    )
+
+    val isWon = function(
+        command = { g: Game -> exists1(Players) { p -> hasWon(g, p) } },
+    )
+
+    val isDraw = function(
+        command = { g: Game -> (!(isWon(g)) and (moveCountLeft(g) == 0)) },
+    )
+
+    val isUnfinished = function(
+        command = { g: Game -> (!(isWon(g)) and !(isDraw(g))) },
+    )
+
+    val movesSoFar = function(
+        command = { g: Game -> g.board.dom() }
+    )
+
+    val moveCountSoFar = function(
+        command = { g: Game -> movesSoFar(g).card }
+    )
+
+    val moveCountLeft = function(
+        command = { g: Game -> MaxMoves - moveCountSoFar(g) }
+    )
+
+    val movesForPlayer = function(
+        command = { g: Game, p: Player -> (g.board rrt mk_Set(p)).dom() }
+    )
 
 }
 

@@ -13,6 +13,8 @@ val <T> Set<T>.card
 
 fun <T> dunion(sets: Set<Set<T>>) = sets.flatten().toSet()
 
+fun <T> dunion(vararg sets: Set<T>) = dunion(sets.toSet())
+
 
 private class __KSet<T>(private val elements: Set<T>) : Set<T> by elements {
 
@@ -29,13 +31,12 @@ private class __KSet<T>(private val elements: Set<T>) : Set<T> by elements {
     override fun toString() = "set$elements"
 }
 
-interface Set1<T>: Set<T> {
+interface Set1<T> : Set<T> {
 
     @Invariant
     fun atLeastOneElement() = card > 0
 
 }
-
 
 
 fun <T> mk_Set1(vararg elems: T): Set1<T> = mk_Set1(elems.toSet())
@@ -66,6 +67,19 @@ private class __KSet1<T>(private val elements: Set<T>) : Set1<T>, Set<T> by elem
     override fun toString() = "set1$elements"
 }
 
-inline fun <reified T: Enum<T>> asSet(): Set1<T> {
+inline fun <reified T : Enum<T>> asSet(): Set1<T> {
     return mk_Set1(enumValues<T>().toList())
 }
+
+fun <I, O> set(
+    selector: (I) -> O,
+    provider: Collection<I>,
+    filter: (I) -> Boolean = { true }
+) = mk_Set(provider.filter(filter).map(selector))
+
+fun <IO> set(
+    selector: (IO) -> IO,
+    provider: Collection<IO>,
+    filter: (IO) -> Boolean = { true }
+) = mk_Set(provider.filter(filter).map(selector).toSet())
+

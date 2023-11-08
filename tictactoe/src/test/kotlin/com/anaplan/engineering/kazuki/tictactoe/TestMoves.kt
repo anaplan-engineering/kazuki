@@ -30,6 +30,4 @@ class TestMoves {
         val sequence = mk_Seq1(completeMoves)
         assertEquals(moves, sequence)
     }
-
-    data class HH(val a: Int, val b: Int)
 }

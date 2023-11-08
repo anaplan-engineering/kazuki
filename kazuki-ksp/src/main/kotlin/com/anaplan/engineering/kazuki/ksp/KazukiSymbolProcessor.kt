@@ -8,6 +8,7 @@ import com.squareup.kotlinpoet.*
 
 class KazukiSymbolProcessor(private val environment: SymbolProcessorEnvironment) : SymbolProcessor {
 
+    // TODO - auto generate tests for equals, hashcode, toString? -- maybe do with opt-in property
     private val processingState = ProcessingState()
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
