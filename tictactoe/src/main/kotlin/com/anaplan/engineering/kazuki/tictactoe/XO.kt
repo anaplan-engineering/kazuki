@@ -53,28 +53,17 @@ object XO {
     val S: Set<nat1> = mk_Set(1..Size)
 
     val winningLines: Set<Set<Position>> = dunion(
-        set<nat1, Set<Position>>(selector = { r: nat1 ->
-            set<nat1, Position>(selector = { c: nat1 ->
-                mk_Position(r,
-                    c)
-            }, S)
-        }, S),
-        set<nat1, Set<Position>>(selector = { c: nat1 ->
-            set<nat1, Position>(selector = { r: nat1 ->
-                mk_Position(r,
-                    c)
-            }, S)
-        }, S),
+        set(selector = { r: nat1 -> set(selector = { c: nat1 -> mk_Position(r, c) }, S) }, S),
+        set(selector = { c: nat1 -> set(selector = { r: nat1 -> mk_Position(r, c) }, S) }, S),
         mk_Set(
-            mk_Set(set<nat1, Position>(selector = { x: nat1 -> mk_Position(x, x) }, S)),
-            mk_Set(set<nat1, Position>(selector = { x: nat1 -> mk_Position(x, Size - x + 1) }, S))
+            mk_Set(set(selector = { x: nat1 -> mk_Position(x, x) }, S)),
+            mk_Set(set(selector = { x: nat1 -> mk_Position(x, Size - x + 1) }, S))
         ),
     )
 
-    data class Game(
-        val board: Map<Position, Player>,
+    interface Game {
+        val board: Map<Position, Player>
         val order: PlayOrder
-    ) {
 
         @Invariant
         fun cantHaveMoreThanMaxMoves() = moveCountLeft(this) >= 0

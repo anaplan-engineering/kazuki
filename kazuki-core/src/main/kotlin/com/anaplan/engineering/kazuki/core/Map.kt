@@ -9,13 +9,13 @@ infix fun <D, R> Map<D, R>.domRestrictTo(s: Set<R>) = mk_Map(this - s)
 
 infix fun <D, R> Map<D, R>.drt(s: Set<R>) = domRestrictTo(s)
 
-infix fun <D, R> Map<D, R>.rngRestrictTo(s: Set<R>) = mk_Map(entries.filter { (_, v) -> v in s })
+infix fun <D, R> Map<D, R>.rngRestrictTo(s: Set<R>) = asMap(entries.filter { (_, v) -> v in s })
 
 infix fun <D, R> Map<D, R>.rrt(s: Set<R>) = rngRestrictTo(s)
 
 fun <D, R> mk_Map(base: Map<D, R>): Map<D, R> = __KMap(base)
 
-fun <D, R> mk_Map(entries: Collection<Map.Entry<D, R>>): Map<D, R> = mk_Map(entries.map { it.key to it.value })
+private fun <D, R> asMap(entries: Collection<Map.Entry<D, R>>): Map<D, R> = mk_Map(entries.map { it.key to it.value })
 
 fun <D, R> mk_Map(entries: Collection<Pair<D, R>>): Map<D, R> = mk_Map(entries.toMap())
 

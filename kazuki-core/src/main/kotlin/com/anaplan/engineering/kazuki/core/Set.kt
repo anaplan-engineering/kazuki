@@ -77,9 +77,3 @@ fun <I, O> set(
     filter: (I) -> Boolean = { true }
 ) = mk_Set(provider.filter(filter).map(selector))
 
-fun <IO> set(
-    selector: (IO) -> IO,
-    provider: Collection<IO>,
-    filter: (IO) -> Boolean = { true }
-) = mk_Set(provider.filter(filter).map(selector).toSet())
-
