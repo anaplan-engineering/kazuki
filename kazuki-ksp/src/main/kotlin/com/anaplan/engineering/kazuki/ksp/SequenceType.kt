@@ -60,6 +60,15 @@ internal fun TypeSpec.Builder.addSeq1Type(
         // N.B. it is important to have properties before init block
         addInvariantFrom(interfaceClassDcl, false, processingState)
 
+        addFunction(
+            FunSpec.builder("get").apply {
+                val indexParameterName = "index"
+                addModifiers(KModifier.OVERRIDE, KModifier.OPERATOR)
+                addParameter(ParameterSpec.builder(indexParameterName, nat1::class.asTypeName()).build())
+                returns(elementClassName)
+                addStatement("return %N.get(%N - 1)", elementParameterName, indexParameterName)
+            }.build()
+        )
         addFunction(FunSpec.builder("toString").addModifiers(KModifier.OVERRIDE)
             .returns(String::class)
             .addStatement("return \"%N\$%N\"", interfaceName, elementParameterName)
