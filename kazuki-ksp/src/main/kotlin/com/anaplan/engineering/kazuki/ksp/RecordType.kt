@@ -36,7 +36,7 @@ internal fun TypeSpec.Builder.addRecordType(
         }
 
         // N.B. it is important to have properties before init block
-        addInvariantFrom(interfaceClassDcl, false, processingState)
+        addInvariantFrom(interfaceClassDcl, false, null, processingState)
 
         addFunction(FunSpec.builder("toString").addModifiers(KModifier.OVERRIDE)
             .returns(String::class).addCode(CodeBlock.builder().apply {
@@ -68,4 +68,6 @@ internal fun TypeSpec.Builder.addRecordType(
             addStatement("return %N(${immutableProperties.joinToString { "%N" }})", *formatArgs.toTypedArray())
         }.build()
     )
+
+    // MEANINGFUL is/as for records?
 }

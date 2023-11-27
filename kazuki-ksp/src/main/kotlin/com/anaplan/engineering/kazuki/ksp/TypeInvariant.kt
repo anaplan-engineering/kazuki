@@ -12,14 +12,17 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.TypeSpec
 
+internal const val validityFunctionName = "isValid"
+
 @OptIn(KspExperimental::class)
 // TODO properties of collections of primitives with invariants
 internal fun TypeSpec.Builder.addInvariantFrom(
     interfaceClassDcl: KSClassDeclaration,
     override: Boolean,
+    enforceInvariantVariableName: String?,
     processingState: KazukiSymbolProcessor.ProcessingState,
+    additionalInvariantParts: List<String> = emptyList(),
 ) {
-    val validityFunctionName = "isValid"
     val invariantParts = mutableListOf<String>().apply {
         if (override) {
             add("super.$validityFunctionName()")
@@ -31,15 +34,20 @@ internal fun TypeSpec.Builder.addInvariantFrom(
             .map { it to processingState.primitiveInvariants[it.type.resolve().declaration.qualifiedName?.asString()] }
             .filter { it.second != null }
             .forEach { add("${it.second!!.qualifiedName!!.asString()}(${it.first.simpleName.asString()})") }
+        addAll(additionalInvariantParts)
     }
     if (invariantParts.isNotEmpty()) {
         addInitializerBlock(CodeBlock.builder().apply {
-            beginControlFlow("if (!$validityFunctionName())")
+            beginControlFlow(if (enforceInvariantVariableName == null) {
+                "if (!$validityFunctionName())"
+            } else {
+                "if ($enforceInvariantVariableName && !$validityFunctionName())"
+            })
             addStatement("throw %T()", InvariantFailure::class)
             endControlFlow()
         }.build())
         addFunction(FunSpec.builder(validityFunctionName).apply {
-            addModifiers(KModifier.PROTECTED)
+            addModifiers(KModifier.INTERNAL)
             if (override) {
                 addModifiers(KModifier.OVERRIDE)
             }

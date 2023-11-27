@@ -1,6 +1,7 @@
 package com.anaplan.engineering.kazuki.ksp
 
 import com.anaplan.engineering.kazuki.core.Sequence1
+import com.anaplan.engineering.kazuki.core.Sequence
 import com.google.devtools.ksp.getVisibility
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -23,13 +24,16 @@ internal class ModuleProcessor(
             clazz.declarations.filterIsInstance<KSClassDeclaration>().filter { it.getVisibility() == Visibility.PUBLIC }
         val seq1Types =
             types.filter { it.superTypes.any { it.resolve().declaration.qualifiedName?.asString() == Sequence1::class.qualifiedName } }
+        val seqTypes =
+            types.filter { it.superTypes.any { it.resolve().declaration.qualifiedName?.asString() == Sequence::class.qualifiedName } }
         val quoteTypes = types.filter { it.classKind == ClassKind.ENUM_CLASS }
-        val recordTypes = types - seq1Types - quoteTypes
+        val recordTypes = types - seq1Types - seqTypes - quoteTypes
 
         val debug = """
            Debugging: 
            
            types = ${types.joinToString(",") { it.simpleName.asString() }}
+           seqTypes = ${seqTypes.joinToString(",") { it.simpleName.asString() }}
            seq1Types = ${seq1Types.joinToString(",") { it.simpleName.asString() }}
            quoteTypes = ${quoteTypes.joinToString(",") { it.simpleName.asString() }}
            recordTypes = ${recordTypes.joinToString(",") { it.simpleName.asString() }}
@@ -39,6 +43,7 @@ internal class ModuleProcessor(
         val moduleClassName = "${clazz.simpleName.asString()}_Module"
         val moduleTypeSpec = TypeSpec.objectBuilder(moduleClassName).apply {
             seq1Types.forEach { addSeq1Type(it, processingState) }
+            seqTypes.forEach { addSeqType(it, processingState) }
             quoteTypes.forEach { processQuoteType(it, processingState) }
             recordTypes.forEach { addRecordType(it, processingState) }
         }.build()
