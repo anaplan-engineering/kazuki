@@ -12,8 +12,7 @@ fun <T> `∀`(i1: Collection<T>, condition: (T) -> Boolean) = forall(i1, conditi
 fun <T> iota(i1: Collection<T>, condition: (T) -> Boolean) =
     i1.singleOrNull(condition) ?: throw IotaDoesNotSelectResult()
 
-class IotaDoesNotSelectResult : RuntimeException()
-
+class IotaDoesNotSelectResult : SpecificationError()
 
 fun <I1> exists(i1: Collection<I1>, condition: (I1) -> Boolean) =
     i1.any(condition)

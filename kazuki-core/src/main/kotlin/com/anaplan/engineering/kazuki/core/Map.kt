@@ -15,7 +15,7 @@ infix fun <D, R> Map<D, R>.munion(other: Map<D, R>): Map<D, R> {
     }
 }
 
-class InvalidMapMergeException(msg: String) : RuntimeException(msg)
+class InvalidMapMergeException(msg: String) : SpecificationError(msg)
 
 infix fun <D, R> Map<D, R>.domRestrictTo(s: Set<R>) = mk_Map(this - s)
 
