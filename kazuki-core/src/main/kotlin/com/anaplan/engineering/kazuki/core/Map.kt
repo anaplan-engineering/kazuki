@@ -10,10 +10,12 @@ interface Map1<D, R> : Map<D, R> {
 val <D, R> Map<D, R>.card: nat
     get() = size
 
-// TODO -- dom/rng to vals
-fun <D, R> Map<D, R>.dom() = mk_Set(keys)
+fun <D, R> Map<D, R>.dom() = keys
 
-fun <D, R> Map<D, R>.rng() = mk_Set(values)
+fun <D, R> Map<D, R>.rng() = values
+
+// TODO - is there any value mapping to pairs?
+fun <D, R> Map<D, R>.maplets() = entries // .map { (k, v) -> k to v }
 
 infix fun <D, R> Map<D, R>.munion(other: Map<D, R>): Map<D, R> {
     val keyIntersection = keys intersect other.keys

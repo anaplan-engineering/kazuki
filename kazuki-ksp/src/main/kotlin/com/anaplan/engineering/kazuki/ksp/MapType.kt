@@ -1,29 +1,39 @@
 package com.anaplan.engineering.kazuki.ksp
 
-import com.anaplan.engineering.kazuki.core.*
+import com.anaplan.engineering.kazuki.core.Map1
+import com.anaplan.engineering.kazuki.core.nat
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
+import com.squareup.kotlinpoet.ksp.toTypeParameterResolver
+import com.squareup.kotlinpoet.ksp.toTypeVariableName
 
-internal fun TypeSpec.Builder.addSequenceType(
+internal fun TypeSpec.Builder.addMapType(
     interfaceClassDcl: KSClassDeclaration,
     processingState: KazukiSymbolProcessor.ProcessingState,
-) = addSequenceType(interfaceClassDcl, processingState, false)
+) = addMapType(interfaceClassDcl, processingState, false)
 
 internal fun TypeSpec.Builder.addMap1Type(
     interfaceClassDcl: KSClassDeclaration,
     processingState: KazukiSymbolProcessor.ProcessingState,
-) = addSequenceType(interfaceClassDcl, processingState, true)
+) = addMapType(interfaceClassDcl, processingState, true)
 
-private fun TypeSpec.Builder.addSequenceType(
+private fun TypeSpec.Builder.addMapType(
     interfaceClassDcl: KSClassDeclaration,
     processingState: KazukiSymbolProcessor.ProcessingState,
     requiresNonEmpty: Boolean
 ) {
     val interfaceName = interfaceClassDcl.simpleName.asString()
-    val interfaceTypeName = interfaceClassDcl.asType(emptyList()).toTypeName()
+    val interfaceTypeArguments = interfaceClassDcl.typeParameters.map { it.toTypeVariableName() }
+    val interfaceTypeName = if (interfaceTypeArguments.isEmpty()) {
+        interfaceClassDcl.toClassName()
+    } else {
+        interfaceClassDcl.toClassName().parameterizedBy(interfaceTypeArguments)
+    }
+    val interfaceTypeParameterResolver = interfaceClassDcl.typeParameters.toTypeParameterResolver()
 
     val properties = interfaceClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
     if (properties.firstOrNull() != null) {
@@ -36,19 +46,18 @@ private fun TypeSpec.Builder.addSequenceType(
         interfaceClassDcl.superTypes.single { it.resolve().declaration.qualifiedName?.asString() == superInterface.qualifiedName }
             .resolve()
     val domainType = mapType.arguments[0].type!!.resolve()
-    val domainTypeDcl = domainType.declaration
     val rangeType = mapType.arguments[1].type!!.resolve()
-    val rangeTypeDcl = rangeType.declaration
-    val domainClassName =
-        ClassName(packageName = domainTypeDcl.packageName.asString(), domainTypeDcl.simpleName.asString())
-    val rangeClassName =
-        ClassName(packageName = rangeTypeDcl.packageName.asString(), rangeTypeDcl.simpleName.asString())
+    val domainTypeName = domainType.toTypeName(interfaceTypeParameterResolver)
+    val rangeTypeName = rangeType.toTypeName(interfaceTypeParameterResolver)
     val baseParameterName = "base"
     val enforceInvariantParameterName = "enforceInvariant"
-    val superMapTypeName = Map::class.asClassName().parameterizedBy(domainClassName, rangeClassName)
+    val superMapTypeName = Map::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName)
     val suffix = if (requiresNonEmpty) "Map1" else "Map"
     val implClassName = "${interfaceName}_$suffix"
     val implTypeSpec = TypeSpec.classBuilder(implClassName).apply {
+        if (interfaceTypeArguments.isNotEmpty()) {
+            addTypeVariables(interfaceTypeArguments)
+        }
         addModifiers(KModifier.PRIVATE)
         addSuperinterface(interfaceTypeName)
         addSuperinterface(superMapTypeName, CodeBlock.of(baseParameterName))
@@ -105,6 +114,9 @@ private fun TypeSpec.Builder.addSequenceType(
 
     addFunction(
         FunSpec.builder("mk_$interfaceName").apply {
+            if (interfaceTypeArguments.isNotEmpty()) {
+                addTypeVariables(interfaceTypeArguments)
+            }
             addParameter(baseParameterName, superMapTypeName)
             returns(interfaceTypeName)
             addStatement("return %N(%N)", implTypeSpec, baseParameterName)
@@ -112,13 +124,35 @@ private fun TypeSpec.Builder.addSequenceType(
     )
     addFunction(
         FunSpec.builder("mk_$interfaceName").apply {
-            addParameter(baseParameterName, Pair::class.asClassName().parameterizedBy(domainClassName, rangeClassName), KModifier.VARARG)
+            if (interfaceTypeArguments.isNotEmpty()) {
+                addTypeVariables(interfaceTypeArguments)
+            }
+            addParameter(baseParameterName,
+                Pair::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName),
+                KModifier.VARARG)
+            returns(interfaceTypeName)
+            addStatement("return %N(%N.toMap())", implTypeSpec, baseParameterName)
+        }.build()
+    )
+    addFunction(
+        FunSpec.builder("mk_$interfaceName").apply {
+            if (interfaceTypeArguments.isNotEmpty()) {
+                addTypeVariables(interfaceTypeArguments)
+            }
+            addParameter(baseParameterName,
+                Collection::class.asClassName().parameterizedBy(
+                    Pair::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName)
+                )
+            )
             returns(interfaceTypeName)
             addStatement("return %N(%N.toMap())", implTypeSpec, baseParameterName)
         }.build()
     )
     addFunction(
         FunSpec.builder("is_$interfaceName").apply {
+            if (interfaceTypeArguments.isNotEmpty()) {
+                addTypeVariables(interfaceTypeArguments)
+            }
             addParameter(baseParameterName, superMapTypeName)
             returns(Boolean::class)
             addStatement("return %N(%N, false).%N()", implClassName, baseParameterName, validityFunctionName)
@@ -126,13 +160,21 @@ private fun TypeSpec.Builder.addSequenceType(
     )
     addFunction(
         FunSpec.builder("is_$interfaceName").apply {
-            addParameter(baseParameterName, Pair::class.asClassName().parameterizedBy(domainClassName, rangeClassName), KModifier.VARARG)
+            if (interfaceTypeArguments.isNotEmpty()) {
+                addTypeVariables(interfaceTypeArguments)
+            }
+            addParameter(baseParameterName,
+                Pair::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName),
+                KModifier.VARARG)
             returns(Boolean::class)
             addStatement("return is_%N(%N.toMap())", interfaceName, baseParameterName)
         }.build()
     )
     addFunction(
         FunSpec.builder("as_$interfaceName").apply {
+            if (interfaceTypeArguments.isNotEmpty()) {
+                addTypeVariables(interfaceTypeArguments)
+            }
             addParameter(baseParameterName, superMapTypeName)
             returns(interfaceTypeName)
             addStatement("return %N(%N)", "mk_$interfaceName", baseParameterName)

@@ -1,9 +1,16 @@
 package com.anaplan.engineering.kazuki.ksp
 
+import com.google.devtools.ksp.isAbstract
+import com.google.devtools.ksp.isLocal
+import com.google.devtools.ksp.isOpen
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
+import com.squareup.kotlinpoet.ksp.toTypeParameterResolver
+import com.squareup.kotlinpoet.ksp.toTypeVariableName
 
 internal fun TypeSpec.Builder.addRecordType(
     interfaceClassDcl: KSClassDeclaration,
@@ -11,7 +18,13 @@ internal fun TypeSpec.Builder.addRecordType(
 ) {
     // TODO -- fail if class is not interface
     val interfaceType = interfaceClassDcl.asType(emptyList())
-    val interfaceTypeName = interfaceType.toTypeName()
+    val interfaceTypeArguments = interfaceClassDcl.typeParameters.map { it.toTypeVariableName() }
+    val interfaceTypeName = if (interfaceTypeArguments.isEmpty()) {
+        interfaceClassDcl.toClassName()
+    } else {
+        interfaceClassDcl.toClassName().parameterizedBy(interfaceTypeArguments)
+    }
+    val interfaceTypeParameterResolver = interfaceClassDcl.typeParameters.toTypeParameterResolver()
 
     val properties = interfaceClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
     if (properties.any { it.isMutable }) {
@@ -19,18 +32,21 @@ internal fun TypeSpec.Builder.addRecordType(
         processingState.errors.add("Record type $interfaceTypeName may not have mutable properties: $mutableProperties")
     }
 
-    val immutableProperties = properties.filter { !it.isMutable }.toList()
+    val recordProperties = properties.filter { !it.isMutable && it.isAbstract() }.toList()
     val implTypeSpec = TypeSpec.classBuilder("${interfaceClassDcl.simpleName.asString()}_Rec").apply {
+        if (interfaceTypeArguments.isNotEmpty()) {
+            addTypeVariables(interfaceTypeArguments)
+        }
         addModifiers(KModifier.PRIVATE, KModifier.DATA)
         addSuperinterface(interfaceTypeName)
         primaryConstructor(FunSpec.constructorBuilder().apply {
-            immutableProperties.forEach { property ->
-                addParameter(property.simpleName.asString(), property.type.toTypeName())
+            recordProperties.forEach { property ->
+                addParameter(property.simpleName.asString(), property.type.toTypeName(interfaceTypeParameterResolver))
             }
         }.build())
-        immutableProperties.forEach { property ->
+        recordProperties.forEach { property ->
             addProperty(
-                PropertySpec.builder(property.simpleName.asString(), property.type.toTypeName(), KModifier.OVERRIDE)
+                PropertySpec.builder(property.simpleName.asString(), property.type.toTypeName(interfaceTypeParameterResolver), KModifier.OVERRIDE)
                     .initializer(property.simpleName.asString())
                     .build()
             )
@@ -43,12 +59,12 @@ internal fun TypeSpec.Builder.addRecordType(
             .returns(String::class).addCode(CodeBlock.builder().apply {
                 beginControlFlow("val sb = %T().apply", StringBuilder::class)
                 addStatement("append(\"%N(\")", interfaceType.declaration.simpleName.asString())
-                if (immutableProperties.isNotEmpty()) {
-                    immutableProperties.dropLast(1).forEach {
+                if (recordProperties.isNotEmpty()) {
+                    recordProperties.dropLast(1).forEach {
                         val propertyName = it.simpleName.asString()
                         addStatement("append(\"%N=\$%N, \")", propertyName, propertyName)
                     }
-                    val lastPropertyName = immutableProperties.last().simpleName.asString()
+                    val lastPropertyName = recordProperties.last().simpleName.asString()
                     addStatement("append(\"%N=\$%N\")", lastPropertyName, lastPropertyName)
                 }
                 addStatement("append(\")\")")
@@ -61,12 +77,15 @@ internal fun TypeSpec.Builder.addRecordType(
 
     addFunction(
         FunSpec.builder("mk_${interfaceClassDcl.simpleName.asString()}").apply {
-            immutableProperties.forEach { property ->
-                addParameter(property.simpleName.asString(), property.type.toTypeName())
+            if (interfaceTypeArguments.isNotEmpty()) {
+                addTypeVariables(interfaceTypeArguments)
+            }
+            recordProperties.forEach { property ->
+                addParameter(property.simpleName.asString(), property.type.toTypeName(interfaceTypeParameterResolver))
             }
             returns(interfaceTypeName)
-            val formatArgs = listOf(implTypeSpec) + immutableProperties.map { it.simpleName.asString() }
-            addStatement("return %N(${immutableProperties.joinToString { "%N" }})", *formatArgs.toTypedArray())
+            val formatArgs = listOf(implTypeSpec) + recordProperties.map { it.simpleName.asString() }
+            addStatement("return %N(${recordProperties.joinToString { "%N" }})", *formatArgs.toTypedArray())
         }.build()
     )
 

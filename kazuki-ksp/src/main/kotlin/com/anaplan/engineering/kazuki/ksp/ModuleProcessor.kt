@@ -53,7 +53,7 @@ internal class ModuleProcessor(
                 KazukiType.SequenceType -> addSeqType(clazz, processingState)
                 KazukiType.QuoteType -> processQuoteType(clazz, processingState)
                 KazukiType.RecordType -> addRecordType(clazz, processingState)
-                KazukiType.MapType -> addSequenceType(clazz, processingState)
+                KazukiType.MapType -> addMapType(clazz, processingState)
                 KazukiType.Map1Type -> addMap1Type(clazz, processingState)
             }
         }.build()

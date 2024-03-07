@@ -36,7 +36,16 @@ internal fun TypeSpec.Builder.addInvariantFrom(
             .forEach { add("${it.second!!.qualifiedName!!.asString()}(${it.first.simpleName.asString()})") }
         addAll(additionalInvariantParts)
     }
-    if (invariantParts.isNotEmpty()) {
+    if (invariantParts.isEmpty()) {
+        addFunction(FunSpec.builder(validityFunctionName).apply {
+            addModifiers(KModifier.INTERNAL)
+            if (override) {
+                addModifiers(KModifier.OVERRIDE)
+            }
+            returns(Boolean::class)
+            addStatement("return true")
+        }.build())
+    } else {
         addInitializerBlock(CodeBlock.builder().apply {
             beginControlFlow(if (enforceInvariantVariableName == null) {
                 "if (!$validityFunctionName())"

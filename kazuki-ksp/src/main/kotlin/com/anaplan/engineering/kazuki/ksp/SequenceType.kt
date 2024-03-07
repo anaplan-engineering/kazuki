@@ -8,6 +8,7 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
+import com.squareup.kotlinpoet.ksp.toTypeParameterResolver
 import com.squareup.kotlinpoet.ksp.toTypeVariableName
 
 internal fun TypeSpec.Builder.addSeqType(
@@ -32,6 +33,7 @@ private fun TypeSpec.Builder.addSequenceType(
     } else {
         interfaceClassDcl.toClassName().parameterizedBy(interfaceTypeArguments)
     }
+    val interfaceTypeParameterResolver = interfaceClassDcl.typeParameters.toTypeParameterResolver()
 
     val properties = interfaceClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
     if (properties.firstOrNull() != null) {
@@ -45,11 +47,7 @@ private fun TypeSpec.Builder.addSequenceType(
             .resolve()
     val elementType = seqType.arguments.single().type!!.resolve()
     val elementTypeDcl = elementType.declaration
-    val elementTypeName = if (elementTypeDcl is KSTypeParameter) {
-        elementTypeDcl.toTypeVariableName()
-    } else {
-        elementType.toTypeName()
-    }
+    val elementTypeName = elementType.toTypeName(interfaceTypeParameterResolver)
     val elementClassName =
         ClassName(packageName = elementTypeDcl.packageName.asString(), elementTypeDcl.simpleName.asString())
     val elementParameterName = "elements"
