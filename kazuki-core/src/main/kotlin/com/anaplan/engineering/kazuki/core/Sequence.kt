@@ -16,7 +16,7 @@ fun <T> mk_Seq(elems: List<T>): Sequence<T> = __KSequence(elems)
 
 // TODO generate impls to ensure consistenct
 private class __KSequence<T>(val elements: List<T>) : Sequence<T>, List<T> by elements {
-    override val len: nat by lazy { size }
+    override val len: nat by elements::size
 
     // TODO -- need to enforce nat
     override operator fun get(index: nat): T = elements.get(index - 1)
@@ -64,7 +64,7 @@ fun <T> mk_Seq1(elems: List<T>): Sequence1<T> = __KSequence1(elems)
 
 private class __KSequence1<T>(private val elements: List<T>) : Sequence1<T>, List<T> by elements {
 
-    override val len: nat1 by lazy { size }
+    override val len: nat1 by elements::size
 
     // TODO -- need to enfore nat1
     override operator fun get(index: nat1): T = elements.get(index - 1)

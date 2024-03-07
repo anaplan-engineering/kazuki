@@ -9,6 +9,7 @@ internal fun TypeSpec.Builder.addRecordType(
     interfaceClassDcl: KSClassDeclaration,
     processingState: KazukiSymbolProcessor.ProcessingState,
 ) {
+    // TODO -- fail if class is not interface
     val interfaceType = interfaceClassDcl.asType(emptyList())
     val interfaceTypeName = interfaceType.toTypeName()
 

@@ -1,33 +1,37 @@
 package com.anaplan.engineering.kazuki.ksp
 
-import com.anaplan.engineering.kazuki.core.Sequence1
-import com.anaplan.engineering.kazuki.core.Sequence
-import com.anaplan.engineering.kazuki.core.Set1
-import com.anaplan.engineering.kazuki.core.nat
-import com.anaplan.engineering.kazuki.core.nat1
+import com.anaplan.engineering.kazuki.core.*
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
+import com.squareup.kotlinpoet.ksp.toTypeVariableName
 
 internal fun TypeSpec.Builder.addSeqType(
     interfaceClassDcl: KSClassDeclaration,
     processingState: KazukiSymbolProcessor.ProcessingState,
-) = addSeqType(interfaceClassDcl, processingState, false)
+) = addSequenceType(interfaceClassDcl, processingState, false)
 
 internal fun TypeSpec.Builder.addSeq1Type(
     interfaceClassDcl: KSClassDeclaration,
     processingState: KazukiSymbolProcessor.ProcessingState,
-) = addSeqType(interfaceClassDcl, processingState, true)
+) = addSequenceType(interfaceClassDcl, processingState, true)
 
-private fun TypeSpec.Builder.addSeqType(
+private fun TypeSpec.Builder.addSequenceType(
     interfaceClassDcl: KSClassDeclaration,
     processingState: KazukiSymbolProcessor.ProcessingState,
     requiresNonEmpty: Boolean
 ) {
     val interfaceName = interfaceClassDcl.simpleName.asString()
-    val interfaceTypeName = interfaceClassDcl.asType(emptyList()).toTypeName()
+    val interfaceTypeArguments = interfaceClassDcl.typeParameters.map { it.toTypeVariableName() }
+    val interfaceTypeName = if (interfaceTypeArguments.isEmpty()) {
+        interfaceClassDcl.toClassName()
+    } else {
+        interfaceClassDcl.toClassName().parameterizedBy(interfaceTypeArguments)
+    }
 
     val properties = interfaceClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
     if (properties.firstOrNull() != null) {
@@ -41,6 +45,11 @@ private fun TypeSpec.Builder.addSeqType(
             .resolve()
     val elementType = seqType.arguments.single().type!!.resolve()
     val elementTypeDcl = elementType.declaration
+    val elementTypeName = if (elementTypeDcl is KSTypeParameter) {
+        elementTypeDcl.toTypeVariableName()
+    } else {
+        elementType.toTypeName()
+    }
     val elementClassName =
         ClassName(packageName = elementTypeDcl.packageName.asString(), elementTypeDcl.simpleName.asString())
     val elementParameterName = "elements"
@@ -49,6 +58,9 @@ private fun TypeSpec.Builder.addSeqType(
     val suffix = if (requiresNonEmpty) "Seq1" else "Seq"
     val implClassName = "${interfaceName}_$suffix"
     val implTypeSpec = TypeSpec.classBuilder(implClassName).apply {
+        if (interfaceTypeArguments.isNotEmpty()) {
+            addTypeVariables(interfaceTypeArguments)
+        }
         addModifiers(KModifier.PRIVATE)
         addSuperinterface(interfaceTypeName)
         addSuperinterface(superListTypeName, CodeBlock.of(elementParameterName))
@@ -63,9 +75,8 @@ private fun TypeSpec.Builder.addSeqType(
             PropertySpec.builder(elementParameterName, superListTypeName, KModifier.OPEN)
                 .initializer(elementParameterName).build()
         )
-        // TODO - get operator override
         addProperty(PropertySpec.builder("len", nat::class.asTypeName()).addModifiers(KModifier.OVERRIDE)
-            .lazy("size").build())
+            .delegate("$elementParameterName::size").build())
         val correspondingSetInterface = if (requiresNonEmpty) Set1::class else Set::class
         val correspondingSetConstructor = if (requiresNonEmpty) InbuiltNames.mkSet1 else InbuiltNames.mkSet
         addProperty(PropertySpec.builder("elems",
@@ -80,6 +91,7 @@ private fun TypeSpec.Builder.addSeqType(
             .lazy("%M(1 .. len)", correspondingSetConstructor).build())
 
         // N.B. it is important to have properties before init block
+        // TODO -- should we get this from super interface -- Sequence1.atLeastOneElement()
         val additionalInvariantParts = if (requiresNonEmpty) listOf("len > 0") else emptyList()
         addInvariantFrom(interfaceClassDcl,
             false,
@@ -124,6 +136,9 @@ private fun TypeSpec.Builder.addSeqType(
 
     addFunction(
         FunSpec.builder("mk_$interfaceName").apply {
+            if (interfaceTypeArguments.isNotEmpty()) {
+                addTypeVariables(interfaceTypeArguments)
+            }
             addParameter(elementParameterName, superListTypeName)
             returns(interfaceTypeName)
             addStatement("return %N(%N)", implTypeSpec, elementParameterName)
@@ -131,14 +146,19 @@ private fun TypeSpec.Builder.addSeqType(
     )
     addFunction(
         FunSpec.builder("mk_$interfaceName").apply {
-            addParameter(elementParameterName, elementType.toTypeName(), KModifier.VARARG)
+            if (interfaceTypeArguments.isNotEmpty()) {
+                addTypeVariables(interfaceTypeArguments)
+            }
+            addParameter(elementParameterName, elementTypeName, KModifier.VARARG)
             returns(interfaceTypeName)
             addStatement("return %N(%N.toList())", implTypeSpec, elementParameterName)
         }.build()
     )
-    // TODO -- need to be able to access invariant and use it to validate
     addFunction(
         FunSpec.builder("is_$interfaceName").apply {
+            if (interfaceTypeArguments.isNotEmpty()) {
+                addTypeVariables(interfaceTypeArguments)
+            }
             addParameter(elementParameterName, superListTypeName)
             returns(Boolean::class)
             addStatement("return %N(%N, false).%N()", implClassName, elementParameterName, validityFunctionName)
@@ -146,6 +166,9 @@ private fun TypeSpec.Builder.addSeqType(
     )
     addFunction(
         FunSpec.builder("as_$interfaceName").apply {
+            if (interfaceTypeArguments.isNotEmpty()) {
+                addTypeVariables(interfaceTypeArguments)
+            }
             addParameter(elementParameterName, superListTypeName)
             returns(interfaceTypeName)
             addStatement("return %N(%N)", "mk_$interfaceName", elementParameterName)

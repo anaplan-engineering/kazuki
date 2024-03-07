@@ -1,6 +1,7 @@
 include(
         "kazuki-core",
         "kazuki-ksp",
+        "kazuki-syntax-examples",
         "tictactoe",
 )
 includeBuild("build-conventions")

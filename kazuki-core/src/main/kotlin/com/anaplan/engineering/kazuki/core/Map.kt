@@ -1,6 +1,16 @@
 package com.anaplan.engineering.kazuki.core
 
+interface Map1<D, R> : Map<D, R> {
+    val card: nat1
 
+    @Invariant
+    fun atLeastOneElement() = card > 0
+}
+
+val <D, R> Map<D, R>.card: nat
+    get() = size
+
+// TODO -- dom/rng to vals
 fun <D, R> Map<D, R>.dom() = mk_Set(keys)
 
 fun <D, R> Map<D, R>.rng() = mk_Set(values)
@@ -32,7 +42,6 @@ private fun <D, R> asMap(entries: Collection<Map.Entry<D, R>>): Map<D, R> = mk_M
 fun <D, R> mk_Map(entries: Collection<Pair<D, R>>): Map<D, R> = mk_Map(entries.toMap())
 
 fun <D, R> mk_Map(vararg entries: Pair<D, R>): Map<D, R> = mk_Map(entries.toMap())
-
 private class __KMap<D, R>(private val base: Map<D, R>) : Map<D, R> by base {
 
     override fun equals(other: Any?): Boolean {
@@ -46,4 +55,38 @@ private class __KMap<D, R>(private val base: Map<D, R>) : Map<D, R> by base {
     }
 
     override fun toString() = "map$base"
+}
+
+fun <D, R> mk_Map1(base: Map<D, R>): Map1<D, R> = __KMap1(base)
+
+private fun <D, R> asMap1(entries: Collection<Map.Entry<D, R>>): Map<D, R> = mk_Map1(entries.map { it.key to it.value })
+
+fun <D, R> mk_Map1(entries: Collection<Pair<D, R>>): Map1<D, R> = mk_Map1(entries.toMap())
+
+fun <D, R> mk_Map1(vararg entries: Pair<D, R>): Map1<D, R> = mk_Map1(entries.toMap())
+
+
+private class __KMap1<D, R>(private val base: Map<D, R>) : Map1<D, R>, Map<D, R> by base {
+
+    override val card: nat1 by base::size
+
+    init {
+        if (!isValid()) {
+            throw InvariantFailure()
+        }
+    }
+
+    protected fun isValid(): Boolean = atLeastOneElement()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Map<*, *>) return false
+        return base == other
+    }
+
+    override fun hashCode(): Int {
+        return base.hashCode()
+    }
+
+    override fun toString() = "map1$base"
 }
