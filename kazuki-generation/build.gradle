@@ -1,0 +1,21 @@
+plugins {
+    id 'kazuki.kotlin-conventions'
+    id 'com.gradle.plugin-publish' version '1.2.0'
+}
+
+
+dependencies {
+    implementation gradleApi()
+//    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin-api")
+    implementation 'com.squareup:kotlinpoet:1.14.2'
+}
+
+gradlePlugin {
+    plugins {
+        kazukiGeneration {
+            id = "${group}.kazuki-generation"
+            implementationClass = "com.anaplan.engineering.kazuki.generation.KazukiGenerationPlugin"
+        }
+    }
+}
+

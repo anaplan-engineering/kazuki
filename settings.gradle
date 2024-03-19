@@ -4,4 +4,5 @@ include(
         "kazuki-syntax-examples",
         "tictactoe",
 )
+includeBuild("kazuki-generation")
 includeBuild("build-conventions")

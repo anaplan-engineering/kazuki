@@ -1,10 +1,20 @@
 plugins {
     id 'kazuki.kotlin-conventions'
     id 'kazuki.jar-publishing-conventions'
+    id 'com.anaplan.engineering.kazuki-generation'
 }
 
 dependencies {
     testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+}
+
+compileKotlin {
+    dependsOn generateFunctions
+}
+
+// TODO - figure out how to do this from the plugin ?!
+sourceSets {
+    main.kotlin.srcDirs "$buildDir/generated/kazuki/main/kotlin"
 }
 
 publishing {
