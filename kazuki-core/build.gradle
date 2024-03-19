@@ -10,6 +10,7 @@ dependencies {
 
 compileKotlin {
     dependsOn generateFunctions
+    dependsOn generateTuples
 }
 
 // TODO - figure out how to do this from the plugin ?!

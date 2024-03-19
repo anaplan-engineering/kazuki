@@ -12,15 +12,12 @@ import java.io.File
 abstract class FunctionGeneratorTask : DefaultTask() {
 
     companion object {
-
         private const val MaxInputCount = 10
-
-
     }
 
     val generationSrcDir: File
         @OutputDirectory
-        get() = File(project.buildDir, "generated/kazuki/main/kotlin")
+        get() = project.generationSrcDir()
 
     @TaskAction
     fun apply() {
@@ -36,7 +33,6 @@ abstract class FunctionGeneratorTask : DefaultTask() {
     }
 }
 
-private const val PackageName = "com.anaplan.engineering.kazuki.core"
 private const val FileName = "Functions"
 private const val KotlinFunctionPackage = "kotlin"
 private const val CommandPropertyName = "command"
@@ -60,7 +56,7 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
         addParameter(PostPropertyName, postTypeName)
     }.build()
 
-    val functionType = TypeSpec.classBuilder(className).apply {
+    addType(TypeSpec.classBuilder(className).apply<TypeSpec.Builder> {
         addTypeVariables(inputTypeNames + outputTypeName)
         addSuperinterface(superInterfaceName)
         primaryConstructor(constructor)
@@ -75,13 +71,13 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
             PropertySpec.builder(PostPropertyName, postTypeName, KModifier.PRIVATE).initializer(PostPropertyName)
                 .build()
         )
-        addFunction(FunSpec.builder("invoke").apply {
+        addFunction(FunSpec.builder("invoke").apply<FunSpec.Builder> {
             addModifiers(KModifier.OVERRIDE)
             (1..argCount).forEach {
                 addParameter("i$it", TypeVariableName("I$it"))
             }
             returns(outputTypeName)
-            addCode(CodeBlock.builder().apply {
+            addCode(CodeBlock.builder().apply<CodeBlock.Builder> {
                 addComment("TODO -- validate primitive args and result")
 
 //              val validParams = validatePrimitive(i2) && validatePrimitive(i2)
@@ -109,8 +105,7 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
                 addStatement("return $resultName")
             }.build())
         }.build())
-    }.build()
-    addType(functionType)
+    }.build())
 
     addFunction(FunSpec.builder("function").apply {
         addTypeVariables(inputTypeNames + outputTypeName)

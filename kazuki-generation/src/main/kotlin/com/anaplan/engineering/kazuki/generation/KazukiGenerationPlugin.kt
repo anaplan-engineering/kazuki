@@ -11,6 +11,9 @@ open class KazukiGenerationPluginExtension @javax.inject.Inject constructor(obje
     var generatedSrc: String = "generatedSrc"
 }
 
+
+internal const val PackageName = "com.anaplan.engineering.kazuki.core"
+
 class KazukiGenerationPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
@@ -20,6 +23,7 @@ class KazukiGenerationPlugin : Plugin<Project> {
         }
         project.extensions.create("kazuki", KazukiGenerationPluginExtension::class.java, project.objects)
         project.createKazukiTask("generateFunctions", FunctionGeneratorTask::class.java)
+        project.createKazukiTask("generateTuples", TupleGeneratorTask::class.java)
     }
 }
 
@@ -34,3 +38,4 @@ internal fun Project.createKazukiTask(name: String, type: Class<out Task>) =
         )
     )
 
+internal fun Project.generationSrcDir() = File(buildDir, "generated/kazuki/main/kotlin")
