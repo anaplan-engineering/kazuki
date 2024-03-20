@@ -26,3 +26,4 @@ fun <I1> `∃!`(i1: Collection<I1>, condition: (I1) -> Boolean) = exists1(i1, co
 
 infix fun Boolean.`∧`(other: Boolean) = this && other
 
+infix fun Boolean.implies(other: Boolean) = if (this) other else true

@@ -2,6 +2,7 @@ include(
         "kazuki-core",
         "kazuki-ksp",
         "kazuki-syntax-examples",
+        "kazuki-toolkit",
         "tictactoe",
 )
 includeBuild("kazuki-generation")

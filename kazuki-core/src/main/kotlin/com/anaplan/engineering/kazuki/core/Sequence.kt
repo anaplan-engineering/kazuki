@@ -7,6 +7,11 @@ interface Sequence<T> : List<T> {
     val elems: Set<T>
 
     val inds: Set<nat1>
+
+    override fun indexOf(element: T): nat1
+
+    override fun lastIndexOf(element: T): nat1
+
 }
 
 fun <T> mk_Seq(vararg elems: T): Sequence<T> = mk_Seq(elems.toList())
@@ -18,8 +23,26 @@ fun <T> mk_Seq(elems: List<T>): Sequence<T> = __KSequence(elems)
 private class __KSequence<T>(val elements: List<T>) : Sequence<T>, List<T> by elements {
     override val len: nat by elements::size
 
-    // TODO -- need to enforce nat
-    override operator fun get(index: nat): T = elements.get(index - 1)
+    override operator fun get(index: nat1): T {
+        if (index < 1 || index > len) {
+            throw PreconditionFailure()
+        }
+        return elements.get(index - 1)
+    }
+
+    override fun indexOf(element: T): nat1 {
+        if (element !in elements) {
+            throw PreconditionFailure()
+        }
+        return elements.indexOf(element) + 1
+    }
+
+    override fun lastIndexOf(element: T): nat1 {
+        if (element !in elements) {
+            throw PreconditionFailure()
+        }
+        return elements.lastIndexOf(element) + 1
+    }
 
     override val elems by lazy {
         mk_Set(this)
@@ -66,13 +89,32 @@ private class __KSequence1<T>(private val elements: List<T>) : Sequence1<T>, Lis
 
     override val len: nat1 by elements::size
 
-    // TODO -- need to enfore nat1
-    override operator fun get(index: nat1): T = elements.get(index - 1)
+    override operator fun get(index: nat1): T {
+        if (index < 1 || index > len) {
+            throw PreconditionFailure()
+        }
+        return elements.get(index - 1)
+    }
 
     init {
         if (!isValid()) {
             throw InvariantFailure()
         }
+    }
+
+    // TODO -- add to generator
+    override fun indexOf(element: T): nat1 {
+        if (element !in elements) {
+            throw PreconditionFailure()
+        }
+        return elements.indexOf(element) + 1
+    }
+
+    override fun lastIndexOf(element: T): nat1 {
+        if (element !in elements) {
+            throw PreconditionFailure()
+        }
+        return elements.lastIndexOf(element) + 1
     }
 
     protected fun isValid(): Boolean = atLeastOneElement()
@@ -101,3 +143,11 @@ private class __KSequence1<T>(private val elements: List<T>) : Sequence1<T>, Lis
 inline fun <reified T: Enum<T>> asSequence(): Sequence1<T> {
     return mk_Seq1(enumValues<T>().toList())
 }
+
+infix fun <T> Sequence<T>.domRestrictTo(s: Set<nat1>) = this.filterIndexed { i, _ -> i in s }
+
+infix fun <T> Sequence<T>.drt(s: Set<nat1>) = domRestrictTo(s)
+
+infix fun <T> Sequence<T>.rngRestrictTo(s: Set<T>) = this.filter { e -> e in s }
+
+infix fun <T> Sequence<T>.rrt(s: Set<T>) = rngRestrictTo(s)

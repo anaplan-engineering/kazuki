@@ -1,0 +1,28 @@
+plugins {
+    id 'kazuki.kotlin-conventions'
+    id 'kazuki.jar-publishing-conventions'
+    id 'com.google.devtools.ksp' version("1.9.10-1.0.13")
+}
+
+dependencies {
+    api project(":kazuki-core")
+    ksp project(":kazuki-ksp")
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+}
+
+tasks.named('compileKotlin', org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask.class) {
+    compilerOptions {
+        freeCompilerArgs.add("-Xjvm-default=all")
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            pom {
+                name = 'Kazuki toolkit'
+                description = 'Toolkit of generic functions for use with the Kazuki specification framework'
+            }
+        }
+    }
+}
