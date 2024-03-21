@@ -3,7 +3,6 @@ package com.anaplan.engineering.kazuki.ksp
 import com.anaplan.engineering.kazuki.core.*
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
-import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
@@ -50,7 +49,7 @@ private fun TypeSpec.Builder.addSequenceType(
     val elementTypeName = elementType.toTypeName(interfaceTypeParameterResolver)
     val elementClassName =
         ClassName(packageName = elementTypeDcl.packageName.asString(), elementTypeDcl.simpleName.asString())
-    val elementParameterName = "elements"
+    val elementsPropertyName = "elements"
     val enforceInvariantParameterName = "enforceInvariant"
     val superListTypeName = List::class.asClassName().parameterizedBy(elementClassName)
     val suffix = if (requiresNonEmpty) "Seq1" else "Seq"
@@ -61,27 +60,28 @@ private fun TypeSpec.Builder.addSequenceType(
         }
         addModifiers(KModifier.PRIVATE)
         addSuperinterface(interfaceTypeName)
-        addSuperinterface(superListTypeName, CodeBlock.of(elementParameterName))
-        addSuperclassConstructorParameter(elementParameterName)
+        addSuperinterface(superListTypeName, CodeBlock.of(elementsPropertyName))
+        addSuperclassConstructorParameter(elementsPropertyName)
         primaryConstructor(FunSpec.constructorBuilder()
-            .addParameter(elementParameterName, superListTypeName)
+            .addParameter(elementsPropertyName, superListTypeName)
             .addParameter(ParameterSpec.builder(enforceInvariantParameterName, Boolean::class).defaultValue("true")
                 .build())
             .build()
         )
         addProperty(
-            PropertySpec.builder(elementParameterName, superListTypeName, KModifier.OPEN)
-                .initializer(elementParameterName).build()
+            PropertySpec.builder(elementsPropertyName, superListTypeName, KModifier.OPEN)
+                .initializer(elementsPropertyName).build()
         )
-        addProperty(PropertySpec.builder("len", nat::class.asTypeName()).addModifiers(KModifier.OVERRIDE)
-            .delegate("$elementParameterName::size").build())
+        val lenPropertyName = "len"
+        addProperty(PropertySpec.builder(lenPropertyName, nat::class.asTypeName()).addModifiers(KModifier.OVERRIDE)
+            .delegate("$elementsPropertyName::size").build())
         val correspondingSetInterface = if (requiresNonEmpty) Set1::class else Set::class
         val correspondingSetConstructor = if (requiresNonEmpty) InbuiltNames.mkSet1 else InbuiltNames.mkSet
         addProperty(PropertySpec.builder("elems",
             correspondingSetInterface.asClassName().parameterizedBy(elementClassName))
             .addModifiers(
                 KModifier.OVERRIDE)
-            .lazy("%M(%N)", correspondingSetConstructor, elementParameterName).build())
+            .lazy("%M(%N)", correspondingSetConstructor, elementsPropertyName).build())
         addProperty(PropertySpec.builder("inds",
             correspondingSetInterface.asClassName().parameterizedBy(nat1::class.asClassName()))
             .addModifiers(
@@ -103,15 +103,48 @@ private fun TypeSpec.Builder.addSequenceType(
                 addModifiers(KModifier.OVERRIDE, KModifier.OPERATOR)
                 addParameter(ParameterSpec.builder(indexParameterName, nat1::class.asTypeName()).build())
                 returns(elementClassName)
-                addStatement("return %N.get(%N - 1)", elementParameterName, indexParameterName)
+                addCode(CodeBlock.builder().apply {
+                    beginControlFlow("if (%N < 1 || %N > %N)", indexParameterName, indexParameterName, lenPropertyName)
+                    addStatement("throw %T()", PreconditionFailure::class)
+                    endControlFlow()
+                    addStatement("return %N.get(%N - 1)", elementsPropertyName, indexParameterName)
+                }.build())
+            }.build()
+        )
+        addFunction(
+            FunSpec.builder("indexOf").apply {
+                val elementParameterName = "element"
+                addModifiers(KModifier.OVERRIDE)
+                addParameter(ParameterSpec.builder(elementParameterName, elementTypeName).build())
+                returns(nat1::class.asTypeName())
+                addCode(CodeBlock.builder().apply {
+                    beginControlFlow("if (%N !in %N)", elementParameterName, elementsPropertyName)
+                    addStatement("throw %T()", PreconditionFailure::class)
+                    endControlFlow()
+                    addStatement("return %N.indexOf(%N) + 1", elementsPropertyName, elementParameterName)
+                }.build())
+            }.build()
+        )
+        addFunction(
+            FunSpec.builder("lastIndexOf").apply {
+                val elementParameterName = "element"
+                addModifiers(KModifier.OVERRIDE)
+                addParameter(ParameterSpec.builder(elementParameterName, elementTypeName).build())
+                returns(nat1::class.asTypeName())
+                addCode(CodeBlock.builder().apply {
+                    beginControlFlow("if (%N !in %N)", elementParameterName, elementsPropertyName)
+                    addStatement("throw %T()", PreconditionFailure::class)
+                    endControlFlow()
+                    addStatement("return %N.lastIndexOf(%N) + 1", elementsPropertyName, elementParameterName)
+                }.build())
             }.build()
         )
         addFunction(FunSpec.builder("toString").addModifiers(KModifier.OVERRIDE)
             .returns(String::class)
-            .addStatement("return \"%N\$%N\"", interfaceName, elementParameterName)
+            .addStatement("return \"%N\$%N\"", interfaceName, elementsPropertyName)
             .build())
         addFunction(FunSpec.builder("hashCode").addModifiers(KModifier.OVERRIDE)
-            .returns(Int::class).addStatement("return %N.hashCode()", elementParameterName).build())
+            .returns(Int::class).addStatement("return %N.hashCode()", elementsPropertyName).build())
         val equalsParameterName = "other"
         addFunction(FunSpec.builder("equals").addModifiers(KModifier.OVERRIDE)
             .addParameter(ParameterSpec.builder(equalsParameterName, Any::class.asTypeName().copy(nullable = true))
@@ -126,7 +159,7 @@ private fun TypeSpec.Builder.addSequenceType(
                 addStatement("return false")
                 endControlFlow()
 
-                addStatement("return %N == %N", elementParameterName, equalsParameterName)
+                addStatement("return %N == %N", elementsPropertyName, equalsParameterName)
 
             }.build()).build())
     }.build()
@@ -137,9 +170,9 @@ private fun TypeSpec.Builder.addSequenceType(
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments)
             }
-            addParameter(elementParameterName, superListTypeName)
+            addParameter(elementsPropertyName, superListTypeName)
             returns(interfaceTypeName)
-            addStatement("return %N(%N)", implTypeSpec, elementParameterName)
+            addStatement("return %N(%N)", implTypeSpec, elementsPropertyName)
         }.build()
     )
     addFunction(
@@ -147,9 +180,9 @@ private fun TypeSpec.Builder.addSequenceType(
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments)
             }
-            addParameter(elementParameterName, elementTypeName, KModifier.VARARG)
+            addParameter(elementsPropertyName, elementTypeName, KModifier.VARARG)
             returns(interfaceTypeName)
-            addStatement("return %N(%N.toList())", implTypeSpec, elementParameterName)
+            addStatement("return %N(%N.toList())", implTypeSpec, elementsPropertyName)
         }.build()
     )
     addFunction(
@@ -157,9 +190,9 @@ private fun TypeSpec.Builder.addSequenceType(
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments)
             }
-            addParameter(elementParameterName, superListTypeName)
+            addParameter(elementsPropertyName, superListTypeName)
             returns(Boolean::class)
-            addStatement("return %N(%N, false).%N()", implClassName, elementParameterName, validityFunctionName)
+            addStatement("return %N(%N, false).%N()", implClassName, elementsPropertyName, validityFunctionName)
         }.build()
     )
     addFunction(
@@ -167,9 +200,9 @@ private fun TypeSpec.Builder.addSequenceType(
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments)
             }
-            addParameter(elementParameterName, superListTypeName)
+            addParameter(elementsPropertyName, superListTypeName)
             returns(interfaceTypeName)
-            addStatement("return %N(%N)", "mk_$interfaceName", elementParameterName)
+            addStatement("return %N(%N)", "mk_$interfaceName", elementsPropertyName)
         }.build()
     )
 }

@@ -65,10 +65,10 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
                 .initializer(CommandPropertyName).build()
         )
         addProperty(
-            PropertySpec.builder(PrePropertyName, preTypeName, KModifier.PRIVATE).initializer(PrePropertyName).build()
+            PropertySpec.builder(PrePropertyName, preTypeName).initializer(PrePropertyName).build()
         )
         addProperty(
-            PropertySpec.builder(PostPropertyName, postTypeName, KModifier.PRIVATE).initializer(PostPropertyName)
+            PropertySpec.builder(PostPropertyName, postTypeName).initializer(PostPropertyName)
                 .build()
         )
         addFunction(FunSpec.builder("invoke").apply<FunSpec.Builder> {
