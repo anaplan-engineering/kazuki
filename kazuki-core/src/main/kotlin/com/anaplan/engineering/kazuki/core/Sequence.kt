@@ -14,13 +14,35 @@ interface Sequence<T> : List<T> {
 
 }
 
+interface KSequence<T, S: Sequence<T>> {
+    fun construct(elements: List<T>): S
+
+    val elements: List<T>
+}
+
+// TODO -- should we use different name?
+// TODO -- precondition on size
+fun <T, S: Sequence<T>> S.drop(n: Int): S {
+    val kSequence = this as? KSequence<T, S> ?: throw PreconditionFailure("Sequence was implemented outside Kazuki")
+    return kSequence.construct(kSequence.elements.drop(n))
+}
+
+
+fun <T> Sequence<T>.first(): T {
+    if (isEmpty()) {
+        throw PreconditionFailure("Sequence is empty")
+    }
+    return this[1]
+}
+
+
 fun <T> mk_Seq(vararg elems: T): Sequence<T> = mk_Seq(elems.toList())
 
 fun <T> mk_Seq(elems: List<T>): Sequence<T> = __KSequence(elems)
 
 
 // TODO generate impls to ensure consistenct
-private class __KSequence<T>(val elements: List<T>) : Sequence<T>, List<T> by elements {
+private class __KSequence<T>(override val elements: List<T>) : Sequence<T>, List<T> by elements, KSequence<T, Sequence<T>> {
     override val len: nat by elements::size
 
     override operator fun get(index: nat1): T {
@@ -51,6 +73,8 @@ private class __KSequence<T>(val elements: List<T>) : Sequence<T>, List<T> by el
     override val inds by lazy {
         mk_Set(1..len)
     }
+
+    override fun construct(elements: List<T>) = __KSequence(elements)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

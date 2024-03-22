@@ -42,16 +42,13 @@ private fun TypeSpec.Builder.addSequenceType(
 
     val superInterface = if (requiresNonEmpty) Sequence1::class else Sequence::class
     val seqType =
-        interfaceClassDcl.superTypes.single { it.resolve().declaration.qualifiedName?.asString() == superInterface.qualifiedName }
+        interfaceClassDcl.allSuperTypes().single { it.resolve().declaration.qualifiedName?.asString() == superInterface.qualifiedName }
             .resolve()
     val elementType = seqType.arguments.single().type!!.resolve()
-    val elementTypeDcl = elementType.declaration
     val elementTypeName = elementType.toTypeName(interfaceTypeParameterResolver)
-    val elementClassName =
-        ClassName(packageName = elementTypeDcl.packageName.asString(), elementTypeDcl.simpleName.asString())
     val elementsPropertyName = "elements"
     val enforceInvariantParameterName = "enforceInvariant"
-    val superListTypeName = List::class.asClassName().parameterizedBy(elementClassName)
+    val superListTypeName = List::class.asClassName().parameterizedBy(elementTypeName)
     val suffix = if (requiresNonEmpty) "Seq1" else "Seq"
     val implClassName = "${interfaceName}_$suffix"
     val implTypeSpec = TypeSpec.classBuilder(implClassName).apply {
@@ -60,6 +57,7 @@ private fun TypeSpec.Builder.addSequenceType(
         }
         addModifiers(KModifier.PRIVATE)
         addSuperinterface(interfaceTypeName)
+        addSuperinterface(KSequence::class.asClassName().parameterizedBy(interfaceTypeArguments + interfaceTypeName))
         addSuperinterface(superListTypeName, CodeBlock.of(elementsPropertyName))
         addSuperclassConstructorParameter(elementsPropertyName)
         primaryConstructor(FunSpec.constructorBuilder()
@@ -69,7 +67,7 @@ private fun TypeSpec.Builder.addSequenceType(
             .build()
         )
         addProperty(
-            PropertySpec.builder(elementsPropertyName, superListTypeName, KModifier.OPEN)
+            PropertySpec.builder(elementsPropertyName, superListTypeName, KModifier.OPEN, KModifier.OVERRIDE)
                 .initializer(elementsPropertyName).build()
         )
         val lenPropertyName = "len"
@@ -78,7 +76,7 @@ private fun TypeSpec.Builder.addSequenceType(
         val correspondingSetInterface = if (requiresNonEmpty) Set1::class else Set::class
         val correspondingSetConstructor = if (requiresNonEmpty) InbuiltNames.mkSet1 else InbuiltNames.mkSet
         addProperty(PropertySpec.builder("elems",
-            correspondingSetInterface.asClassName().parameterizedBy(elementClassName))
+            correspondingSetInterface.asClassName().parameterizedBy(elementTypeName))
             .addModifiers(
                 KModifier.OVERRIDE)
             .lazy("%M(%N)", correspondingSetConstructor, elementsPropertyName).build())
@@ -98,11 +96,19 @@ private fun TypeSpec.Builder.addSequenceType(
             additionalInvariantParts)
 
         addFunction(
+            FunSpec.builder("construct").apply {
+                addModifiers(KModifier.OVERRIDE)
+                addParameter(elementsPropertyName, superListTypeName)
+                returns(interfaceTypeName)
+                addStatement("return %N(%N)", implClassName, elementsPropertyName)
+            }.build()
+        )
+        addFunction(
             FunSpec.builder("get").apply {
                 val indexParameterName = "index"
                 addModifiers(KModifier.OVERRIDE, KModifier.OPERATOR)
                 addParameter(ParameterSpec.builder(indexParameterName, nat1::class.asTypeName()).build())
-                returns(elementClassName)
+                returns(elementTypeName)
                 addCode(CodeBlock.builder().apply {
                     beginControlFlow("if (%N < 1 || %N > %N)", indexParameterName, indexParameterName, lenPropertyName)
                     addStatement("throw %T()", PreconditionFailure::class)

@@ -7,7 +7,6 @@ plugins {
 dependencies {
     api project(":kazuki-core")
     ksp project(":kazuki-ksp")
-    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
 }
 
 tasks.named('compileKotlin', org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask.class) {

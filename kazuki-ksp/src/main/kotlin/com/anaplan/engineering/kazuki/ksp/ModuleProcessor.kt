@@ -8,6 +8,7 @@ import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.Visibility
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
@@ -28,7 +29,8 @@ internal class ModuleProcessor(
     }
 
     private fun KSClassDeclaration.kazukiType(): KazukiType {
-        val superTypeNames = superTypes.map { it.resolve().declaration.qualifiedName?.asString() }
+        val superTypeNames = allSuperTypes().map { it.resolve().declaration.qualifiedName?.asString() }
+        // TODO -- might be more than one!
         return if (Sequence1::class.qualifiedName in superTypeNames) {
             KazukiType.Sequence1Type
         } else if (Sequence::class.qualifiedName in superTypeNames) {

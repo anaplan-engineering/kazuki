@@ -46,6 +46,7 @@ fun FileSpec.Builder.addNAryTuple(nary: Int) {
 
 
     addType(TypeSpec.classBuilder(className).apply {
+        addModifiers(KModifier.DATA)
         addTypeVariables(typeNames)
         primaryConstructor(constructor)
         (1..nary).forEach {

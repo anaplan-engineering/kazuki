@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    api project(":kazuki-core")
+    api project(":kazuki-toolkit")
     ksp project(":kazuki-ksp")
 }
 

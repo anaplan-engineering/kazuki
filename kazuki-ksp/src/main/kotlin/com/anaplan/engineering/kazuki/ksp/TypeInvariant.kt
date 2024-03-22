@@ -2,6 +2,7 @@ package com.anaplan.engineering.kazuki.ksp
 
 import com.anaplan.engineering.kazuki.core.Invariant
 import com.anaplan.engineering.kazuki.core.InvariantFailure
+import com.anaplan.engineering.kazuki.core.Module
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -27,7 +28,7 @@ internal fun TypeSpec.Builder.addInvariantFrom(
         if (override) {
             add("super.$validityFunctionName()")
         }
-        interfaceClassDcl.declarations.filterIsInstance<KSFunctionDeclaration>()
+        interfaceClassDcl.getAllFunctions()
             .filter { it.isAnnotationPresent(Invariant::class) }
             .forEach { add("${it.simpleName.asString()}()") }
         interfaceClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
@@ -47,11 +48,13 @@ internal fun TypeSpec.Builder.addInvariantFrom(
         }.build())
     } else {
         addInitializerBlock(CodeBlock.builder().apply {
-            beginControlFlow(if (enforceInvariantVariableName == null) {
-                "if (!$validityFunctionName())"
-            } else {
-                "if ($enforceInvariantVariableName && !$validityFunctionName())"
-            })
+            beginControlFlow(
+                if (enforceInvariantVariableName == null) {
+                    "if (!$validityFunctionName())"
+                } else {
+                    "if ($enforceInvariantVariableName && !$validityFunctionName())"
+                }
+            )
             addStatement("throw %T()", InvariantFailure::class)
             endControlFlow()
         }.build())
