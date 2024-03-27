@@ -1,9 +1,6 @@
 package com.anaplan.engineering.kazuki.toolkit
 
-import com.anaplan.engineering.kazuki.core.function
-import com.anaplan.engineering.kazuki.core.mk_Seq
-import com.anaplan.engineering.kazuki.core.mk_Set
-import com.anaplan.engineering.kazuki.core.rrt
+import com.anaplan.engineering.kazuki.core.*
 
 enum class Ord {
     LT,

@@ -14,19 +14,36 @@ interface Sequence<T> : List<T> {
 
 }
 
-interface KSequence<T, S: Sequence<T>> {
+interface KSequence<T, S : Sequence<T>>: Sequence<T> {
     fun construct(elements: List<T>): S
 
     val elements: List<T>
 }
 
-// TODO -- should we use different name?
-// TODO -- precondition on size
-fun <T, S: Sequence<T>> S.drop(n: Int): S {
+private fun <T, S : Sequence<T>> S.transform(fn: (KSequence<T, S>) -> List<T>): S {
     val kSequence = this as? KSequence<T, S> ?: throw PreconditionFailure("Sequence was implemented outside Kazuki")
-    return kSequence.construct(kSequence.elements.drop(n))
+    return kSequence.construct(fn(kSequence))
 }
 
+// TODO -- should we use different name?
+fun <T, S : Sequence<T>> S.drop(n: Int) = transform { it.elements.drop(n) }
+
+fun <T, S : Sequence<T>> S.reverse() = transform { it.elements.reversed() }
+
+infix fun <T, S : Sequence<T>> S.domRestrictTo(s: Set<nat1>) = transform {
+    it.elements.filterIndexed { i, _ -> i in s }
+}
+
+infix fun <T, S : Sequence<T>> S.drt(s: Set<nat1>) = domRestrictTo(s)
+
+infix fun <T, S : Sequence<T>> S.rngRestrictTo(s: Set<T>) = transform {
+    it.elements.filter { e -> e in s }
+}
+
+infix fun <T, S : Sequence<T>> S.rrt(s: Set<T>) = rngRestrictTo(s)
+
+// TODO -- override plus for Seq?
+infix fun <T, S : Sequence<T>> S.cat(s: Sequence<T>) = transform { it.elements + s }
 
 fun <T> Sequence<T>.first(): T {
     if (isEmpty()) {
@@ -42,7 +59,8 @@ fun <T> mk_Seq(elems: List<T>): Sequence<T> = __KSequence(elems)
 
 
 // TODO generate impls to ensure consistenct
-private class __KSequence<T>(override val elements: List<T>) : Sequence<T>, List<T> by elements, KSequence<T, Sequence<T>> {
+private class __KSequence<T>(override val elements: List<T>) : Sequence<T>, List<T> by elements,
+    KSequence<T, Sequence<T>> {
     override val len: nat by elements::size
 
     override operator fun get(index: nat1): T {
@@ -164,14 +182,7 @@ private class __KSequence1<T>(private val elements: List<T>) : Sequence1<T>, Lis
     override fun toString() = "seq1$elements"
 }
 
-inline fun <reified T: Enum<T>> asSequence(): Sequence1<T> {
+inline fun <reified T : Enum<T>> asSequence(): Sequence1<T> {
     return mk_Seq1(enumValues<T>().toList())
 }
 
-infix fun <T> Sequence<T>.domRestrictTo(s: Set<nat1>) = this.filterIndexed { i, _ -> i in s }
-
-infix fun <T> Sequence<T>.drt(s: Set<nat1>) = domRestrictTo(s)
-
-infix fun <T> Sequence<T>.rngRestrictTo(s: Set<T>) = this.filter { e -> e in s }
-
-infix fun <T> Sequence<T>.rrt(s: Set<T>) = rngRestrictTo(s)
