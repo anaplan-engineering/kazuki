@@ -7,6 +7,7 @@ import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 @CacheableTask
 abstract class FunctionGeneratorTask : DefaultTask() {
@@ -38,25 +39,31 @@ private const val KotlinFunctionPackage = "kotlin"
 private const val CommandPropertyName = "command"
 private const val PrePropertyName = "pre"
 private const val PostPropertyName = "post"
+private const val MeasurePropertyName = "measure"
+private const val InvocationsPropertyName = "Invocations"
 
 fun FileSpec.Builder.addNArgFunction(argCount: Int) {
     val className = "VFunction$argCount"
     val inputTypeNames = (1..argCount).map { TypeVariableName("I$it") }
     val outputTypeName = TypeVariableName("O")
     val booleanName = Boolean::class.asClassName()
+    val intName = Int::class.asClassName()
     val superInterfaceName = ClassName(KotlinFunctionPackage, "Function$argCount")
         .parameterizedBy(inputTypeNames + outputTypeName)
     val preTypeName = ClassName(KotlinFunctionPackage, "Function$argCount")
         .parameterizedBy(inputTypeNames + booleanName)
     val postTypeName = ClassName(KotlinFunctionPackage, "Function${argCount + 1}")
         .parameterizedBy(inputTypeNames + outputTypeName + booleanName)
+    val measureTypeName = ClassName(KotlinFunctionPackage, "Function$argCount")
+        .parameterizedBy(inputTypeNames + intName).copy(nullable = true)
     val constructor = FunSpec.constructorBuilder().apply {
         addParameter(CommandPropertyName, superInterfaceName)
         addParameter(PrePropertyName, preTypeName)
         addParameter(PostPropertyName, postTypeName)
+        addParameter(MeasurePropertyName, measureTypeName)
     }.build()
 
-    addType(TypeSpec.classBuilder(className).apply<TypeSpec.Builder> {
+    addType(TypeSpec.classBuilder(className).apply {
         addTypeVariables(inputTypeNames + outputTypeName)
         addSuperinterface(superInterfaceName)
         primaryConstructor(constructor)
@@ -71,38 +78,88 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
             PropertySpec.builder(PostPropertyName, postTypeName).initializer(PostPropertyName)
                 .build()
         )
-        addFunction(FunSpec.builder("invoke").apply<FunSpec.Builder> {
+        addProperty(
+            PropertySpec.builder(MeasurePropertyName, measureTypeName).initializer(MeasurePropertyName)
+                .build()
+        )
+        addType(TypeSpec.companionObjectBuilder().apply {
+            val invocationsTypeName = ConcurrentHashMap::class.asClassName().parameterizedBy(
+                ClassName(PackageName, className).parameterizedBy((0..argCount).map { STAR }),
+                intName
+            )
+            addProperty(
+                PropertySpec.builder(InvocationsPropertyName, invocationsTypeName)
+                    .initializer("%T()", invocationsTypeName)
+                    .build()
+            )
+        }.build())
+        addFunction(FunSpec.builder("invoke").apply {
             addModifiers(KModifier.OVERRIDE)
             (1..argCount).forEach {
                 addParameter("i$it", TypeVariableName("I$it"))
             }
             returns(outputTypeName)
-            addCode(CodeBlock.builder().apply<CodeBlock.Builder> {
-                addComment("TODO -- validate primitive args and result")
+            addCode(CodeBlock.builder().apply {
+                val lastMeasureValName = "lastMeasure"
+                val currentMeasureValName = "currentMeasure"
+                val initialRecursionValName = "initialRecursion"
+                val inputs = (1..argCount).joinToString(", ") { "i$it" }
+                val resultValName = "result"
 
+                addComment("TODO -- detect recursion without measure?")
+                addStatement("val %N = %N[this]", lastMeasureValName, InvocationsPropertyName)
+                addStatement(
+                    "val %N = %N != null && %N == null",
+                    initialRecursionValName,
+                    MeasurePropertyName,
+                    lastMeasureValName
+                )
+
+                // not thread safe - could include current thread in tracked object -- but doesn't account for MT in command
+                beginControlFlow("if (%N != null)", MeasurePropertyName)
+                addStatement("val %N = %N.invoke($inputs)", currentMeasureValName, MeasurePropertyName)
+                beginControlFlow(
+                    "if (%N != null && %N >= %N)",
+                    lastMeasureValName,
+                    currentMeasureValName,
+                    lastMeasureValName
+                )
+                addStatement("%N.remove(this)", InvocationsPropertyName)
+                addStatement("throw MeasureFailure()")
+                endControlFlow()
+                addStatement("%N.put(this, %N)", InvocationsPropertyName, currentMeasureValName)
+                endControlFlow()
+
+                beginControlFlow("try")
+
+                addComment("TODO -- validate primitive args and result")
 //              val validParams = validatePrimitive(i2) && validatePrimitive(i2)
 //              if (!validParams) {
 //                  throw InvariantFailure()
 //              }
-                val inputs = (1..argCount).joinToString(", ") { "i$it" }
-                val resultName = "result"
 
                 beginControlFlow("if (!$PrePropertyName($inputs))")
                 addStatement("throw PreconditionFailure()")
                 endControlFlow()
 
-                addStatement("val $resultName = $CommandPropertyName($inputs)")
+                addStatement("val $resultValName = $CommandPropertyName($inputs)")
 
 //                val validResult = validatePrimitive(result)
 //                if (!validResult) {
 //                    throw InvariantFailure()
 //                }
 
-                beginControlFlow("if (!$PostPropertyName($inputs, $resultName))")
+                beginControlFlow("if (!$PostPropertyName($inputs, $resultValName))")
                 addStatement("throw PostconditionFailure()")
                 endControlFlow()
 
-                addStatement("return $resultName")
+                addStatement("return $resultValName")
+
+                nextControlFlow("finally")
+                beginControlFlow("if (%N)", initialRecursionValName)
+                addStatement("%N.remove(this)", InvocationsPropertyName)
+                endControlFlow()
+                endControlFlow()
             }.build())
         }.build())
     }.build())
@@ -118,7 +175,10 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
             val inputs = (1..argCount + 1).joinToString(", ") { "_" }
             defaultValue("{ $inputs -> true }")
         }.build())
-        addCode("return $className($CommandPropertyName, $PrePropertyName, $PostPropertyName)")
+        addParameter(ParameterSpec.builder(MeasurePropertyName, measureTypeName).apply {
+            defaultValue("null")
+        }.build())
+        addCode("return $className($CommandPropertyName, $PrePropertyName, $PostPropertyName, $MeasurePropertyName)")
         returns(ClassName(PackageName, className).parameterizedBy(inputTypeNames + outputTypeName))
     }.build())
 }

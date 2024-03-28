@@ -15,10 +15,8 @@ enum class Ord {
         class Natural<T : Comparable<T>> {
 
             val min = function(
-                command = { l: T, r: T ->
-                    if (l < r) l else r
-                },
-                post = { l: T, r: T, result: T ->
+                command = { l: T, r: T -> if (l < r) l else r },
+                post = { l, r, result ->
                     when (result) {
                         l -> r >= l
                         r -> l >= r
@@ -28,10 +26,8 @@ enum class Ord {
             )
 
             val max = function(
-                command = { l: T, r: T ->
-                    if (r < l) l else r
-                },
-                post = { l: T, r: T, result: T ->
+                command = { l: T, r: T -> if (r < l) l else r },
+                post = { l, r, result ->
                     when (result) {
                         l -> r <= l
                         r -> l <= r
@@ -47,7 +43,7 @@ enum class Ord {
                         else -> if (c > 0) GT else LT
                     }
                 },
-                post = { l: T, r: T, result: Ord ->
+                post = { l, r, result ->
                     when (result) {
                         EQ -> l == r
                         LT -> l < r
@@ -60,27 +56,15 @@ enum class Ord {
         class BySeq<T>(private val seq: OrderedSet<T>) {
 
             val min = function(
-                command = { l: T, r: T ->
-                    if (seq.indexOf(l) < seq.indexOf(r)) l else r
-                },
-                pre = { l: T, r: T ->
-                    l in seq.elems && r in seq.elems
-                },
-                post = { l: T, r: T, result: T ->
-                    (seq rrt mk_Set(l, r)).first() == result
-                }
+                command = { l: T, r: T -> if (seq.indexOf(l) < seq.indexOf(r)) l else r },
+                pre = { l, r -> l in seq.elems && r in seq.elems },
+                post = { l, r, result -> (seq rrt mk_Set(l, r)).first() == result }
             )
 
             val max = function(
-                command = { l: T, r: T ->
-                    if (seq.indexOf(r) < seq.indexOf(l)) l else r
-                },
-                pre = { l: T, r: T ->
-                    l in seq.elems && r in seq.elems
-                },
-                post = { l: T, r: T, result: T ->
-                    (seq rrt mk_Set(l, r)).last() == result
-                }
+                command = { l: T, r: T -> if (seq.indexOf(r) < seq.indexOf(l)) l else r },
+                pre = { l, r -> l in seq.elems && r in seq.elems },
+                post = { l, r, result -> (seq rrt mk_Set(l, r)).last() == result }
             )
 
             val compare = function(
@@ -94,10 +78,8 @@ enum class Ord {
                         }
                     }
                 },
-                pre = { l: T, r: T ->
-                    l in seq.elems && r in seq.elems
-                },
-                post = { l: T, r: T, result: Ord ->
+                pre = { l, r -> l in seq.elems && r in seq.elems },
+                post = { l, r, result ->
                     val lrSeq = seq rrt mk_Set(l, r)
                     when (result) {
                         EQ -> lrSeq == mk_Seq(l)
