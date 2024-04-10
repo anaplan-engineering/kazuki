@@ -14,37 +14,58 @@ fun <D, R> Map<D, R>.dom() = keys
 
 fun <D, R> Map<D, R>.rng() = values
 
-// TODO - is there any value mapping to pairs?
-fun <D, R> Map<D, R>.maplets() = entries // .map { (k, v) -> k to v }
+fun <D, R> Map<D, R>.maplets() = entries.map { (k, v) -> mk_(k, v) }
 
-infix fun <D, R> Map<D, R>.munion(other: Map<D, R>): Map<D, R> {
+infix fun <D, R, M : Map<D, R>> M.domRestrictTo(s: Set<D>) = transform { it.base - s }
+
+infix fun <D, R, M : Map<D, R>> M.drt(s: Set<D>) = domRestrictTo(s)
+
+infix fun <D, R, M : Map<D, R>> M.rngRestrictTo(s: Set<R>) = transform { it.base.filter { (_, v) -> v in s } }
+
+infix fun <D, R, M : Map<D, R>> M.rrt(s: Set<R>) = rngRestrictTo(s)
+
+infix operator fun <D, R, M : Map<D, R>> M.plus(t: Tuple2<D, R>) = transform { it.base + (t._1 to t._2) }
+
+infix fun <D, R, M : Map<D, R>> M.munion(other: Map<D, R>) = transform {
     val keyIntersection = keys intersect other.keys
     if (keyIntersection.isNotEmpty()) {
-        throw InvalidMapMergeException("Attempting to merge maps with intersecting domain: $keyIntersection")
+        throw PreconditionFailure("Attempting to merge maps with intersecting domain: $keyIntersection")
     }
-    return HashMap(this).apply {
+    HashMap(it.base).apply {
         putAll(other)
     }
 }
 
-class InvalidMapMergeException(msg: String) : SpecificationError(msg)
+interface KMap<D, R, M : Map<D, R>> : Map<D, R> {
+    fun construct(base: Map<D, R>): M
 
-infix fun <D, R> Map<D, R>.domRestrictTo(s: Set<R>) = mk_Map(this - s)
+    val base: Map<D, R>
+}
 
-infix fun <D, R> Map<D, R>.drt(s: Set<R>) = domRestrictTo(s)
+private fun <D, R, M : Map<D, R>> M.transform(fn: (KMap<D, R, M>) -> Map<D, R>): M {
+    val kMap = this as? KMap<D, R, M> ?: throw PreconditionFailure("Map was implemented outside Kazuki")
+    return kMap.construct(fn(kMap))
+}
 
-infix fun <D, R> Map<D, R>.rngRestrictTo(s: Set<R>) = asMap(entries.filter { (_, v) -> v in s })
-
-infix fun <D, R> Map<D, R>.rrt(s: Set<R>) = rngRestrictTo(s)
-
+// TODO -- update map Type to use below and KMap!
 fun <D, R> mk_Map(base: Map<D, R>): Map<D, R> = __KMap(base)
 
-private fun <D, R> asMap(entries: Collection<Map.Entry<D, R>>): Map<D, R> = mk_Map(entries.map { it.key to it.value })
+private fun <D, R> asMap(entries: Collection<Map.Entry<D, R>>): Map<D, R> =
+    mk_Map(entries.map { mk_(it.key, it.value) })
 
-fun <D, R> mk_Map(entries: Collection<Pair<D, R>>): Map<D, R> = mk_Map(entries.toMap())
+fun <D, R> mk_Map(maplets: Iterable<Tuple2<D, R>>): Map<D, R> =
+    __KMap(LinkedHashMap<D, R>().apply {
+        maplets.forEach { put(it._1, it._2) }
+    })
 
-fun <D, R> mk_Map(vararg entries: Pair<D, R>): Map<D, R> = mk_Map(entries.toMap())
-private class __KMap<D, R>(private val base: Map<D, R>) : Map<D, R> by base {
+fun <D, R> mk_Map(vararg maplets: Tuple2<D, R>): Map<D, R> =
+    __KMap(LinkedHashMap<D, R>().apply {
+        maplets.forEach { put(it._1, it._2) }
+    })
+
+private class __KMap<D, R>(override val base: Map<D, R>) : Map<D, R> by base, KMap<D, R, Map<D, R>> {
+
+    override fun construct(base: Map<D, R>) = __KMap(base)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -61,14 +82,20 @@ private class __KMap<D, R>(private val base: Map<D, R>) : Map<D, R> by base {
 
 fun <D, R> mk_Map1(base: Map<D, R>): Map1<D, R> = __KMap1(base)
 
-private fun <D, R> asMap1(entries: Collection<Map.Entry<D, R>>): Map<D, R> = mk_Map1(entries.map { it.key to it.value })
+private fun <D, R> asMap1(entries: Collection<Map.Entry<D, R>>): Map1<D, R> =
+    mk_Map1(entries.map { mk_(it.key, it.value) })
 
-fun <D, R> mk_Map1(entries: Collection<Pair<D, R>>): Map1<D, R> = mk_Map1(entries.toMap())
+fun <D, R> mk_Map1(maplets: Iterable<Tuple2<D, R>>): Map1<D, R> =
+    __KMap1(LinkedHashMap<D, R>().apply {
+        maplets.forEach { put(it._1, it._2) }
+    })
 
-fun <D, R> mk_Map1(vararg entries: Pair<D, R>): Map1<D, R> = mk_Map1(entries.toMap())
+fun <D, R> mk_Map1(vararg maplets: Tuple2<D, R>): Map1<D, R> =
+    __KMap1(LinkedHashMap<D, R>().apply {
+        maplets.forEach { put(it._1, it._2) }
+    })
 
-
-private class __KMap1<D, R>(private val base: Map<D, R>) : Map1<D, R>, Map<D, R> by base {
+private class __KMap1<D, R>(override val base: Map<D, R>) : Map1<D, R>, Map<D, R> by base, KMap<D, R, Map<D, R>> {
 
     override val card: nat1 by base::size
 
@@ -77,6 +104,8 @@ private class __KMap1<D, R>(private val base: Map<D, R>) : Map1<D, R>, Map<D, R>
             throw InvariantFailure()
         }
     }
+
+    override fun construct(base: Map<D, R>) = __KMap1(base)
 
     protected fun isValid(): Boolean = atLeastOneElement()
 

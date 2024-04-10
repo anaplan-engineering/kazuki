@@ -2,6 +2,9 @@ package com.anaplan.engineering.kazuki.ksp
 
 import com.anaplan.engineering.kazuki.core.Map1
 import com.anaplan.engineering.kazuki.core.nat
+import com.anaplan.engineering.kazuki.core.KMap
+import com.anaplan.engineering.kazuki.core.Tuple2
+import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.squareup.kotlinpoet.*
@@ -36,7 +39,7 @@ private fun TypeSpec.Builder.addMapType(
     val interfaceTypeParameterResolver = interfaceClassDcl.typeParameters.toTypeParameterResolver()
 
     val properties = interfaceClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
-    if (properties.firstOrNull() != null) {
+    if (properties.filter { it.isAbstract() }.firstOrNull() != null) {
         val propertyNames = properties.map { it.simpleName.asString() }.toList()
         processingState.errors.add("Map type $interfaceTypeName may not have properties: $propertyNames")
     }
@@ -49,7 +52,7 @@ private fun TypeSpec.Builder.addMapType(
     val rangeType = mapType.arguments[1].type!!.resolve()
     val domainTypeName = domainType.toTypeName(interfaceTypeParameterResolver)
     val rangeTypeName = rangeType.toTypeName(interfaceTypeParameterResolver)
-    val baseParameterName = "base"
+    val basePropertyName = "base"
     val enforceInvariantParameterName = "enforceInvariant"
     val superMapTypeName = Map::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName)
     val suffix = if (requiresNonEmpty) "Map1" else "Map"
@@ -60,66 +63,94 @@ private fun TypeSpec.Builder.addMapType(
         }
         addModifiers(KModifier.PRIVATE)
         addSuperinterface(interfaceTypeName)
-        addSuperinterface(superMapTypeName, CodeBlock.of(baseParameterName))
-        addSuperclassConstructorParameter(baseParameterName)
-        primaryConstructor(FunSpec.constructorBuilder()
-            .addParameter(baseParameterName, superMapTypeName)
-            .addParameter(ParameterSpec.builder(enforceInvariantParameterName, Boolean::class).defaultValue("true")
-                .build())
-            .build()
+        addSuperinterface(superMapTypeName, CodeBlock.of(basePropertyName))
+        addSuperinterface(KMap::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName, interfaceTypeName))
+        addSuperclassConstructorParameter(basePropertyName)
+        primaryConstructor(
+            FunSpec.constructorBuilder()
+                .addParameter(basePropertyName, superMapTypeName)
+                .addParameter(
+                    ParameterSpec.builder(enforceInvariantParameterName, Boolean::class).defaultValue("true")
+                        .build()
+                )
+                .build()
         )
         addProperty(
-            PropertySpec.builder(baseParameterName, superMapTypeName, KModifier.OPEN)
-                .initializer(baseParameterName).build()
+            PropertySpec.builder(basePropertyName, superMapTypeName, KModifier.OVERRIDE)
+                .initializer(basePropertyName).build()
         )
         if (requiresNonEmpty) {
-            addProperty(PropertySpec.builder("card", nat::class.asTypeName()).addModifiers(KModifier.OVERRIDE)
-                .delegate("$baseParameterName::size").build())
+            addProperty(
+                PropertySpec.builder("card", nat::class.asTypeName()).addModifiers(KModifier.OVERRIDE)
+                    .delegate("$basePropertyName::size").build()
+            )
         }
 
         // N.B. it is important to have properties before init block
         val additionalInvariantParts = if (requiresNonEmpty) listOf("len > 0") else emptyList()
         // TODO -- should we get this from super interface -- Sequence1.atLeastOneElement()
-        addInvariantFrom(interfaceClassDcl,
+        addInvariantFrom(
+            interfaceClassDcl,
             false,
             enforceInvariantParameterName,
             processingState,
-            additionalInvariantParts)
+            additionalInvariantParts
+        )
 
-        addFunction(FunSpec.builder("toString").addModifiers(KModifier.OVERRIDE)
-            .returns(String::class)
-            .addStatement("return \"%N\$%N\"", interfaceName, baseParameterName)
-            .build())
-        addFunction(FunSpec.builder("hashCode").addModifiers(KModifier.OVERRIDE)
-            .returns(Int::class).addStatement("return %N.hashCode()", baseParameterName).build())
+        addFunction(
+            FunSpec.builder("construct").apply {
+                addModifiers(KModifier.OVERRIDE)
+                addParameter(basePropertyName, superMapTypeName)
+                returns(interfaceTypeName)
+                addStatement("return %N(%N)", implClassName, basePropertyName)
+            }.build()
+        )
+        addFunction(
+            FunSpec.builder("toString").addModifiers(KModifier.OVERRIDE)
+                .returns(String::class)
+                .addStatement("return \"%N\$%N\"", interfaceName, basePropertyName)
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("hashCode").addModifiers(KModifier.OVERRIDE)
+                .returns(Int::class).addStatement("return %N.hashCode()", basePropertyName).build()
+        )
         val equalsParameterName = "other"
-        addFunction(FunSpec.builder("equals").addModifiers(KModifier.OVERRIDE)
-            .addParameter(ParameterSpec.builder(equalsParameterName, Any::class.asTypeName().copy(nullable = true))
-                .build())
-            .returns(Boolean::class).addCode(CodeBlock.builder().apply {
-                beginControlFlow("if (this === %N)", equalsParameterName)
-                addStatement("return true")
-                endControlFlow()
+        addFunction(
+            FunSpec.builder("equals").addModifiers(KModifier.OVERRIDE)
+                .addParameter(
+                    ParameterSpec.builder(equalsParameterName, Any::class.asTypeName().copy(nullable = true))
+                        .build()
+                )
+                .returns(Boolean::class).addCode(CodeBlock.builder().apply {
+                    beginControlFlow("if (this === %N)", equalsParameterName)
+                    addStatement("return true")
+                    endControlFlow()
 
-                beginControlFlow("if (%N !is %T)", equalsParameterName, superInterface.asTypeName().parameterizedBy(
-                    STAR, STAR))
-                addStatement("return false")
-                endControlFlow()
+                    beginControlFlow(
+                        "if (%N !is %T)", equalsParameterName, superInterface.asTypeName().parameterizedBy(
+                            STAR, STAR
+                        )
+                    )
+                    addStatement("return false")
+                    endControlFlow()
 
-                addStatement("return %N == %N", baseParameterName, equalsParameterName)
+                    addStatement("return %N == %N", basePropertyName, equalsParameterName)
 
-            }.build()).build())
+                }.build()).build()
+        )
     }.build()
     addType(implTypeSpec)
 
+    val mapletsParameterName = "maplets"
     addFunction(
         FunSpec.builder("mk_$interfaceName").apply {
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments)
             }
-            addParameter(baseParameterName, superMapTypeName)
+            addParameter(basePropertyName, superMapTypeName)
             returns(interfaceTypeName)
-            addStatement("return %N(%N)", implTypeSpec, baseParameterName)
+            addStatement("return %N(%N)", implTypeSpec, basePropertyName)
         }.build()
     )
     addFunction(
@@ -127,11 +158,18 @@ private fun TypeSpec.Builder.addMapType(
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments)
             }
-            addParameter(baseParameterName,
-                Pair::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName),
-                KModifier.VARARG)
+            addParameter(
+                mapletsParameterName,
+                Tuple2::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName),
+                KModifier.VARARG
+            )
             returns(interfaceTypeName)
-            addStatement("return %N(%N.toMap())", implTypeSpec, baseParameterName)
+            addStatement(
+                "return %N(%T().apply{ %N.forEach{ put(it._1, it._2) } })",
+                implClassName,
+                LinkedHashMap::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName),
+                mapletsParameterName
+            )
         }.build()
     )
     addFunction(
@@ -139,13 +177,19 @@ private fun TypeSpec.Builder.addMapType(
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments)
             }
-            addParameter(baseParameterName,
+            addParameter(
+                mapletsParameterName,
                 Collection::class.asClassName().parameterizedBy(
-                    Pair::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName)
+                    Tuple2::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName)
                 )
             )
             returns(interfaceTypeName)
-            addStatement("return %N(%N.toMap())", implTypeSpec, baseParameterName)
+            addStatement(
+                "return %N(%T().apply{ %N.forEach{ put(it._1, it._2) } })",
+                implClassName,
+                LinkedHashMap::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName),
+                mapletsParameterName
+            )
         }.build()
     )
     addFunction(
@@ -153,9 +197,9 @@ private fun TypeSpec.Builder.addMapType(
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments)
             }
-            addParameter(baseParameterName, superMapTypeName)
+            addParameter(basePropertyName, superMapTypeName)
             returns(Boolean::class)
-            addStatement("return %N(%N, false).%N()", implClassName, baseParameterName, validityFunctionName)
+            addStatement("return %N(%N, false).%N()", implClassName, basePropertyName, validityFunctionName)
         }.build()
     )
     addFunction(
@@ -163,11 +207,19 @@ private fun TypeSpec.Builder.addMapType(
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments)
             }
-            addParameter(baseParameterName,
-                Pair::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName),
-                KModifier.VARARG)
+            addParameter(
+                mapletsParameterName,
+                Tuple2::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName),
+                KModifier.VARARG
+            )
             returns(Boolean::class)
-            addStatement("return is_%N(%N.toMap())", interfaceName, baseParameterName)
+            addStatement(
+                "return %N(%T().apply{ %N.forEach{ put(it._1, it._2) } }, false).%N()",
+                implClassName,
+                LinkedHashMap::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName),
+                mapletsParameterName,
+                validityFunctionName
+            )
         }.build()
     )
     addFunction(
@@ -175,9 +227,9 @@ private fun TypeSpec.Builder.addMapType(
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments)
             }
-            addParameter(baseParameterName, superMapTypeName)
+            addParameter(basePropertyName, superMapTypeName)
             returns(interfaceTypeName)
-            addStatement("return %N(%N)", "mk_$interfaceName", baseParameterName)
+            addStatement("return mk_%N(%N)", interfaceName, basePropertyName)
         }.build()
     )
 }

@@ -50,7 +50,11 @@ fun <T> Sequence<T>.first(): T {
         throw PreconditionFailure("Sequence is empty")
     }
     return this[1]
+
 }
+fun <T> Sequence<T>.head() = first()
+
+fun <T> Sequence<T>.tail() = drop(1)
 
 
 fun <T> mk_Seq(vararg elems: T): Sequence<T> = mk_Seq(elems.toList())
@@ -85,7 +89,7 @@ private class __KSequence<T>(override val elements: List<T>) : Sequence<T>, List
     }
 
     override val elems by lazy {
-        mk_Set(this)
+        mk_Set(elements)
     }
 
     override val inds by lazy {

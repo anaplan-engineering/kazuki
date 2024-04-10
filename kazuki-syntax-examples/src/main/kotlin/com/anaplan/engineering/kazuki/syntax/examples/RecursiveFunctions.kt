@@ -10,14 +10,14 @@ object RecursiveFunctions {
         command = { t: Set<Int> -> t.card }
     )
 
-    val validRecursion: Function1<Set<Int>, Int> by lazy {
+    val validRecursion: (Set<Int>) -> Int by lazy {
         function(
             command = { t -> if (t.isEmpty()) 0 else 1 + validRecursion(t.drop(1)) },
             measure = { t -> t.card }
         )
     }
 
-    val invalidRecursion: Function1<Set<Int>, Int> by lazy {
+    val invalidRecursion: (Set<Int>) -> Int by lazy {
         function(
             command = { t -> 1 + invalidRecursion(t.drop(1)) },
             measure = { t -> t.card }

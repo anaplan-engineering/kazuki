@@ -54,11 +54,11 @@ object XO {
     val S: Set<nat1> = mk_Set(1..Size)
 
     val winningLines: Set<Set<Position>> = dunion(
-        set(selector = { r: nat1 -> set(selector = { c: nat1 -> mk_Position(r, c) }, S) }, S),
-        set(selector = { c: nat1 -> set(selector = { r: nat1 -> mk_Position(r, c) }, S) }, S),
+        set(S) { r: nat1 -> set(S) { c: nat1 -> mk_Position(r, c) } },
+        set(S) { c: nat1 -> set(S) { r: nat1 -> mk_Position(r, c) } },
         mk_Set(
-            mk_Set(set(selector = { x: nat1 -> mk_Position(x, x) }, S)),
-            mk_Set(set(selector = { x: nat1 -> mk_Position(x, Size - x + 1) }, S))
+            mk_Set(set(S) { x: nat1 -> mk_Position(x, x) }),
+            mk_Set(set(S) { x: nat1 -> mk_Position(x, Size - x + 1) })
         ),
     )
 
@@ -126,7 +126,7 @@ object XO {
 
     val move = function(
         command = { g: Game, p: Player, pos: Position ->
-            mk_Game(g.board munion mk_Map(pos to p), g.order)
+            mk_Game(g.board munion mk_Map(mk_(pos, p)), g.order)
         },
         pre = { g, p, pos ->
             hasTurn(g, p) &&

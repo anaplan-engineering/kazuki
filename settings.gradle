@@ -1,5 +1,6 @@
 include(
         "kazuki-core",
+        "kazuki-core-test",
         "kazuki-ksp",
         "kazuki-syntax-examples",
         "kazuki-toolkit",
