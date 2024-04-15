@@ -23,12 +23,14 @@ interface KSet<T, S : Set<T>> : Set<T> {
     val elements: Set<T>
 }
 
-private fun <T, S : Set<T>> S.transform(fn: (KSet<T, S>) -> Set<T>): S {
+private fun <T, S : Set<T>> S.transform(fn: (KSet<T, S>) -> Collection<T>): S {
     val kSet = this as? KSet<T, S> ?: throw PreconditionFailure("Set was implemented outside Kazuki")
-    return kSet.construct(fn(kSet))
+    return kSet.construct(fn(kSet).toSet())
 }
 
-fun <T, S : Set<T>> S.drop(n: Int) = transform { (it.elements as Iterable<T>).drop(n).toSet() }
+fun <T, S : Set<T>> S.drop(n: Int) = transform { (it.elements as Iterable<T>).drop(n) }
+
+infix fun <T, S : Set<T>> S.inter(other: Set<T>) = transform { it.elements.filter { it in other } }
 
 private class __KSet<T>(override val elements: Set<T>) : Set<T> by elements, KSet<T, Set<T>> {
 
@@ -92,12 +94,12 @@ inline fun <reified T : Enum<T>> asSet(): Set1<T> {
 // TODO -- generate the below to suitable size!
 
 fun <I, O> set(
-    provider: Collection<I>,
+    provider: Iterable<I>,
     selector: (I) -> O
 ) = set(provider, { true }, selector)
 
 fun <I, O> set(
-    provider: Collection<I>,
+    provider: Iterable<I>,
     filter: (I) -> Boolean,
     selector: (I) -> O
 ) = mk_Set(provider.filter(filter).map(selector))

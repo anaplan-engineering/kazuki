@@ -2,7 +2,7 @@ package com.anaplan.engineering.kazuki.ksp
 
 import com.anaplan.engineering.kazuki.core.Map1
 import com.anaplan.engineering.kazuki.core.nat
-import com.anaplan.engineering.kazuki.core.KMap
+import com.anaplan.engineering.kazuki.core._KMap
 import com.anaplan.engineering.kazuki.core.Tuple2
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -64,7 +64,7 @@ private fun TypeSpec.Builder.addMapType(
         addModifiers(KModifier.PRIVATE)
         addSuperinterface(interfaceTypeName)
         addSuperinterface(superMapTypeName, CodeBlock.of(basePropertyName))
-        addSuperinterface(KMap::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName, interfaceTypeName))
+        addSuperinterface(_KMap::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName, interfaceTypeName))
         addSuperclassConstructorParameter(basePropertyName)
         primaryConstructor(
             FunSpec.constructorBuilder()
