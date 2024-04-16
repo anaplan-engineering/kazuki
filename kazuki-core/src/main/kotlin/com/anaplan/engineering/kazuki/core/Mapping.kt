@@ -1,128 +1,137 @@
 package com.anaplan.engineering.kazuki.core
 
-interface KMap<D, R> : Map<D, R> {
+interface Mapping<D, R> : Relation<D, R> {
 
-    override fun get(key: D): R
+    operator fun get(d: D): R
 
 }
 
-interface KMap1<D, R> : KMap<D, R> {
+interface Mapping1<D, R> : Mapping<D, R> {
     val card: nat1
+
+    override val dom: Set1<D>
+
+    override val rng: Set1<R>
 
     @Invariant
     fun atLeastOneElement() = card > 0
 }
 
-val <D, R> Map<D, R>.card: nat
-    get() = size
-
-infix operator fun <D, R> Map<D, R>.contains(t: Tuple2<D, R>) = this.containsKey(t._1) && this[t._1] == t._2
-
-fun <D, R> Map<D, R>.dom() = mk_Set(keys)
-
-fun <D, R> Map<D, R>.rng() = mk_Set(values)
-
-fun <D, R> Map<D, R>.toRelation() = mk_Set(entries.map { (k, v) -> mk_(k, v) })
-
-infix fun <D, R, M : Map<D, R>> M.domRestrictTo(s: Set<D>) = transform { it.base.filter { (k, _) -> k in s } }
-
-infix fun <D, R, M : Map<D, R>> M.drt(s: Set<D>) = domRestrictTo(s)
-
-infix fun <D, R, M : Map<D, R>> M.rngRestrictTo(s: Set<R>) = transform { it.base.filter { (_, v) -> v in s } }
-
-infix fun <D, R, M : Map<D, R>> M.rrt(s: Set<R>) = rngRestrictTo(s)
-
-infix fun <D, R, M : Map<D, R>> M.domSubtract(s: Set<D>) = transform { it.base.filter { (k, _) -> k !in s } }
-
-infix fun <D, R, M : Map<D, R>> M.dsub(s: Set<D>) = domSubtract(s)
-
-infix fun <D, R, M : Map<D, R>> M.rngSubtract(s: Set<R>) = transform { it.base.filter { (_, v) -> v !in s } }
-
-infix fun <D, R, M : Map<D, R>> M.rsub(s: Set<R>) = rngSubtract(s)
-
-infix operator fun <D, R, M : Map<D, R>> M.plus(t: Tuple2<D, R>) = transform { it.base + (t._1 to t._2) }
-
-infix operator fun <D, R, M : Map<D, R>> M.plus(m: Map<D, R>) = transform {
-    val r = LinkedHashMap<D, R>(this.size + m.size)
-    r.putAll(this)
-    r.putAll(m)
-    r
-}
-
-infix fun <D, R, M : Map<D, R>> M.munion(other: Map<D, R>) = transform {
-    val keyIntersection = keys intersect other.keys
-    if (keyIntersection.isNotEmpty()) {
-        throw PreconditionFailure("Attempting to merge maps with intersecting domain: $keyIntersection")
-    }
-    LinkedHashMap(it.base).apply {
-        putAll(other)
+infix operator fun <D, R, M : Mapping<D, R>> M.times(t: Tuple2<D, R>) = transform {
+    LinkedHashMap<D, R>().apply {
+        put(t._1, t._2)
+        it.forEach {
+            if (!containsKey(it._1)) {
+                put(it._1, it._2)
+            }
+        }
     }
 }
 
-interface _KMap<D, R, M : Map<D, R>> : KMap<D, R> {
+infix operator fun <D, R, M : Mapping<D, R>> M.times(r: Relation<D, R>) = transform {
+    if (!is_Mapping(r)) {
+        throw PreconditionFailure("Argument to mapping override must be mapping")
+    }
+    LinkedHashMap<D, R>().apply {
+        r.forEach {
+            put(it._1, it._2)
+        }
+        it.forEach {
+            if (!containsKey(it._1)) {
+                put(it._1, it._2)
+            }
+        }
+    }
+}
+
+interface _KMapping<D, R, M : Mapping<D, R>> : Mapping<D, R>, _KRelation<D, R, M> {
     fun construct(base: Map<D, R>): M
 
-    val base: Map<D, R>
+    override fun construct(base: Set<Tuple2<D, R>>): M =
+        construct(LinkedHashMap<D, R>().apply {
+            base.forEach {
+                if (containsKey(it._1)) {
+                    throw PreconditionFailure("${it._1} is already present in mapping domain")
+                }
+                put(it._1, it._2)
+            }
+        })
+
+    val baseMap: Map<D, R>
+
+    override val baseSet: Set<Tuple2<D, R>>
+        get() = set(baseMap.entries) { (k, v) -> mk_(k, v) }
+
 }
 
-private fun <D, R, M : Map<D, R>> M.transform(fn: (_KMap<D, R, M>) -> Map<D, R>): M {
-    val kMap = this as? _KMap<D, R, M> ?: throw PreconditionFailure("Map was implemented outside Kazuki")
+private fun <D, R, T : Mapping<D, R>> T.transform(fn: (_KMapping<D, R, T>) -> Map<D, R>): T {
+    val kMap = this as? _KMapping<D, R, T> ?: throw PreconditionFailure("Mapping was implemented outside Kazuki")
     return kMap.construct(fn(kMap))
 }
 
-// TODO -- update map Type to use below and KMap!
-fun <D, R> mk_Map(base: Map<D, R>): Map<D, R> = __KMap(base)
+fun <D, R> mk_Mapping(base: Map<D, R>): Mapping<D, R> = __KMapping(base)
 
-private fun <D, R> asMap(entries: Collection<Map.Entry<D, R>>): Map<D, R> =
-    mk_Map(entries.map { mk_(it.key, it.value) })
-
-fun <D, R> mk_Map(maplets: Iterable<Tuple2<D, R>>): Map<D, R> =
-    __KMap(LinkedHashMap<D, R>().apply {
+fun <D, R> mk_Mapping(maplets: Iterable<Tuple2<D, R>>): Mapping<D, R> =
+    __KMapping(LinkedHashMap<D, R>().apply {
         maplets.forEach { put(it._1, it._2) }
     })
 
-fun <D, R> mk_Map(vararg maplets: Tuple2<D, R>): Map<D, R> =
-    __KMap(LinkedHashMap<D, R>().apply {
+fun <D, R> mk_Mapping(vararg maplets: Tuple2<D, R>): Mapping<D, R> =
+    __KMapping(LinkedHashMap<D, R>().apply {
         maplets.forEach { put(it._1, it._2) }
     })
 
-private class __KMap<D, R>(override val base: Map<D, R>) : Map<D, R> by base, _KMap<D, R, Map<D, R>> {
+fun <D, R> is_Mapping(maplets: Iterable<Tuple2<D, R>>) = mk_Relation(maplets).let { it.dom.card == it.card }
 
-    override fun construct(base: Map<D, R>) = __KMap(base)
+fun <D, R> is_Mapping(vararg maplets: Tuple2<D, R>) = mk_Relation(*maplets).let { it.dom.card == it.card }
 
-    override fun get(key: D) = base.get(key) ?: throw PreconditionFailure("$key not in map")
+// TODO - generate for consistency
+private class __KMapping<D, R>(override val baseMap: Map<D, R>) : _KMapping<D, R, Mapping<D, R>> {
+
+    override fun construct(base: Map<D, R>) = __KMapping(base)
+
+    override fun get(d: D) = baseMap.get(d) ?: throw PreconditionFailure("$d not in mapping domain")
+
+    override fun contains(element: Tuple2<D, R>) = baseMap[element._1] == element._2
+
+    override fun containsAll(elements: Collection<Tuple2<D, R>>) = forall(elements) { contains(it) }
+
+    override val dom by lazy { mk_Set(baseMap.keys) }
+
+    override val rng by lazy { mk_Set(baseMap.values) }
+
+    override val size by baseMap::size
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Map<*, *>) return false
-        return base == other
+        if (other !is Relation<*, *>) return false
+        return baseSet == other
     }
 
-    override fun hashCode(): Int {
-        return base.hashCode()
-    }
+    override fun hashCode() = baseMap.hashCode()
 
-    override fun toString() = "map$base"
+    override fun isEmpty() = baseMap.isEmpty()
+
+    override fun iterator() = baseSet.iterator()
+
+    override fun toString() = "map$baseMap"
 }
 
-fun <D, R> mk_Map1(base: Map<D, R>): KMap1<D, R> = __KMap1(base)
+fun <D, R> mk_Mapping1(base: Map<D, R>): Mapping1<D, R> = __KMapping1(base)
 
-private fun <D, R> asMap1(entries: Collection<Map.Entry<D, R>>): KMap1<D, R> =
-    mk_Map1(entries.map { mk_(it.key, it.value) })
-
-fun <D, R> mk_Map1(maplets: Iterable<Tuple2<D, R>>): KMap1<D, R> =
-    __KMap1(LinkedHashMap<D, R>().apply {
+fun <D, R> mk_Mapping1(maplets: Iterable<Tuple2<D, R>>): Mapping1<D, R> =
+    __KMapping1(LinkedHashMap<D, R>().apply {
         maplets.forEach { put(it._1, it._2) }
     })
 
-fun <D, R> mk_Map1(vararg maplets: Tuple2<D, R>): KMap1<D, R> =
-    __KMap1(LinkedHashMap<D, R>().apply {
+fun <D, R> mk_Mapping1(vararg maplets: Tuple2<D, R>): Mapping1<D, R> =
+    __KMapping1(LinkedHashMap<D, R>().apply {
         maplets.forEach { put(it._1, it._2) }
     })
 
-private class __KMap1<D, R>(override val base: Map<D, R>) : KMap1<D, R>, Map<D, R> by base, _KMap<D, R, Map<D, R>> {
-
-    override val card: nat1 by base::size
+// TODO - generate for consistency
+private class __KMapping1<D, R>(override val baseMap: Map<D, R>) : Mapping1<D, R>,
+    _KMapping<D, R, Mapping1<D, R>> {
 
     init {
         if (!isValid()) {
@@ -130,33 +139,46 @@ private class __KMap1<D, R>(override val base: Map<D, R>) : KMap1<D, R>, Map<D, 
         }
     }
 
-    override fun get(key: D) = base.get(key) ?: throw PreconditionFailure("$key not in map")
-
-    override fun construct(base: Map<D, R>) = __KMap1(base)
-
     protected fun isValid(): Boolean = atLeastOneElement()
+
+    override fun get(d: D) = baseMap.get(d) ?: throw PreconditionFailure("$d not in mapping domain")
+
+    override fun construct(base: Map<D, R>) = __KMapping1(base)
+
+    override val card: nat1 by lazy { baseMap.size }
+
+    override val dom by lazy { mk_Set1(baseMap.keys) }
+
+    override val rng by lazy { mk_Set1(baseMap.values) }
+
+    override val size by baseMap::size
+
+    override fun contains(element: Tuple2<D, R>) = baseMap[element._1] == element._2
+
+    override fun containsAll(elements: Collection<Tuple2<D, R>>) = forall(elements) { contains(it) }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Map<*, *>) return false
-        return base == other
+        if (other !is Relation<*, *>) return false
+        return baseSet == other
     }
 
-    override fun hashCode(): Int {
-        return base.hashCode()
-    }
+    override fun hashCode() = baseMap.hashCode()
 
-    override fun toString() = "map1$base"
+    override fun isEmpty() = baseMap.isEmpty()
+
+    override fun iterator() = baseSet.iterator()
+
+    override fun toString() = "map1$baseMap"
 }
 
-fun <I, OD, OR> map(
+fun <I, OD, OR> mapping(
     provider: Iterable<I>,
     filter: (I) -> Boolean,
     selector: (I) -> Tuple2<OD, OR>
-) = mk_Map(provider.filter(filter).map(selector))
+) = mk_Mapping(provider.filter(filter).map(selector))
 
-fun <ID, IR, OD, OR> map(
-    provider: Map<ID, IR>,
-    filter: (Tuple2<ID, IR>) -> Boolean,
-    selector: (Tuple2<ID, IR>) -> Tuple2<OD, OR>
-) = mk_Map(provider.toRelation().filter(filter).map(selector))
+fun <I, OD, OR> mapping(
+    provider: Iterable<I>,
+    selector: (I) -> Tuple2<OD, OR>
+) = mapping(provider, { true }, selector)

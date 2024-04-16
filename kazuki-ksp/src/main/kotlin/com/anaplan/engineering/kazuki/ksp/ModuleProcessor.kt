@@ -1,6 +1,7 @@
 package com.anaplan.engineering.kazuki.ksp
 
-import com.anaplan.engineering.kazuki.core.Map1
+import com.anaplan.engineering.kazuki.core.Mapping
+import com.anaplan.engineering.kazuki.core.Mapping1
 import com.anaplan.engineering.kazuki.core.Sequence
 import com.anaplan.engineering.kazuki.core.Sequence1
 import com.google.devtools.ksp.getVisibility
@@ -8,7 +9,6 @@ import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.Visibility
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
@@ -35,10 +35,10 @@ internal class ModuleProcessor(
             KazukiType.Sequence1Type
         } else if (Sequence::class.qualifiedName in superTypeNames) {
             KazukiType.SequenceType
-        } else if (Map1::class.qualifiedName in superTypeNames) {
-            KazukiType.Map1Type
-        } else if (Map::class.qualifiedName in superTypeNames) {
-            KazukiType.MapType
+        } else if (Mapping1::class.qualifiedName in superTypeNames) {
+            KazukiType.Mapping1Type
+        } else if (Mapping::class.qualifiedName in superTypeNames) {
+            KazukiType.MappingType
         } else if (classKind == ClassKind.ENUM_CLASS) {
             KazukiType.QuoteType
         } else {
@@ -55,8 +55,8 @@ internal class ModuleProcessor(
                 KazukiType.SequenceType -> addSeqType(clazz, processingState)
                 KazukiType.QuoteType -> processQuoteType(clazz, processingState)
                 KazukiType.RecordType -> addRecordType(clazz, processingState)
-                KazukiType.MapType -> addMapType(clazz, processingState)
-                KazukiType.Map1Type -> addMap1Type(clazz, processingState)
+                KazukiType.MappingType -> addMappingType(clazz, processingState)
+                KazukiType.Mapping1Type -> addMapping1Type(clazz, processingState)
             }
         }.build()
 

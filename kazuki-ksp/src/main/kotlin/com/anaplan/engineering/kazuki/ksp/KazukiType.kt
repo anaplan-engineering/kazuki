@@ -5,6 +5,6 @@ enum class KazukiType {
     SequenceType,
     QuoteType,
     RecordType,
-    MapType,
-    Map1Type,
+    MappingType,
+    Mapping1Type,
 }

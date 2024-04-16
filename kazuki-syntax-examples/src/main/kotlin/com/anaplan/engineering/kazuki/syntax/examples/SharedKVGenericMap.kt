@@ -1,5 +1,6 @@
 package com.anaplan.engineering.kazuki.syntax.examples
 
+import com.anaplan.engineering.kazuki.core.Mapping
 import com.anaplan.engineering.kazuki.core.Module
 
 /**
@@ -8,6 +9,6 @@ import com.anaplan.engineering.kazuki.core.Module
  *  - no invariant
  */
 @Module
-interface SharedKVGenericMap<C>: Map<C, Set<C>> {
+interface SharedKVGenericMap<C>: Mapping<C, Set<C>> {
 
 }

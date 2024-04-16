@@ -63,7 +63,7 @@ object XO {
     )
 
     interface Game {
-        val board: Map<Position, Player>
+        val board: Mapping<Position, Player>
         val order: PlayOrder
 
         @Invariant
@@ -109,7 +109,7 @@ object XO {
     )
 
     val movesSoFar = function(
-        command = { g: Game -> g.board.dom() }
+        command = { g: Game -> g.board.dom }
     )
 
     val moveCountSoFar = function(
@@ -121,12 +121,12 @@ object XO {
     )
 
     val movesForPlayer = function(
-        command = { g: Game, p: Player -> (g.board rrt mk_Set(p)).dom() }
+        command = { g: Game, p: Player -> (g.board rrt mk_Set(p)).dom }
     )
 
     val move = function(
         command = { g: Game, p: Player, pos: Position ->
-            mk_Game(g.board munion mk_Map(mk_(pos, p)), g.order)
+            mk_Game(g.board + mk_Mapping(mk_(pos, p)), g.order)
         },
         pre = { g, p, pos ->
             hasTurn(g, p) &&

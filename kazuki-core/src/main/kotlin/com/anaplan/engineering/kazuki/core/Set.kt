@@ -2,7 +2,7 @@ package com.anaplan.engineering.kazuki.core
 
 fun <T> mk_Set(vararg elems: T): Set<T> = mk_Set(elems.toSet())
 
-fun <T> mk_Set(elems: Collection<T>): Set<T> = __KSet(elems.toSet())
+fun <T> mk_Set(elems: Iterable<T>): Set<T> = __KSet(elems.toSet())
 
 fun mk_Set(elems: IntRange): Set<Int> = mk_Set(elems.toSet())
 
