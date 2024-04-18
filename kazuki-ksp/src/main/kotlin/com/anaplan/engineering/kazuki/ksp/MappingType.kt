@@ -1,6 +1,7 @@
 package com.anaplan.engineering.kazuki.ksp
 
 import com.anaplan.engineering.kazuki.core.*
+import com.anaplan.engineering.kazuki.core.internal._KMapping
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
@@ -85,7 +86,7 @@ private fun TypeSpec.Builder.addMappingType(
             PropertySpec.builder("dom", setType.asClassName().parameterizedBy(domainTypeName), KModifier.OVERRIDE)
                 .delegate(CodeBlock.builder().apply {
                     beginControlFlow("lazy")
-                    addStatement("%M(%N.keys)", InbuiltNames.mkSet, baseMapPropertyName)
+                    addStatement("%M(%N.keys)", InbuiltNames.asSet, baseMapPropertyName)
                     endControlFlow()
                 }.build()).build()
         )
@@ -93,7 +94,7 @@ private fun TypeSpec.Builder.addMappingType(
             PropertySpec.builder("rng", setType.asClassName().parameterizedBy(rangeTypeName), KModifier.OVERRIDE)
                 .delegate(CodeBlock.builder().apply {
                     beginControlFlow("lazy")
-                    addStatement("%M(%N.values)", InbuiltNames.mkSet, baseMapPropertyName)
+                    addStatement("%M(%N.values)", InbuiltNames.asSet, baseMapPropertyName)
                     endControlFlow()
                 }.build()).build()
         )

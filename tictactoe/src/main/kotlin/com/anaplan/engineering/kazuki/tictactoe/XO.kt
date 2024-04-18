@@ -51,14 +51,14 @@ object XO {
         fun correctNumberOfPlayers() = elems == Players
     }
 
-    val S: Set<nat1> = mk_Set(1..Size)
+    val S: Set<nat1> = as_Set(1..Size)
 
     val winningLines: Set<Set<Position>> = dunion(
         set(S) { r: nat1 -> set(S) { c: nat1 -> mk_Position(r, c) } },
         set(S) { c: nat1 -> set(S) { r: nat1 -> mk_Position(r, c) } },
         mk_Set(
-            mk_Set(set(S) { x: nat1 -> mk_Position(x, x) }),
-            mk_Set(set(S) { x: nat1 -> mk_Position(x, Size - x + 1) })
+            as_Set(set(S) { x: nat1 -> mk_Position(x, x) }),
+            as_Set(set(S) { x: nat1 -> mk_Position(x, Size - x + 1) })
         ),
     )
 

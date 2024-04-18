@@ -1,9 +1,6 @@
 package com.anaplan.engineering.kazuki.ksp
 
-import com.anaplan.engineering.kazuki.core.Mapping
-import com.anaplan.engineering.kazuki.core.Mapping1
-import com.anaplan.engineering.kazuki.core.Sequence
-import com.anaplan.engineering.kazuki.core.Sequence1
+import com.anaplan.engineering.kazuki.core.*
 import com.google.devtools.ksp.getVisibility
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
@@ -39,6 +36,10 @@ internal class ModuleProcessor(
             KazukiType.Mapping1Type
         } else if (Mapping::class.qualifiedName in superTypeNames) {
             KazukiType.MappingType
+        } else if (Set1::class.qualifiedName in superTypeNames) {
+            KazukiType.Set1Type
+        } else if (Set::class.qualifiedName in superTypeNames) {
+            KazukiType.SetType
         } else if (classKind == ClassKind.ENUM_CLASS) {
             KazukiType.QuoteType
         } else {
@@ -53,6 +54,8 @@ internal class ModuleProcessor(
             when (clazz.kazukiType()) {
                 KazukiType.Sequence1Type -> addSeq1Type(clazz, processingState)
                 KazukiType.SequenceType -> addSeqType(clazz, processingState)
+                KazukiType.Set1Type -> addSet1Type(clazz, processingState)
+                KazukiType.SetType -> addSetType(clazz, processingState)
                 KazukiType.QuoteType -> processQuoteType(clazz, processingState)
                 KazukiType.RecordType -> addRecordType(clazz, processingState)
                 KazukiType.MappingType -> addMappingType(clazz, processingState)

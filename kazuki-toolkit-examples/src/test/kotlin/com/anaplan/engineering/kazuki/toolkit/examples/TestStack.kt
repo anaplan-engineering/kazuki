@@ -4,7 +4,6 @@ import com.anaplan.engineering.kazuki.core.mk_
 import com.anaplan.engineering.kazuki.core.mk_Seq
 import com.anaplan.engineering.kazuki.toolkit.examples.Stack_Module.is_Stack
 import com.anaplan.engineering.kazuki.toolkit.examples.Stack_Module.mk_Stack
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

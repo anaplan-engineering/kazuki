@@ -5,7 +5,7 @@ fun <T> forall(i1: Iterable<T>, condition: (T) -> Boolean) =
     i1.all(condition)
 
 fun <T1, T2> forall(i1: Iterable<T1>, i2: Collection<T2>, condition: (T1, T2) -> Boolean) =
-    i1.product(i2).all { condition(it.first, it.second) }
+    i1.product(i2).all { condition(it._1, it._2) }
 
 fun <T> `∀`(i1: Iterable<T>, condition: (T) -> Boolean) = forall(i1, condition)
 

@@ -27,7 +27,7 @@ class TestMoves {
     @Test
     fun checkEquality_vsSeq() {
         val moves = mk_Moves(completeMoves)
-        val sequence = mk_Seq1(completeMoves)
+        val sequence = as_Seq1(completeMoves)
         assertEquals(moves, sequence)
     }
 }
