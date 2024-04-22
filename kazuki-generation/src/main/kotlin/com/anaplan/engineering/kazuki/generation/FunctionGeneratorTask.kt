@@ -25,7 +25,7 @@ abstract class FunctionGeneratorTask : DefaultTask() {
         FileSpec.builder(PackageName, FileName)
             .addFileComment("This file is generated -- do not edit!")
             .apply {
-                (1..MaxInputCount).forEach {
+                (0..MaxInputCount).forEach {
                     addNArgFunction(it)
                 }
             }
@@ -149,7 +149,8 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
 //                    throw InvariantFailure()
 //                }
 
-                beginControlFlow("if (!$PostPropertyName($inputs, $resultValName))")
+                val postInputs = ((1..argCount).map { "i$it" } + resultValName).joinToString(", ")
+                beginControlFlow("if (!$PostPropertyName($postInputs))")
                 addStatement("throw PostconditionFailure()")
                 endControlFlow()
 
