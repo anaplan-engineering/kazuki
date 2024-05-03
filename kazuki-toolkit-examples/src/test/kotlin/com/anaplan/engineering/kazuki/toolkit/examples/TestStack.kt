@@ -11,14 +11,14 @@ class TestStack {
 
     @Test
     fun testPush() {
-        assertEquals(mk_Stack(1), Stack.Functions<Int>().push(mk_Stack(), 1))
-        assertEquals(mk_Stack(2, 1), Stack.Functions<Int>().push(mk_Stack(1), 2))
+        assertEquals(mk_Stack(1), mk_Stack<Int>().functions.push(1))
+        assertEquals(mk_Stack(2, 1), mk_Stack(1).functions.push(2))
     }
 
     @Test
     fun testPop() {
-        assertEquals( mk_(2, mk_Stack(1)), Stack.Functions<Int>().pop(mk_Stack(2, 1)))
-        assertEquals(mk_(1, mk_Stack()), Stack.Functions<Int>().pop(mk_Stack(1)))
+        assertEquals( mk_(2, mk_Stack(1)), mk_Stack(2, 1).functions.pop())
+        assertEquals(mk_(1, mk_Stack()), mk_Stack(1).functions.pop())
     }
 
     @Test

@@ -19,6 +19,19 @@ annotation class PrimitiveInvariant(
     val base: KClass<*>
 )
 
+/**
+ * Note that, the provider must:
+ *  - have inferable generic types (only tested where same as the module thus far)
+ *  - have constructor that takes a single param, which is an instance of the module
+ */
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.RUNTIME)
+// TODO - better name!
+annotation class FunctionProvider(
+    val provider: KClass<*>
+)
+
+
 // TODO - create stdlib
 typealias nat1 = Int
 

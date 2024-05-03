@@ -2,7 +2,9 @@ package com.anaplan.engineering.kazuki.ksp
 
 import com.anaplan.engineering.kazuki.core.*
 import com.anaplan.engineering.kazuki.core.internal._KSequence
+import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAbstract
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.squareup.kotlinpoet.*
@@ -22,6 +24,7 @@ internal fun TypeSpec.Builder.addSeq1Type(
     processingState: KazukiSymbolProcessor.ProcessingState,
 ) = addSequenceType(interfaceClassDcl, processingState, true)
 
+@OptIn(KspExperimental::class)
 private fun TypeSpec.Builder.addSequenceType(
     interfaceClassDcl: KSClassDeclaration,
     processingState: KazukiSymbolProcessor.ProcessingState,
@@ -37,7 +40,8 @@ private fun TypeSpec.Builder.addSequenceType(
     val interfaceTypeParameterResolver = interfaceClassDcl.typeParameters.toTypeParameterResolver()
 
     val properties = interfaceClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
-    if (properties.filter { it.isAbstract() }.firstOrNull() != null) {
+    val functionProviderProperties = properties.filter { it.isAnnotationPresent(FunctionProvider::class) }
+    if ((properties - functionProviderProperties).filter { it.isAbstract() }.firstOrNull() != null) {
         val propertyNames = properties.map { it.simpleName.asString() }.toList()
         processingState.errors.add("Sequence type $interfaceTypeName may not have properties: $propertyNames")
     }
@@ -87,6 +91,7 @@ private fun TypeSpec.Builder.addSequenceType(
             .addModifiers(
                 KModifier.OVERRIDE)
             .lazy("%M(1 .. len)", correspondingSetConstructor).build())
+        addFunctionProviders(functionProviderProperties, interfaceTypeParameterResolver)
 
         // N.B. it is important to have properties before init block
         // TODO -- should we get this from super interface -- Sequence1.atLeastOneElement()

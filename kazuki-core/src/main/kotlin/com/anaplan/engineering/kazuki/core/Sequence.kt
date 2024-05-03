@@ -66,8 +66,15 @@ infix fun <T, S : Sequence<T>> S.rngRestrictTo(s: Set<T>) = transformSequence {
 
 infix fun <T, S : Sequence<T>> S.rrt(s: Set<T>) = rngRestrictTo(s)
 
-// TODO -- override plus for Seq?
 infix fun <T, S : Sequence<T>> S.cat(s: Sequence<T>) = transformSequence { it.elements + s }
+
+infix operator fun <T, S : Sequence<T>> S.plus(s: Sequence<T>) = transformSequence { it.elements + s }
+
+infix operator fun <T, S : Sequence<T>> S.plus(t: T) = transformSequence { it.elements + t }
+
+infix operator fun <T, S : Sequence<T>> S.minus(s: Sequence<T>) = transformSequence { it.elements - s }
+
+infix operator fun <T, S : Sequence<T>> S.minus(t: T) = transformSequence { it.elements - t }
 
 fun <T> Sequence<T>.first(): T {
     if (isEmpty()) {

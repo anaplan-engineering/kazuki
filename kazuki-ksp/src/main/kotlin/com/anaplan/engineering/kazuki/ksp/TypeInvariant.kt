@@ -2,11 +2,9 @@ package com.anaplan.engineering.kazuki.ksp
 
 import com.anaplan.engineering.kazuki.core.Invariant
 import com.anaplan.engineering.kazuki.core.InvariantFailure
-import com.anaplan.engineering.kazuki.core.Module
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
