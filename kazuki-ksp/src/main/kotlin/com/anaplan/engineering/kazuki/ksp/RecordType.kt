@@ -1,6 +1,7 @@
 package com.anaplan.engineering.kazuki.ksp
 
 import com.anaplan.engineering.kazuki.core.FunctionProvider
+import com.anaplan.engineering.kazuki.core.Module
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.isAnnotationPresent
@@ -28,6 +29,14 @@ internal fun TypeSpec.Builder.addRecordType(
     }
     val interfaceTypeParameterResolver = interfaceClassDcl.typeParameters.toTypeParameterResolver()
 
+    val superRecords = interfaceClassDcl.allSuperTypes().filter { it.resolve().declaration.isAnnotationPresent(Module::class) }.map { superType ->
+        val resolved = superType.resolve()
+        val simpleName = resolved.toClassName().simpleName
+        val propertyName = simpleName.first().lowercase() + simpleName.drop(1)
+
+        propertyName to resolved
+    }
+
     val properties = interfaceClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
     if (properties.any { it.isMutable }) {
         val mutableProperties = properties.filter { it.isMutable }.map { it.simpleName.asString() }.toList()
@@ -43,7 +52,17 @@ internal fun TypeSpec.Builder.addRecordType(
         }
         addModifiers(KModifier.PRIVATE, KModifier.DATA)
         addSuperinterface(interfaceTypeName)
+        superRecords.forEach { (propertyName, type) ->
+            addSuperinterface(type.toTypeName(interfaceTypeParameterResolver), CodeBlock.of(propertyName))
+            addProperty(PropertySpec.builder(
+                propertyName,
+                type.toTypeName(interfaceTypeParameterResolver)
+            ).initializer(propertyName).build())
+        }
         primaryConstructor(FunSpec.constructorBuilder().apply {
+            superRecords.forEach { (propertyName, type) ->
+                addParameter(propertyName, type.toTypeName(interfaceTypeParameterResolver))
+            }
             recordProperties.forEach { property ->
                 addParameter(property.simpleName.asString(), property.type.toTypeName(interfaceTypeParameterResolver))
             }
@@ -82,7 +101,6 @@ internal fun TypeSpec.Builder.addRecordType(
                     addStatement("return sb.toString()")
                 }.build()).build()
         )
-
     }.build()
     addType(implTypeSpec)
 
@@ -91,12 +109,28 @@ internal fun TypeSpec.Builder.addRecordType(
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments)
             }
+            val parameters = mutableListOf<String>()
+            val formatArgs = mutableListOf<Any>()
+            formatArgs.add(implTypeSpec)
+            superRecords.forEach { (_, type) ->
+                val superClassDcl = type.declaration as KSClassDeclaration
+                val superProperties = superClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
+                val superRecordProperties =
+                    (superProperties - functionProviderProperties).filter { !it.isMutable && it.isAbstract() }.toList()
+                superRecordProperties.forEach { property ->
+                    addParameter(property.simpleName.asString(), property.type.toTypeName(interfaceTypeParameterResolver))
+                }
+                formatArgs.add(superClassDcl.simpleName.asString())
+                formatArgs.addAll(superRecordProperties.map { it.simpleName.asString() })
+                parameters.add("${superClassDcl.qualifiedName!!.asString()}_Module.mk_%N(${superRecordProperties.joinToString { "%N" }})")
+            }
             recordProperties.forEach { property ->
                 addParameter(property.simpleName.asString(), property.type.toTypeName(interfaceTypeParameterResolver))
             }
             returns(interfaceTypeName)
-            val formatArgs = listOf(implTypeSpec) + recordProperties.map { it.simpleName.asString() }
-            addStatement("return %N(${recordProperties.joinToString { "%N" }})", *formatArgs.toTypedArray())
+            formatArgs.addAll(recordProperties.map { it.simpleName.asString() })
+            parameters.addAll(recordProperties.map { "%N" })
+            addStatement("return %N(${parameters.joinToString()})", *formatArgs.toTypedArray())
         }.build()
     )
 
