@@ -8,11 +8,11 @@ fun <I, O> set(
     selector: (I) -> O
 ) = set(provider, { true }, selector)
 
-fun <I, O> set(
-    provider: Iterable<I>,
-    filter: (I) -> Boolean,
-    selector: (I) -> O
-) = as_Set(provider.filter(filter).map(selector))
+    fun <I, O> set(
+        provider: Iterable<I>,
+        filter: (I) -> Boolean,
+        selector: (I) -> O
+    ) = as_Set(provider.filter(filter).map(selector))
 
 fun <I1, I2, O> set(
     p1: Iterable<I1>,

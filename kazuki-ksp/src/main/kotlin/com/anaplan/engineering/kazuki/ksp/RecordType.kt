@@ -2,6 +2,8 @@ package com.anaplan.engineering.kazuki.ksp
 
 import com.anaplan.engineering.kazuki.core.FunctionProvider
 import com.anaplan.engineering.kazuki.core.Module
+import com.anaplan.engineering.kazuki.core.internal._KRecord
+import com.anaplan.engineering.kazuki.ksp.InbuiltNames.corePackage
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.isAnnotationPresent
@@ -29,13 +31,15 @@ internal fun TypeSpec.Builder.addRecordType(
     }
     val interfaceTypeParameterResolver = interfaceClassDcl.typeParameters.toTypeParameterResolver()
 
-    val superRecords = interfaceClassDcl.allSuperTypes().filter { it.resolve().declaration.isAnnotationPresent(Module::class) }.map { superType ->
-        val resolved = superType.resolve()
-        val simpleName = resolved.toClassName().simpleName
-        val propertyName = simpleName.first().lowercase() + simpleName.drop(1)
+    val superRecords =
+        interfaceClassDcl.allSuperTypes().filter { it.resolve().declaration.isAnnotationPresent(Module::class) }
+            .map { superType ->
+                val resolved = superType.resolve()
+                val simpleName = resolved.toClassName().simpleName
+                val propertyName = simpleName.first().lowercase() + simpleName.drop(1)
 
-        propertyName to resolved
-    }
+                propertyName to resolved
+            }
 
     val properties = interfaceClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
     if (properties.any { it.isMutable }) {
@@ -46,18 +50,46 @@ internal fun TypeSpec.Builder.addRecordType(
     val functionProviderProperties = properties.filter { it.isAnnotationPresent(FunctionProvider::class) }
     val recordProperties =
         (properties - functionProviderProperties).filter { !it.isMutable && it.isAbstract() }.toList()
+
+
+    val tupleComponents = superRecords.flatMap { (_, type) ->
+        val superClassDcl = type.declaration as KSClassDeclaration
+        val superProperties = superClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
+        val superRecordProperties =
+            (superProperties - functionProviderProperties).filter { !it.isMutable && it.isAbstract() }.toList()
+        superRecordProperties.map { property ->
+            property.simpleName.asString() to
+                    property.type.toTypeName(interfaceTypeParameterResolver)
+        }
+    } + recordProperties.map { property ->
+        property.simpleName.asString() to property.type.toTypeName(interfaceTypeParameterResolver)
+    }
+    val tupleType =
+        if (tupleComponents.isEmpty()) {
+            Nothing::class.asTypeName()
+        } else if (tupleComponents.size == 1) {
+            tupleComponents.first().second
+        } else {
+            ClassName(corePackage, "Tuple${tupleComponents.size}").parameterizedBy(
+                tupleComponents.map { it.second }
+            )
+        }
+
     val implTypeSpec = TypeSpec.classBuilder("${interfaceClassDcl.simpleName.asString()}_Rec").apply {
         if (interfaceTypeArguments.isNotEmpty()) {
             addTypeVariables(interfaceTypeArguments)
         }
         addModifiers(KModifier.PRIVATE, KModifier.DATA)
         addSuperinterface(interfaceTypeName)
+        addSuperinterface(_KRecord::class.asTypeName().parameterizedBy(tupleType))
         superRecords.forEach { (propertyName, type) ->
             addSuperinterface(type.toTypeName(interfaceTypeParameterResolver), CodeBlock.of(propertyName))
-            addProperty(PropertySpec.builder(
-                propertyName,
-                type.toTypeName(interfaceTypeParameterResolver)
-            ).initializer(propertyName).build())
+            addProperty(
+                PropertySpec.builder(
+                    propertyName,
+                    type.toTypeName(interfaceTypeParameterResolver)
+                ).initializer(propertyName).build()
+            )
         }
         primaryConstructor(FunSpec.constructorBuilder().apply {
             superRecords.forEach { (propertyName, type) ->
@@ -84,6 +116,19 @@ internal fun TypeSpec.Builder.addRecordType(
         addInvariantFrom(interfaceClassDcl, false, null, processingState)
 
         addFunction(
+            FunSpec.builder("toTuple").addModifiers(KModifier.OVERRIDE)
+                .returns(tupleType).addCode(CodeBlock.builder().apply {
+                    if (tupleComponents.isEmpty()) {
+                        addStatement("throw %T", IllegalStateException::class)
+                    } else if (tupleComponents.size == 1) {
+                        addStatement("return %N", tupleComponents.first().first)
+                    } else {
+                        addStatement("return Tuple${tupleComponents.size}(${tupleComponents.joinToString { it.first }})")
+                    }
+                }.build()).build()
+        )
+
+        addFunction(
             FunSpec.builder("toString").addModifiers(KModifier.OVERRIDE)
                 .returns(String::class).addCode(CodeBlock.builder().apply {
                     beginControlFlow("val sb = %T().apply", StringBuilder::class)
@@ -99,6 +144,40 @@ internal fun TypeSpec.Builder.addRecordType(
                     addStatement("append(\")\")")
                     endControlFlow()
                     addStatement("return sb.toString()")
+                }.build()).build()
+        )
+
+        val equalsParameterName = "other"
+        addFunction(
+            FunSpec.builder("equals").addModifiers(KModifier.OVERRIDE)
+                .addParameter(
+                    ParameterSpec.builder(equalsParameterName, Any::class.asTypeName().copy(nullable = true))
+                        .build()
+                )
+                .returns(Boolean::class).addCode(CodeBlock.builder().apply {
+                    beginControlFlow("if (this === %N)", equalsParameterName)
+                    addStatement("return true")
+                    endControlFlow()
+
+                    val compatibleSuperTypes =
+                        (superRecords.map { it.second.toTypeName(interfaceTypeParameterResolver) }
+                            + interfaceType.toTypeName(interfaceTypeParameterResolver))
+                    val formatArgs =
+                        mutableListOf<Any>(equalsParameterName, _KRecord::class.asClassName().parameterizedBy(STAR))
+                    compatibleSuperTypes.forEach {
+                        formatArgs.add(equalsParameterName)
+                        formatArgs.add(it)
+                    }
+                    beginControlFlow(
+                        // TODO -- shared inheritence
+                        "if (%N is %T && (${compatibleSuperTypes.joinToString(" || ") { "%N is %T" }}))",
+                        *formatArgs.toTypedArray()
+                    )
+                    addStatement("return toTuple() == %N.toTuple()", equalsParameterName)
+                    endControlFlow()
+
+                    addStatement("return false")
+
                 }.build()).build()
         )
     }.build()
@@ -118,7 +197,10 @@ internal fun TypeSpec.Builder.addRecordType(
                 val superRecordProperties =
                     (superProperties - functionProviderProperties).filter { !it.isMutable && it.isAbstract() }.toList()
                 superRecordProperties.forEach { property ->
-                    addParameter(property.simpleName.asString(), property.type.toTypeName(interfaceTypeParameterResolver))
+                    addParameter(
+                        property.simpleName.asString(),
+                        property.type.toTypeName(interfaceTypeParameterResolver)
+                    )
                 }
                 formatArgs.add(superClassDcl.simpleName.asString())
                 formatArgs.addAll(superRecordProperties.map { it.simpleName.asString() })
@@ -134,7 +216,7 @@ internal fun TypeSpec.Builder.addRecordType(
         }.build()
     )
 
-    // MEANINGFUL is/as for records?
+// MEANINGFUL is/as for records?
 }
 
 

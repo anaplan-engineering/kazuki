@@ -1,8 +1,5 @@
 package com.anaplan.engineering.kazuki.core
 
-annotation class GHGHS
-
-@GHGHS
 @Module
 interface Record {
     val a: Int
@@ -13,5 +10,13 @@ interface RecordExtension: Record {
     val b: String
 }
 
+@Module
+interface RecordInvOnlyExtension: Record {
+    @Invariant
+    fun notZero() = a != 0
+}
 
-class RE(private val r: Record, override val b: String): RecordExtension, Record by r
+@Module
+interface OtherRecord {
+    val a: Int
+}
