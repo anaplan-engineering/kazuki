@@ -24,7 +24,7 @@ abstract class TupleGeneratorTask : DefaultTask() {
         FileSpec.builder(PackageName, FileName)
             .addFileComment("This file is generated -- do not edit!")
             .apply {
-                (2..MaxNary).forEach {
+                (1..MaxNary).forEach {
                     addNAryTuple(it)
                 }
             }
@@ -36,7 +36,8 @@ abstract class TupleGeneratorTask : DefaultTask() {
 private const val FileName = "Tuples"
 
 fun FileSpec.Builder.addNAryTuple(nary: Int) {
-    val className = "Tuple$nary"
+    val interfaceName = "Tuple$nary"
+    val className = "_$interfaceName"
     val typeNames = (1..nary).map { TypeVariableName("T$it") }
     val constructor = FunSpec.constructorBuilder().apply {
         (1..nary).forEach {
@@ -44,13 +45,23 @@ fun FileSpec.Builder.addNAryTuple(nary: Int) {
         }
     }.build()
 
+    addType(TypeSpec.interfaceBuilder(interfaceName).apply {
+        addTypeVariables(typeNames)
+        (1..nary).forEach {
+            addProperty(PropertySpec.builder("_$it", TypeVariableName("T$it")).build())
+            addFunction(FunSpec.builder("component$it").addModifiers(KModifier.OPERATOR).addStatement("return _$it").returns(TypeVariableName("T$it")).build())        }
+    }.build())
 
     addType(TypeSpec.classBuilder(className).apply {
-        addModifiers(KModifier.DATA)
+        addModifiers(KModifier.DATA, KModifier.PRIVATE)
         addTypeVariables(typeNames)
+        addSuperinterface(ClassName(PackageName, interfaceName).parameterizedBy(typeNames))
         primaryConstructor(constructor)
         (1..nary).forEach {
-            addProperty(PropertySpec.builder("_$it", TypeVariableName("T$it")).initializer("_$it").build())
+            addProperty(
+                PropertySpec.builder("_$it", TypeVariableName("T$it")).addModifiers(KModifier.OVERRIDE)
+                    .initializer("_$it").build()
+            )
         }
         // TODO -- toSequence
         // TODO -- toString
@@ -62,6 +73,6 @@ fun FileSpec.Builder.addNAryTuple(nary: Int) {
             addParameter("_$it", TypeVariableName("T$it"))
         }
         addCode("return $className(${(1..nary).joinToString(", ") { "_$it" }})")
-        returns(ClassName(PackageName, className).parameterizedBy(typeNames))
+        returns(ClassName(PackageName, interfaceName).parameterizedBy(typeNames))
     }.build())
 }
