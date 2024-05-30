@@ -12,18 +12,18 @@ publishing {
         mavenJava(MavenPublication) {
             from components.java
             pom {
-                url = 'https://github.com/anaplan-engineering/azuki'
+                url = 'https://github.com/anaplan-engineering/kazuki'
 
                 scm {
-                    connection = 'scm:git:git://github.com/anaplan-engineering/azuki.git'
-                    developerConnection = 'scm:git:git@github.com:anaplan-engineering/azuki.git'
-                    url = 'https://github.com/anaplan-engineering/azuki'
+                    connection = 'scm:git:git://github.com/anaplan-engineering/kazuki.git'
+                    developerConnection = 'scm:git:git@github.com:anaplan-engineering/kazuki.git'
+                    url = 'https://github.com/anaplan-engineering/kazuki'
                 }
 
                 licenses {
                     license {
                         name = 'MIT License'
-                        url = 'https://github.com/anaplan-engineering/azuki/blob/main/LICENCE.txt'
+                        url = 'https://github.com/anaplan-engineering/kazuki/blob/main/LICENCE.txt'
                     }
                 }
 
@@ -36,15 +36,6 @@ publishing {
                         organization = "Anaplan Ltd"
                         organizationUrl = "http://www.anaplan.com"
                         roles = ['architect', 'senior principal engineer']
-                    }
-                    developer {
-                        id = 'donbex'
-                        name = 'Alessandro Pezzoni'
-                        email = 'alessandro.pezzoni@anaplan.com'
-                        url = "https://github.com/donbex"
-                        organization = "Anaplan Ltd"
-                        organizationUrl = "http://www.anaplan.com"
-                        roles = ['engineer']
                     }
                 }
             }
