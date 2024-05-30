@@ -4,6 +4,7 @@ sealed class ConditionFailure(message: String? = null, cause: Throwable? = null)
     constructor(cause: Throwable) : this(null, cause)
 }
 
+// TODO -- default failures should include message
 class PreconditionFailure(message: String? = null) : ConditionFailure(message)
 class PostconditionFailure(message: String? = null) : ConditionFailure(message)
 class MeasureFailure(message: String? = null) : ConditionFailure(message)

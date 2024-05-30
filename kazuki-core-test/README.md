@@ -1,3 +1,3 @@
 # kazuki-core-test
 
-Easier to have a separate test project so that we can define a spec and test basic capabilities in an encapsulated fashion.
+A separate test project that enables definition of some basic spec and testing based on the basic capabilities of that spec in an encapsulated fashion.

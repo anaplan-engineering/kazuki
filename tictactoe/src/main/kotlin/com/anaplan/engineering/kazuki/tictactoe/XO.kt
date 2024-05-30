@@ -4,10 +4,6 @@ import com.anaplan.engineering.kazuki.core.*
 import com.anaplan.engineering.kazuki.tictactoe.XO_Module.mk_Game
 import com.anaplan.engineering.kazuki.tictactoe.XO_Module.mk_Position
 
-// TODO -- invariants should include message
-// TODO -- is_<Moves>() and as_<Moves>
-
-
 @Module
 object XO {
 
