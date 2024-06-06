@@ -49,18 +49,26 @@ internal fun TypeSpec.Builder.addRecordType(
         processingState.errors.add("Record type $interfaceTypeName may not have mutable properties: $mutableProperties")
     }
 
-    val functionProviderProperties = properties.filter { it.isAnnotationPresent(FunctionProvider::class) }
+    val debug = mutableListOf<String>()
+    val localFunctionProviderProperties = properties.filter { it.isAnnotationPresent(FunctionProvider::class) }
+    val nonOverriddenSuperFunctionProviderProperties = superRecords.flatMap { type ->
+        val superClassDcl = type.resolve().declaration as KSClassDeclaration
+        val superProperties = superClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
+        val superFunctionProviderProperties = superProperties.filter { it.isAnnotationPresent(FunctionProvider::class) }
+        superFunctionProviderProperties.filter { s -> localFunctionProviderProperties.none { l -> s.simpleName.asString() == l.simpleName.asString() } }
+    }
+    val functionProviderProperties = localFunctionProviderProperties + nonOverriddenSuperFunctionProviderProperties
     val recordProperties =
         (properties - functionProviderProperties).filter { !it.isMutable && it.isAbstract() }.toList()
 
-    val debug = mutableListOf<String>()
     var index = 1
     val allInterfaceProperties = interfaceClassDcl.getAllProperties().toList()
     val tupleComponents = superRecords.flatMap { type ->
         val superClassDcl = type.resolve().declaration as KSClassDeclaration
         val superProperties = superClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
+        val superFunctionProviderProperties = superProperties.filter { it.isAnnotationPresent(FunctionProvider::class) }
         val superRecordProperties =
-            (superProperties - functionProviderProperties).filter { !it.isMutable && it.isAbstract() }.toList()
+            (superProperties - superFunctionProviderProperties).filter { !it.isMutable && it.isAbstract() }.toList()
         superRecordProperties.map { superProperty -> allInterfaceProperties.find { interfaceProperty -> superProperty.simpleName == interfaceProperty.simpleName }!! }
             .map { property ->
                 property.type.resolve()
@@ -182,7 +190,7 @@ internal fun TypeSpec.Builder.addRecordType(
 
                 }.build()).build()
         )
-        
+
         addType(TypeSpec.companionObjectBuilder().apply {
             addFunction(
                 FunSpec.builder(isRelatedFunctionName).apply {

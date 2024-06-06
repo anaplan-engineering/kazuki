@@ -3,15 +3,34 @@ package com.anaplan.engineering.kazuki.core
 @Module
 interface Record {
     val a: Int
+
+    @FunctionProvider(RecordFunctions::class)
+    val functions: RecordFunctions
+}
+
+open class RecordFunctions(private val r: Record) {
+    open val mutateA = function<Int>(command = { r.a * 2 })
 }
 
 @Module
-interface RecordExtension: Record {
+interface RecordExtension : Record {
     val b: String
 }
 
 @Module
-interface RecordInvOnlyExtension: Record {
+interface RecordExtensionAlternate : Record {
+    val b: Int
+
+    @FunctionProvider(RecordExtensionAlternateFunctions::class)
+    override val functions: RecordExtensionAlternateFunctions
+}
+
+open class RecordExtensionAlternateFunctions(private val r: RecordExtensionAlternate) : RecordFunctions(r) {
+    override val mutateA = function<Int>(command = { r.a * r.b })
+}
+
+@Module
+interface RecordInvOnlyExtension : Record {
     @Invariant
     fun notZero() = a != 0
 }

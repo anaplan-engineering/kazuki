@@ -11,6 +11,7 @@ import com.anaplan.engineering.kazuki.core.GenericRecord_Module.is_GenericRecord
 import com.anaplan.engineering.kazuki.core.GenericRecord_Module.mk_GenericRecord
 import com.anaplan.engineering.kazuki.core.OtherGenericRecord_Module.mk_OtherGenericRecord
 import com.anaplan.engineering.kazuki.core.OtherRecord_Module.mk_OtherRecord
+import com.anaplan.engineering.kazuki.core.RecordExtensionAlternate_Module.mk_RecordExtensionAlternate
 import com.anaplan.engineering.kazuki.core.RecordExtension_Module.component1
 import com.anaplan.engineering.kazuki.core.RecordExtension_Module.component2
 import com.anaplan.engineering.kazuki.core.RecordExtension_Module.mk_RecordExtension
@@ -157,4 +158,12 @@ class TestRecordExtension {
 //        assertEquals(4.0, g)
     }
 
+    @Test
+    fun functionProviders() {
+        assertEquals(4, mk_Record(2).functions.mutateA())
+        assertEquals(4, mk_RecordExtension(2, "4").functions.mutateA())
+        assertEquals(8, mk_RecordExtensionAlternate(2, 4).functions.mutateA())
+    }
+
+    // TODO -- test overriding variable with more specific type
 }
