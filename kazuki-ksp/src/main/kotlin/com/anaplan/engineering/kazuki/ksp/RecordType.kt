@@ -326,6 +326,26 @@ internal fun TypeSpec.Builder.addRecordType(
     }
 
     addFunction(
+        FunSpec.builder("set").apply {
+            if (interfaceTypeArguments.isNotEmpty()) {
+                addTypeVariables(interfaceTypeArguments)
+            }
+            receiver(interfaceTypeName)
+            tupleComponents.forEach { tc ->
+                addParameter(ParameterSpec.builder(tc.name, tc.typeName).apply {
+                    defaultValue("this.%N", tc.name)
+                }.build())
+            }
+            returns(interfaceTypeName)
+            addStatement(
+                "return %N(${tupleComponents.joinToString { "%N" }})",
+                implTypeSpec,
+                *tupleComponents.map { it.name }.toTypedArray()
+            )
+        }.build()
+    )
+
+    addFunction(
         FunSpec.builder("mk_$interfaceName").apply {
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments)

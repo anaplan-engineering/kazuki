@@ -21,6 +21,7 @@ import com.anaplan.engineering.kazuki.core.RecordInvOnlyExtension_Module.mk_Reco
 import com.anaplan.engineering.kazuki.core.Record_Module.as_Record
 import com.anaplan.engineering.kazuki.core.Record_Module.is_Record
 import com.anaplan.engineering.kazuki.core.Record_Module.mk_Record
+import com.anaplan.engineering.kazuki.core.RecordExtension_Module.set
 import com.anaplan.engineering.kazuki.core.mk_Set
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -40,7 +41,7 @@ class TestRecordExtension {
         assertEquals(mk_RecordInvOnlyExtension(2), mk_Record(2))
         assertEquals(mk_Record(2), mk_RecordInvOnlyExtension(2))
 
-        assertNotEquals(mk_RecordInvOnlyExtension(2), mk_Record(3),)
+        assertNotEquals(mk_RecordInvOnlyExtension(2), mk_Record(3))
         assertNotEquals(mk_Record(3), mk_RecordInvOnlyExtension(2))
 
         assertEquals(mk_RecordInvOnlyExtension(2), mk_RecordInvOnlyExtension(2))
@@ -52,11 +53,11 @@ class TestRecordExtension {
         // Making choice that type declaration is part of equality not just tuple
         assertNotEquals<Any>(mk_OtherRecord(2), mk_Record(2))
         assertNotEquals<Any>(mk_Record(2), mk_OtherRecord(2))
-        
+
         assertEquals(mk_GenericRecordInvOnlyExtension(2), mk_GenericRecord(2))
         assertEquals(mk_GenericRecord(2), mk_GenericRecordInvOnlyExtension(2))
 
-        assertNotEquals(mk_GenericRecordInvOnlyExtension(2), mk_GenericRecord(3),)
+        assertNotEquals(mk_GenericRecordInvOnlyExtension(2), mk_GenericRecord(3))
         assertNotEquals(mk_GenericRecord(3), mk_GenericRecordInvOnlyExtension(2))
 
         assertEquals(mk_GenericRecordInvOnlyExtension(2), mk_GenericRecordInvOnlyExtension(2))
@@ -75,7 +76,7 @@ class TestRecordExtension {
         assertEquals(mk_RecordInvOnlyExtension(2).hashCode(), mk_Record(2).hashCode())
         assertEquals(mk_Record(2).hashCode(), mk_RecordInvOnlyExtension(2).hashCode())
 
-        assertNotEquals(mk_RecordInvOnlyExtension(2).hashCode(), mk_Record(3).hashCode(),)
+        assertNotEquals(mk_RecordInvOnlyExtension(2).hashCode(), mk_Record(3).hashCode())
         assertNotEquals(mk_Record(3).hashCode(), mk_RecordInvOnlyExtension(2).hashCode())
 
         assertEquals(mk_RecordInvOnlyExtension(2).hashCode(), mk_RecordInvOnlyExtension(2).hashCode())
@@ -83,11 +84,11 @@ class TestRecordExtension {
 
         assertNotEquals(mk_RecordInvOnlyExtension(2).hashCode(), mk_RecordInvOnlyExtension(3).hashCode())
         assertNotEquals(mk_RecordInvOnlyExtension(3).hashCode(), mk_RecordInvOnlyExtension(2).hashCode())
-        
+
         assertEquals(mk_GenericRecordInvOnlyExtension(2).hashCode(), mk_GenericRecord(2).hashCode())
         assertEquals(mk_GenericRecord(2).hashCode(), mk_GenericRecordInvOnlyExtension(2).hashCode())
 
-        assertNotEquals(mk_GenericRecordInvOnlyExtension(2).hashCode(), mk_GenericRecord(3).hashCode(),)
+        assertNotEquals(mk_GenericRecordInvOnlyExtension(2).hashCode(), mk_GenericRecord(3).hashCode())
         assertNotEquals(mk_GenericRecord(3).hashCode(), mk_GenericRecordInvOnlyExtension(2).hashCode())
 
         assertEquals(mk_GenericRecordInvOnlyExtension(2).hashCode(), mk_GenericRecordInvOnlyExtension(2).hashCode())
@@ -110,7 +111,7 @@ class TestRecordExtension {
         assertEquals(true, is_RecordInvOnlyExtension(mk_RecordInvOnlyExtension(2)))
         assertEquals(false, is_RecordInvOnlyExtension(mk_RecordExtension(2, "3")))
         assertEquals(false, is_RecordInvOnlyExtension(mk_OtherRecord(2)))
-        
+
         assertEquals(true, is_GenericRecord<Int>(mk_GenericRecord(2)))
         assertEquals(true, is_GenericRecord<Int>(mk_GenericRecordInvOnlyExtension(2)))
         assertEquals(false, is_GenericRecord<Int>(mk_GenericRecordExtension(2, mk_Set(3))))
@@ -122,7 +123,7 @@ class TestRecordExtension {
         assertEquals(false, is_GenericRecordInvOnlyExtension(mk_GenericRecordExtension(2, mk_Set(3))))
         assertEquals(false, is_GenericRecordInvOnlyExtension(mk_OtherGenericRecord(2)))
     }
-    
+
     // TODO should is/as admit anon tuple?
     @Test
     fun as_() {
@@ -131,12 +132,23 @@ class TestRecordExtension {
 
         assertEquals(mk_RecordInvOnlyExtension(2), as_RecordInvOnlyExtension(mk_Record(2)))
         assertEquals(mk_RecordInvOnlyExtension(2), as_RecordInvOnlyExtension(mk_RecordInvOnlyExtension(2)))
-        
+
         assertEquals(mk_GenericRecord(2), as_GenericRecord(mk_GenericRecord(2)))
         assertEquals(mk_GenericRecord(2), as_GenericRecord(mk_GenericRecordInvOnlyExtension(2)))
 
         assertEquals(mk_GenericRecordInvOnlyExtension(2), as_GenericRecordInvOnlyExtension(mk_GenericRecord(2)))
-        assertEquals(mk_GenericRecordInvOnlyExtension(2), as_GenericRecordInvOnlyExtension(mk_GenericRecordInvOnlyExtension(2)))
+        assertEquals(
+            mk_GenericRecordInvOnlyExtension(2),
+            as_GenericRecordInvOnlyExtension(mk_GenericRecordInvOnlyExtension(2))
+        )
+    }
+
+    @Test
+    fun set() {
+        assertEquals(mk_RecordExtension(4, "3"), mk_RecordExtension(2, "3").set(a = 4))
+        assertEquals(mk_RecordExtension(2, "hello"), mk_RecordExtension(2, "3").set(b = "hello"))
+        assertEquals(mk_RecordExtension(4, "2"), mk_RecordExtension(2, "3").set(a = 4, b = "2"))
+        assertEquals(mk_RecordExtension(2, "3"), mk_RecordExtension(2, "3").set())
     }
 
     // Note that for deconstruction, must:
