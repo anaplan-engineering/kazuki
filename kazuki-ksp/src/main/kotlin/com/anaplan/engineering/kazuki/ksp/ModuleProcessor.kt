@@ -32,6 +32,10 @@ internal class ModuleProcessor(
             KazukiType.Sequence1Type
         } else if (Sequence::class.qualifiedName in superTypeNames) {
             KazukiType.SequenceType
+        } else if (InjectiveMapping1::class.qualifiedName in superTypeNames) {
+            KazukiType.InjectiveMapping1Type
+        } else if (InjectiveMapping::class.qualifiedName in superTypeNames) {
+            KazukiType.InjectiveMappingType
         } else if (Mapping1::class.qualifiedName in superTypeNames) {
             KazukiType.Mapping1Type
         } else if (Mapping::class.qualifiedName in superTypeNames) {
@@ -58,6 +62,8 @@ internal class ModuleProcessor(
                 KazukiType.SetType -> addSetType(clazz, processingState)
                 KazukiType.QuoteType -> processQuoteType(clazz, processingState)
                 KazukiType.RecordType -> addRecordType(clazz, processingState)
+                KazukiType.InjectiveMappingType -> addInjectiveMappingType(clazz, processingState)
+                KazukiType.InjectiveMapping1Type -> addInjectiveMapping1Type(clazz, processingState)
                 KazukiType.MappingType -> addMappingType(clazz, processingState)
                 KazukiType.Mapping1Type -> addMapping1Type(clazz, processingState)
             }

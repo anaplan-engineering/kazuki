@@ -17,18 +17,29 @@ import com.squareup.kotlinpoet.ksp.toTypeVariableName
 internal fun TypeSpec.Builder.addMappingType(
     interfaceClassDcl: KSClassDeclaration,
     processingState: KazukiSymbolProcessor.ProcessingState,
-) = addMappingType(interfaceClassDcl, processingState, false)
+) = addMappingType(interfaceClassDcl, processingState, false, false)
 
 internal fun TypeSpec.Builder.addMapping1Type(
     interfaceClassDcl: KSClassDeclaration,
     processingState: KazukiSymbolProcessor.ProcessingState,
-) = addMappingType(interfaceClassDcl, processingState, true)
+) = addMappingType(interfaceClassDcl, processingState, true, false)
+
+internal fun TypeSpec.Builder.addInjectiveMappingType(
+    interfaceClassDcl: KSClassDeclaration,
+    processingState: KazukiSymbolProcessor.ProcessingState,
+) = addMappingType(interfaceClassDcl, processingState, false, true)
+
+internal fun TypeSpec.Builder.addInjectiveMapping1Type(
+    interfaceClassDcl: KSClassDeclaration,
+    processingState: KazukiSymbolProcessor.ProcessingState,
+) = addMappingType(interfaceClassDcl, processingState, true, true)
 
 @OptIn(KspExperimental::class)
 private fun TypeSpec.Builder.addMappingType(
     interfaceClassDcl: KSClassDeclaration,
     processingState: KazukiSymbolProcessor.ProcessingState,
-    requiresNonEmpty: Boolean
+    requiresNonEmpty: Boolean,
+    injective: Boolean,
 ) {
     val interfaceName = interfaceClassDcl.simpleName.asString()
     val interfaceTypeArguments = interfaceClassDcl.typeParameters.map { it.toTypeVariableName() }
@@ -46,7 +57,11 @@ private fun TypeSpec.Builder.addMappingType(
         processingState.errors.add("Mapping type $interfaceTypeName may not have properties: $propertyNames")
     }
 
-    val superInterface = if (requiresNonEmpty) Mapping1::class else Mapping::class
+    val superInterface = if (injective) {
+        if (requiresNonEmpty) InjectiveMapping1::class else InjectiveMapping::class
+    } else {
+        if (requiresNonEmpty) Mapping1::class else Mapping::class
+    }
     val mappingType =
         interfaceClassDcl.superTypes.single { it.resolve().declaration.qualifiedName?.asString() == superInterface.qualifiedName }
             .resolve()

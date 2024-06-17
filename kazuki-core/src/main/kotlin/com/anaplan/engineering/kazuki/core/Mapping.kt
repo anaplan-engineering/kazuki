@@ -10,6 +10,17 @@ interface Mapping<D, R> : Relation<D, R> {
 
 }
 
+interface InjectiveMapping<D, R> : Mapping<D, R> {
+    val inverse: Mapping<R, D>
+
+    @Invariant
+    fun noDuplicatesInRange() = dom.card == rng.card
+}
+
+interface InjectiveMapping1<D, R> : InjectiveMapping<D, R>, Mapping1<D, R>
+
+// TODO -- test mapping 1 and combinations here
+
 interface Mapping1<D, R> : Mapping<D, R> {
     val card: nat1
 
