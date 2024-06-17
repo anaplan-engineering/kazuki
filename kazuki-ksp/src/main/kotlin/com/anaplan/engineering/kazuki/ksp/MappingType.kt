@@ -1,6 +1,7 @@
 package com.anaplan.engineering.kazuki.ksp
 
 import com.anaplan.engineering.kazuki.core.*
+import com.anaplan.engineering.kazuki.core.internal._KInjectiveMapping
 import com.anaplan.engineering.kazuki.core.internal._KMapping
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAbstract
@@ -17,18 +18,29 @@ import com.squareup.kotlinpoet.ksp.toTypeVariableName
 internal fun TypeSpec.Builder.addMappingType(
     interfaceClassDcl: KSClassDeclaration,
     processingState: KazukiSymbolProcessor.ProcessingState,
-) = addMappingType(interfaceClassDcl, processingState, false)
+) = addMappingType(interfaceClassDcl, processingState, false, false)
 
 internal fun TypeSpec.Builder.addMapping1Type(
     interfaceClassDcl: KSClassDeclaration,
     processingState: KazukiSymbolProcessor.ProcessingState,
-) = addMappingType(interfaceClassDcl, processingState, true)
+) = addMappingType(interfaceClassDcl, processingState, true, false)
+
+internal fun TypeSpec.Builder.addInjectiveMappingType(
+    interfaceClassDcl: KSClassDeclaration,
+    processingState: KazukiSymbolProcessor.ProcessingState,
+) = addMappingType(interfaceClassDcl, processingState, false, true)
+
+internal fun TypeSpec.Builder.addInjectiveMapping1Type(
+    interfaceClassDcl: KSClassDeclaration,
+    processingState: KazukiSymbolProcessor.ProcessingState,
+) = addMappingType(interfaceClassDcl, processingState, true, true)
 
 @OptIn(KspExperimental::class)
 private fun TypeSpec.Builder.addMappingType(
     interfaceClassDcl: KSClassDeclaration,
     processingState: KazukiSymbolProcessor.ProcessingState,
-    requiresNonEmpty: Boolean
+    requiresNonEmpty: Boolean,
+    injective: Boolean,
 ) {
     val interfaceName = interfaceClassDcl.simpleName.asString()
     val interfaceTypeArguments = interfaceClassDcl.typeParameters.map { it.toTypeVariableName() }
@@ -46,7 +58,11 @@ private fun TypeSpec.Builder.addMappingType(
         processingState.errors.add("Mapping type $interfaceTypeName may not have properties: $propertyNames")
     }
 
-    val superInterface = if (requiresNonEmpty) Mapping1::class else Mapping::class
+    val superInterface = if (injective) {
+        if (requiresNonEmpty) InjectiveMapping1::class else InjectiveMapping::class
+    } else {
+        if (requiresNonEmpty) Mapping1::class else Mapping::class
+    }
     val mappingType =
         interfaceClassDcl.superTypes.single { it.resolve().declaration.qualifiedName?.asString() == superInterface.qualifiedName }
             .resolve()
@@ -68,8 +84,9 @@ private fun TypeSpec.Builder.addMappingType(
         }
         addModifiers(KModifier.PRIVATE)
         addSuperinterface(interfaceTypeName)
+        val mappingClass = if (injective) _KInjectiveMapping::class else _KMapping::class
         addSuperinterface(
-            _KMapping::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName, interfaceTypeName)
+            mappingClass.asClassName().parameterizedBy(domainTypeName, rangeTypeName, interfaceTypeName)
         )
         addSuperclassConstructorParameter(baseMapPropertyName)
         primaryConstructor(
@@ -86,11 +103,12 @@ private fun TypeSpec.Builder.addMappingType(
                 .initializer(baseMapPropertyName).build()
         )
         val setType = if (requiresNonEmpty) Set1::class else Set::class
+        val setFunction = if (requiresNonEmpty) InbuiltNames.asSet1 else InbuiltNames.asSet
         addProperty(
             PropertySpec.builder("dom", setType.asClassName().parameterizedBy(domainTypeName), KModifier.OVERRIDE)
                 .delegate(CodeBlock.builder().apply {
                     beginControlFlow("lazy")
-                    addStatement("%M(%N.keys)", InbuiltNames.asSet, baseMapPropertyName)
+                    addStatement("%M(%N.keys)", setFunction, baseMapPropertyName)
                     endControlFlow()
                 }.build()).build()
         )
@@ -98,7 +116,7 @@ private fun TypeSpec.Builder.addMappingType(
             PropertySpec.builder("rng", setType.asClassName().parameterizedBy(rangeTypeName), KModifier.OVERRIDE)
                 .delegate(CodeBlock.builder().apply {
                     beginControlFlow("lazy")
-                    addStatement("%M(%N.values)", InbuiltNames.asSet, baseMapPropertyName)
+                    addStatement("%M(%N.values)", setFunction, baseMapPropertyName)
                     endControlFlow()
                 }.build()).build()
         )
@@ -110,6 +128,22 @@ private fun TypeSpec.Builder.addMappingType(
             addProperty(
                 PropertySpec.builder("card", nat1::class.asTypeName()).addModifiers(KModifier.OVERRIDE)
                     .delegate("$baseMapPropertyName::size").build()
+            )
+        }
+        // TODO -- inverse should be Mapping1 for IM1
+        if (injective) {
+            addProperty(
+                PropertySpec.builder(
+                    "inverse",
+                    Mapping::class.asTypeName().parameterizedBy(rangeTypeName, domainTypeName)
+                ).addModifiers(KModifier.OVERRIDE)
+                    .delegate(
+                        CodeBlock.builder().apply {
+                            beginControlFlow("lazy")
+                            addStatement("${InbuiltNames.corePackage}.as_Mapping($baseSetPropertyName.map { (d, r) -> mk_(r, d) })")
+                            endControlFlow()
+                        }.build()
+                    ).build()
             )
         }
         addFunctionProviders(functionProviderProperties, interfaceTypeParameterResolver)

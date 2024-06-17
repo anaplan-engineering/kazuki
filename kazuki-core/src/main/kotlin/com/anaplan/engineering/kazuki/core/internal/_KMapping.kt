@@ -22,6 +22,23 @@ interface _KMapping<D, R, M : Mapping<D, R>> : Mapping<D, R>, _KRelation<D, R, M
 
 }
 
+interface _KInjectiveMapping<D, R, M : InjectiveMapping<D, R>> : InjectiveMapping<D, R>, _KMapping<D, R, M> {
+
+    override fun construct(baseSet: Set<Tuple2<D, R>>): M =
+        construct(LinkedHashMap<D, R>().apply {
+            baseSet.forEach {
+                if (containsKey(it._1)) {
+                    throw PreconditionFailure("${it._1} is already present in mapping domain")
+                }
+                if (containsValue(it._2)) {
+                    throw PreconditionFailure("${it._2} is already present in mapping range")
+                }
+                put(it._1, it._2)
+            }
+        })
+
+}
+
 // TODO - generate impls for consistency
 internal class __KMapping<D, R>(override val baseMap: Map<D, R>) : _KMapping<D, R, Mapping<D, R>> {
 
@@ -54,14 +71,93 @@ internal class __KMapping<D, R>(override val baseMap: Map<D, R>) : _KMapping<D, 
     override fun toString() = "map$baseMap"
 }
 
-internal class __KMapping1<D, R>(override val baseMap: Map<D, R>) : Mapping1<D, R>,
-    _KMapping<D, R, Mapping1<D, R>> {
+internal class __KInjectiveMapping<D, R>(override val baseMap: Map<D, R>) : InjectiveMapping<D, R>, _KInjectiveMapping<D, R, InjectiveMapping<D, R>> {
+
+    protected fun isValid(): Boolean = noDuplicatesInRange()
+
+    override fun construct(base: Map<D, R>) = __KInjectiveMapping(base)
+
+    override fun get(d: D) = baseMap.get(d) ?: throw PreconditionFailure("$d not in mapping domain")
+
+    override fun contains(element: Tuple2<D, R>) = baseMap[element._1] == element._2
+
+    override fun containsAll(elements: Collection<Tuple2<D, R>>) = forall(elements) { contains(it) }
+
+    override val inverse by lazy { as_Mapping(baseSet.map { (d, r) -> mk_(r, d) }) }
+
+    override val dom by lazy { as_Set(baseMap.keys) }
+
+    override val rng by lazy { as_Set(baseMap.values) }
+
+    override val size by baseMap::size
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Relation<*, *>) return false
+        return baseSet == other
+    }
+
+    override fun hashCode() = baseMap.hashCode()
+
+    override fun isEmpty() = baseMap.isEmpty()
+
+    override fun iterator() = baseSet.iterator()
+
+    override fun toString() = "map$baseMap"
 
     init {
         if (!isValid()) {
             throw InvariantFailure()
         }
     }
+}
+
+internal class __KInjectiveMapping1<D, R>(override val baseMap: Map<D, R>) : InjectiveMapping1<D, R>, _KInjectiveMapping<D, R, InjectiveMapping1<D, R>> {
+
+    protected fun isValid(): Boolean = noDuplicatesInRange() && atLeastOneElement()
+
+    override fun construct(base: Map<D, R>) = __KInjectiveMapping1(base)
+
+    override fun get(d: D) = baseMap.get(d) ?: throw PreconditionFailure("$d not in mapping domain")
+
+    override fun contains(element: Tuple2<D, R>) = baseMap[element._1] == element._2
+
+    override fun containsAll(elements: Collection<Tuple2<D, R>>) = forall(elements) { contains(it) }
+
+    override val inverse by lazy { as_Mapping(baseSet.map { (d, r) -> mk_(r, d) }) }
+
+    override val card: nat1 by lazy { baseMap.size }
+
+    override val dom by lazy { as_Set1(baseMap.keys) }
+
+    override val rng by lazy { as_Set1(baseMap.values) }
+
+    override val size by baseMap::size
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Relation<*, *>) return false
+        return baseSet == other
+    }
+
+    override fun hashCode() = baseMap.hashCode()
+
+    override fun isEmpty() = baseMap.isEmpty()
+
+    override fun iterator() = baseSet.iterator()
+
+    override fun toString() = "map$baseMap"
+
+    init {
+        if (!isValid()) {
+            throw InvariantFailure()
+        }
+    }
+
+}
+
+internal class __KMapping1<D, R>(override val baseMap: Map<D, R>) : Mapping1<D, R>,
+    _KMapping<D, R, Mapping1<D, R>> {
 
     protected fun isValid(): Boolean = atLeastOneElement()
 
@@ -94,6 +190,12 @@ internal class __KMapping1<D, R>(override val baseMap: Map<D, R>) : Mapping1<D, 
     override fun iterator() = baseSet.iterator()
 
     override fun toString() = "map1$baseMap"
+
+    init {
+        if (!isValid()) {
+            throw InvariantFailure()
+        }
+    }
 }
 
 internal fun <D, R, T : Mapping<D, R>> T.transformMapping(fn: (_KMapping<D, R, T>) -> Map<D, R>): T {

@@ -1,14 +1,21 @@
 package com.anaplan.engineering.kazuki.core
 
-import com.anaplan.engineering.kazuki.core.internal.__KMapping
-import com.anaplan.engineering.kazuki.core.internal.__KMapping1
-import com.anaplan.engineering.kazuki.core.internal.transformMapping
+import com.anaplan.engineering.kazuki.core.internal.*
 
 interface Mapping<D, R> : Relation<D, R> {
 
     operator fun get(d: D): R
 
 }
+
+interface InjectiveMapping<D, R> : Mapping<D, R> {
+    val inverse: Mapping<R, D>
+
+    @Invariant
+    fun noDuplicatesInRange() = dom.card == rng.card
+}
+
+interface InjectiveMapping1<D, R> : InjectiveMapping<D, R>, Mapping1<D, R>
 
 interface Mapping1<D, R> : Mapping<D, R> {
     val card: nat1
@@ -33,6 +40,16 @@ fun <D, R> as_Mapping(maplets: Array<Tuple2<D, R>>): Mapping<D, R> =
 
 fun <D, R> mk_Mapping(vararg maplets: Tuple2<D, R>): Mapping<D, R> =
     __KMapping(LinkedHashMap<D, R>().apply {
+        maplets.forEach { put(it._1, it._2) }
+    })
+
+fun <D, R> mk_InjectiveMapping(vararg maplets: Tuple2<D, R>): InjectiveMapping<D, R> =
+    __KInjectiveMapping(LinkedHashMap<D, R>().apply {
+        maplets.forEach { put(it._1, it._2) }
+    })
+
+fun <D, R> mk_InjectiveMapping1(vararg maplets: Tuple2<D, R>): InjectiveMapping1<D, R> =
+    __KInjectiveMapping1(LinkedHashMap<D, R>().apply {
         maplets.forEach { put(it._1, it._2) }
     })
 
