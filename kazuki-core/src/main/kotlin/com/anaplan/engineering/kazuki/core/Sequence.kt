@@ -47,8 +47,6 @@ fun <T> as_Seq1(elems: Iterable<T>): Sequence1<T> = __KSequence1(elems.toList())
 
 fun <T> as_Seq1(elems: Array<T>): Sequence1<T> = __KSequence1(elems.toList())
 
-
-
 // TODO -- should we use different name?
 fun <T, S : Sequence<T>> S.drop(n: Int) = transformSequence { it.elements.drop(n) }
 
@@ -67,6 +65,19 @@ infix fun <T, S : Sequence<T>> S.rngRestrictTo(s: Set<T>) = transformSequence {
 infix fun <T, S : Sequence<T>> S.rrt(s: Set<T>) = rngRestrictTo(s)
 
 infix fun <T, S : Sequence<T>> S.cat(s: Sequence<T>) = transformSequence { it.elements + s }
+
+infix fun <T, S : Sequence<T>> S.domSubtract(s: Set<nat1>) = transformSequence {
+    it.elements.filterIndexed { i, _ -> i !in s }
+}
+
+infix fun <T, S : Sequence<T>> S.dsub(s: Set<nat1>) = domSubtract(s)
+
+infix fun <T, S : Sequence<T>> S.rngSubtract(s: Set<T>) = transformSequence {
+    it.elements.filter { e -> e in s }
+}
+
+infix fun <T, S : Sequence<T>> S.rsub(s: Set<T>) = rngSubtract(s)
+
 
 infix operator fun <T, S : Sequence<T>> S.plus(s: Sequence<T>) = transformSequence { it.elements + s }
 
