@@ -4,8 +4,8 @@ import com.anaplan.engineering.kazuki.core.*
 import com.google.devtools.ksp.*
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.*
-import com.squareup.kotlinpoet.*
 
+@OptIn(KspExperimental::class)
 class KazukiSymbolProcessor(private val environment: SymbolProcessorEnvironment) : SymbolProcessor {
 
     // TODO - auto generate tests for equals, hashcode, toString? -- maybe do with opt-in property
@@ -20,7 +20,9 @@ class KazukiSymbolProcessor(private val environment: SymbolProcessorEnvironment)
         initializePrimitiveInvariants(resolver, primitiveTypeProcessor)
 
         val moduleProcessor = ModuleProcessor(processingState, environment.codeGenerator)
-        allModules[true]?.forEach { moduleProcessor.processModule(it) }
+        allModules[true]
+            ?.filter { it.getAnnotationsByType(Module::class).single().makeable }
+            ?.forEach { moduleProcessor.generateImplementation(it) }
 
         if (processingState.hasErrors()) {
             processingState.errors.forEach {
@@ -49,7 +51,6 @@ class KazukiSymbolProcessor(private val environment: SymbolProcessorEnvironment)
                     "${it.packageName.asString()}.${primitiveTypeAlias.name}"
                 }
         )
-
 
 
 }

@@ -62,7 +62,9 @@ internal class __KSequence<T>(override val elements: List<T>) : Sequence<T>, Lis
     override fun toString() = "seq$elements"
 }
 
-internal class __KSequence1<T>(private val elements: List<T>) : Sequence1<T>, List<T> by elements {
+internal class __KSequence1<T>(override val elements: List<T>) : Sequence1<T>, _KSequence<T, Sequence1<T>>, List<T> by elements {
+
+    override fun construct(elements: List<T>) = __KSequence1(elements)
 
     override val len: nat1 by elements::size
 

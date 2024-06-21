@@ -17,7 +17,7 @@ internal class ModuleProcessor(
     private val codeGenerator: CodeGenerator
 ) {
 
-    fun processModule(clazz: KSClassDeclaration) {
+    fun generateImplementation(clazz: KSClassDeclaration) {
         if (clazz.classKind == ClassKind.OBJECT) {
             processModuleObject(clazz)
         } else {

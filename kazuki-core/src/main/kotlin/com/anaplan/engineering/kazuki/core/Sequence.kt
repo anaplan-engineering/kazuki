@@ -47,10 +47,21 @@ fun <T> as_Seq1(elems: Iterable<T>): Sequence1<T> = __KSequence1(elems.toList())
 
 fun <T> as_Seq1(elems: Array<T>): Sequence1<T> = __KSequence1(elems.toList())
 
-// TODO -- should we use different name?
+// TODO -- should we use different names?
 fun <T, S : Sequence<T>> S.drop(n: Int) = transformSequence { it.elements.drop(n) }
+fun <T, S : Sequence<T>> S.take(n: Int) = transformSequence { it.elements.take(n) }
 
 fun <T, S : Sequence<T>> S.reverse() = transformSequence { it.elements.reversed() }
+
+fun <T, S : Sequence<T>> S.insert(t: T, i: nat1) =
+    if (i < 1 || i > len + 1) {
+        throw PreconditionFailure("Index $i is out of bounds")
+    } else {
+        transformSequence { it.elements.toMutableList().apply { add(i - 1, t) } }
+    }
+
+infix fun <T> Sequence<T>.subseq(other: Sequence<T>) =
+    this == other || (1..other.len).any { i -> this == other.drop(i - 1).take(len) }
 
 infix fun <T, S : Sequence<T>> S.domRestrictTo(s: Set<nat1>) = transformSequence {
     it.elements.filterIndexed { i, _ -> i in s }

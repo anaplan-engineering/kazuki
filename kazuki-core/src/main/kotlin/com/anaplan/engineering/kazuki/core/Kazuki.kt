@@ -4,9 +4,15 @@ import kotlin.reflect.KClass
 
 
 annotation class RecordType
+
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class Module
+annotation class Module(
+    /** If true, concrete implementation is generated with necessary constructors and utilities. If false, no concrete
+     *  implementation is generated, but fields, invariants etc. are incorporated into descendant classes.
+     */
+    val makeable: Boolean = true
+)
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
