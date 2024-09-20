@@ -2,6 +2,7 @@ package com.anaplan.engineering.kazuki.gameoflife
 
 import com.anaplan.engineering.kazuki.core.*
 import com.anaplan.engineering.kazuki.gameoflife.Conway_Module.mk_Point
+import com.anaplan.engineering.kazuki.gameoflife.Conway_Module.mk_Population
 
 
 @Module
@@ -34,22 +35,24 @@ object Conway {
                 around(p) inter pop
             ).card
         },
-        post = { _, _, result -> result <= maxNeigh }
+        post = { _, _, result -> result <= maxNeigh },
+        pre = {_,_,_ -> mk_Population().card == 0}
     )
 
-    val newCells = function(
+    val newCells: (Population) -> Population = function(
         command = { pop: Population ->
-            dunion(
+            mk_Population().add( dunion(
                 set(pop) { p: Point ->
                     set(around(p) minus pop, filter = {
                         neighbourCount(pop, it) == Generate
                     }) { it }
-                })
+                }))
+            )
         },
         post = { pop, result -> (result inter pop).isEmpty() }
     )
-
-    val deadCells = function(
+/*
+    val deadCells: (Population) -> Population = function(
         command = { pop: Population ->
             dunion(
                 set(pop, filter = { neighbourCount(pop, it) in Survive })
@@ -60,7 +63,7 @@ object Conway {
             (result inter pop) == result
         }
     )
-
+*/
     val generation = function(
         command = { pop: Population ->
             (pop minus deadCells(pop)) union newCells(pop)
