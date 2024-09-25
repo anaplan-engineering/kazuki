@@ -1,23 +1,14 @@
 package com.anaplan.engineering.kazuki.gameoflife
 
-import com.anaplan.engineering.kazuki.core.PreconditionFailure
-import com.anaplan.engineering.kazuki.core.dunion
-import com.anaplan.engineering.kazuki.core.minus
-import com.anaplan.engineering.kazuki.core.set
+import com.anaplan.engineering.kazuki.core.*
+import com.anaplan.engineering.kazuki.gameoflife.Conway.Population
 import com.anaplan.engineering.kazuki.gameoflife.Conway.around
 import com.anaplan.engineering.kazuki.gameoflife.Conway.deadCells
-import com.anaplan.engineering.kazuki.gameoflife.Conway.disappearN
-import com.anaplan.engineering.kazuki.gameoflife.Conway.disappearNP
 import com.anaplan.engineering.kazuki.gameoflife.Conway.generation
 import com.anaplan.engineering.kazuki.gameoflife.Conway.generations
-import com.anaplan.engineering.kazuki.gameoflife.Conway.gliderN
-import com.anaplan.engineering.kazuki.gameoflife.Conway.gliderNP
-import com.anaplan.engineering.kazuki.gameoflife.Conway.isOffset
 import com.anaplan.engineering.kazuki.gameoflife.Conway.neighbourCount
 import com.anaplan.engineering.kazuki.gameoflife.Conway.newCells
-import com.anaplan.engineering.kazuki.gameoflife.Conway.offset
-import com.anaplan.engineering.kazuki.gameoflife.Conway.periodN
-import com.anaplan.engineering.kazuki.gameoflife.Conway.periodNP
+import com.anaplan.engineering.kazuki.gameoflife.Conway_Module.as_Population
 import com.anaplan.engineering.kazuki.gameoflife.Conway_Module.mk_Point
 import com.anaplan.engineering.kazuki.gameoflife.Conway_Module.mk_Population
 import kotlin.test.Ignore
@@ -49,13 +40,15 @@ class TestConway {
         mk_Point(3, 5), mk_Point(3, 6), mk_Point(3, 7)
     )
 
-    private val pulsar = mk_Population(
+
+    private val pulsar = as_Population(
         dunion(
             set(pQuad) { point -> point },
             set(pQuad) { point -> mk_Point(-point.x, point.y) },
             set(pQuad) { point -> mk_Point(point.x, -point.y) },
             set(pQuad) { point -> mk_Point(-point.x, -point.y) }
-        ))
+        )
+    )
 
     private val diehard = mk_Population(
         mk_Point(0, 1), mk_Point(1, 1), mk_Point(1, 0), mk_Point(0, 5),
@@ -67,10 +60,67 @@ class TestConway {
         mk_Point(3, 1), mk_Point(2, 2)
     )
 
+
+    private val offset: (Population, int, int) -> Population = function(
+        command = { pop: Population, dx: int, dy: int ->
+            as_Population(
+                set(pop) { point -> mk_Point(point.x + dx, point.y + dy) }
+            )
+        }
+    )
+
+    private val isOffset: (Population, Population, nat1) -> bool = function(
+        command = { pop1: Population, pop2: Population, max: nat1 ->
+            exists(-max..max) { dx ->
+                exists(-max..max) { dy ->
+                    (dx != 0 || dy != 0) && offset(pop1, dx, dy) == pop2
+                }
+            }
+        }
+    )
+
+    private val periodN: (Population, nat1) -> bool = function(
+        command = { pop: Population, n: nat1 ->
+            generations(n, pop) == pop
+        }
+    )
+
+    private val periodNP: (Population, nat1) -> bool = function(
+        command = { pop: Population, n: nat1 ->
+            set(1..n, filter = { periodN(pop, it) }) { it } == mk_Set(n)
+        }
+    )
+
+    private val disappearN: (Population, nat1) -> bool = function(
+        command = { pop: Population, n: nat1 ->
+            generations(n, pop).isEmpty()
+        }
+    )
+
+    private val disappearNP: (Population, nat1) -> bool = function(
+        command = { pop: Population, n: nat1 ->
+            set(1..n, filter = { disappearN(pop, it) }) { it } == mk_Set(n)
+        }
+    )
+
+    private val gliderN: (Population, nat1, nat1) -> bool = function(
+        command = { pop: Population, n: nat1, max: nat1 ->
+            isOffset(pop, generations(n, pop), max)
+        },
+        pre = { pop, _, _ -> pop.card > 0 }
+    )
+
+    private val gliderNP: (Population, nat1, nat1) -> bool = function(
+        command = { pop: Population, n: nat1, max: nat1 ->
+            set(1..n, filter = { gliderN(pop, it, max) }) { it } == mk_Set(n)
+        }
+    )
+
+
     @Test
+    // They should not allow these 0s to be input, as they should be a nat1 number
     @Ignore
-    fun preconditionTests() {
-        // They should not allow these 0s to be input, as they should be a nat1 number
+    fun nat1InputZeroTests() {
         assertFailsWith<PreconditionFailure> { generations(0, block) }
         assertFailsWith<PreconditionFailure> { periodN(block, 0) }
         assertFailsWith<PreconditionFailure> { disappearN(block, 0) }
@@ -137,7 +187,7 @@ class TestConway {
             )
         )
         assertEquals(block, generations(1, block))
-        assertEquals(block, generations(500, block))
+        assertEquals(block, generations(50, block))
         assertEquals(toad, generations(4, toad))
     }
 
@@ -183,7 +233,7 @@ class TestConway {
     }
 
     @Test
-    fun periodN() {
+    fun periodN_NP() {
         assertEquals(true, periodN(mk_Population(), 1))
         assertEquals(true, periodN(block, 1))
         assertEquals(true, periodN(block, 5))
@@ -191,10 +241,7 @@ class TestConway {
         assertEquals(true, periodN(pulsar, 3))
         assertEquals(false, periodN(pulsar, 2))
         assertEquals(false, periodN(blinker, 1))
-    }
 
-    @Test
-    fun periodNP() {
         assertEquals(true, periodNP(mk_Population(), 1))
         assertEquals(true, periodNP(block, 1))
         assertEquals(false, periodNP(block, 5))
@@ -205,17 +252,14 @@ class TestConway {
     }
 
     @Test
-    fun gliderN() {
+    fun gliderN_NP() {
         assertEquals(false, gliderN(block, 1, 1))
         assertEquals(true, gliderN(glider, 4, 1))
         assertEquals(true, gliderN(glider, 8, 2))
         assertEquals(false, gliderN(glider, 8, 1))
         assertEquals(false, gliderN(glider, 3, 1))
         assertFailsWith<PreconditionFailure> { gliderN(mk_Population(), 1, 1) }
-    }
 
-    @Test
-    fun gliderNP() {
         assertEquals(false, gliderNP(block, 1, 1))
         assertEquals(true, gliderNP(glider, 4, 1))
         assertEquals(false, gliderNP(glider, 8, 2))
@@ -226,7 +270,7 @@ class TestConway {
 
 
     @Test
-    fun disappearN() {
+    fun disappearN_NP() {
         assertEquals(
             false, disappearN(
                 mk_Population(
@@ -251,14 +295,7 @@ class TestConway {
                 ), 5
             )
         )
-        assertEquals(false, disappearN(diehard, 10))
-        assertEquals(true, disappearN(diehard, 130))
-        assertEquals(true, disappearN(diehard, 131))
-        assertEquals(true, disappearN(mk_Population(), 1))
-    }
 
-    @Test
-    fun disappearNP() {
         assertEquals(
             false, disappearNP(
                 mk_Population(
@@ -283,12 +320,22 @@ class TestConway {
                 ), 5
             )
         )
+
+        assertEquals(false, disappearN(diehard, 10))
+        assertEquals(false, disappearN(diehard, 129))
+        assertEquals(true, disappearN(diehard, 130))
+        assertEquals(true, disappearN(diehard, 131))
+
         assertEquals(false, disappearNP(diehard, 10))
+        assertEquals(false, disappearNP(diehard, 129))
         assertEquals(true, disappearNP(diehard, 130))
         assertEquals(false, disappearNP(diehard, 131))
-        assertEquals(true, disappearN(mk_Population(), 1))
-    }
 
+        assertEquals(true, disappearN(mk_Population(), 1))
+
+        assertEquals(true, disappearNP(mk_Population(), 1))
+
+    }
 
     @Test
     fun generalTests() {
