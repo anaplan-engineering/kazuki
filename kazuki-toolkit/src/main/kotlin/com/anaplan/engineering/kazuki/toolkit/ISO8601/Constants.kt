@@ -33,8 +33,8 @@ val DAYS_PER_MONTH: Mapping<Month, Day> = mk_Mapping(
 )
 val DAYS_PER_MONTH_LEAP: Mapping<Month, Day> = DAYS_PER_MONTH * mk_(2, 29)
 
-val MONTHS_PER_YEAR: nat1 = DAYS_PER_MONTH.dom.card
-val MAX_DAYS_PER_MONTH: nat1 = (set(1..MONTHS_PER_YEAR) { DAYS_PER_MONTH[it] }).max()
+val MONTHS_PER_YEAR: nat = DAYS_PER_MONTH.dom.card
+val MAX_DAYS_PER_MONTH: nat = DAYS_PER_MONTH.rng.max()
 
 const val FirstYear: nat = 0
 const val LastYear: nat = 9999

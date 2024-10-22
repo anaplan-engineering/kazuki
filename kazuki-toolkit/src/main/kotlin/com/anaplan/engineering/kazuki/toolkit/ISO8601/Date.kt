@@ -2,10 +2,9 @@ package com.anaplan.engineering.kazuki.toolkit.ISO8601
 
 import com.anaplan.engineering.kazuki.core.*
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Date_Module.mk_Date
-import com.anaplan.engineering.kazuki.toolkit.ISO8601.Duration_Module.mk_Duration
 
 @Module
-interface Date {
+interface Date : Comparable<Date> {
     val year: Year
     val month: Month
     val day: Day
@@ -14,7 +13,9 @@ interface Date {
     fun isDayValid() = day <= daysInMonth(year, month)
 
     @ComparableProperty
-    val duration_ms: nat get() = functions.toDuration().duration_ms
+    val duration_ms: Long get() = functions.toDuration().duration_ms
+
+    override fun compareTo(other: Date) = duration_ms.compareTo(other.duration_ms)
 
     @FunctionProvider(DateFunctions::class)
     val functions: DateFunctions
@@ -25,7 +26,7 @@ interface Date {
             command = {
                 Duration.durationUpToYear(date.year).functions.add(
                     Duration.durationUpToMonth(date.year, date.month).functions.add(
-                        Duration.fromDays(date.day - 1)
+                        Duration.fromDays(date.day - 1L)
                     )
                 )
             },
@@ -37,7 +38,7 @@ interface Date {
         )
 
         val toDayOfWeek: () -> DayOfWeek = function<DayOfWeek>(
-            command = { DayOfWeek.entries[(date.functions.toDuration().functions.toDays() - 365) % 7] }
+            command = { DayOfWeek.entries[(date.functions.toDuration().functions.toDays().toInt() - 365) % 7] }
         )
     }
 }
@@ -64,12 +65,12 @@ val daysInMonth: (Year, Month) -> nat1 = function(
 )
 
 val minDate: (Set1<Date>) -> Date = function(
-    command = { dates: Set1<Date> -> mk_Duration((set(dates) { it.duration_ms }).min()).functions.toDate() },
-    post = { dates, result -> result in dates && forall(dates) { result.duration_ms <= it.duration_ms } }
+    command = { dates: Set1<Date> -> (set(dates) { it }).min() },
+    post = { dates, result -> result in dates && forall(dates) { result <= it } }
 )
 val maxDate: (Set1<Date>) -> Date = function(
-    command = { dates: Set1<Date> -> mk_Duration((set(dates) { it.duration_ms }).max()).functions.toDate() },
-    post = { dates, result -> result in dates && forall(dates) { result.duration_ms >= it.duration_ms } }
+    command = { dates: Set1<Date> -> (set(dates) { it }).max() },
+    post = { dates, result -> result in dates && forall(dates) { result >= it } }
 )
 
 val nextDateForYM: (Date) -> Date = function(

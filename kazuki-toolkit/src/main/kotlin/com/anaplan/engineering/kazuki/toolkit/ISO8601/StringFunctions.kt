@@ -6,6 +6,7 @@ import com.anaplan.engineering.kazuki.toolkit.ISO8601.DTG_Module.mk_DTG
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Date_Module.mk_Date
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Time_Module.mk_Time
 
+// todo make private functions with descriptive names here
 val isDate: (String) -> bool = function(
     command = { string: String ->
         if (string.length != 10) {

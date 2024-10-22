@@ -8,16 +8,20 @@ import com.anaplan.engineering.kazuki.toolkit.ISO8601.Interval_Module.mk_Interva
 import kotlin.math.max
 import kotlin.math.min
 
+
 @Module
-interface DTG {
+interface DTG : Comparable<DTG> {
     val date: Date
     val time: Time
 
     @ComparableProperty
-    val duration_ms: nat get() = functions.toDuration().duration_ms
+    val duration_ms: Long get() = functions.toDuration().duration_ms
+
+    override fun compareTo(other: DTG) = duration_ms.compareTo(other.duration_ms)
 
     @FunctionProvider(DTGFunctions::class)
     val functions: DTGFunctions
+
 
     class DTGFunctions(private val dtg: DTG) {
 
@@ -28,7 +32,7 @@ interface DTG {
 
         val subtract: (Duration) -> DTG = function(
             command = { duration -> durationDiff(dtg.functions.toDuration(), duration).functions.toDTG() },
-            pre = { duration -> duration.duration_ms <= dtg.functions.toDuration().duration_ms },
+            pre = { duration -> duration <= dtg.functions.toDuration() },
 //        post = { duration, result -> result.functions.add(dur) == dtg }
         )
 
@@ -36,17 +40,17 @@ interface DTG {
             command = { dtg.date.functions.toDuration().functions.add(dtg.time.functions.toDuration()) },
         )
 
-        val within: (Duration, DTG) -> bool = function(
+        val within = function(
             command = { duration: Duration, target: DTG ->
-                if (duration.duration_ms == 0) {
-                    dtg.duration_ms == target.duration_ms
+                if (duration.duration_ms == 0L) {
+                    dtg == target
                 } else {
                     dtg.functions.inInterval(
                         mk_Interval(target.functions.subtract(duration), target.functions.add(duration))
                     )
                 }
             },
-            post = { duration, target, result -> (duration.duration_ms == 0) implies ((dtg == target) == result) }
+            post = { duration, target, result -> (duration == NO_DURATION) implies ((dtg == target) == result) }
         )
 
         val inInterval: (Interval) -> bool = function(
@@ -54,12 +58,12 @@ interface DTG {
         )
 
         val inRange: (DTG, DTG) -> bool = function(
-            command = { min: DTG, max: DTG -> min.duration_ms <= dtg.duration_ms && dtg.duration_ms < max.duration_ms }
+            command = { min: DTG, max: DTG -> min <= dtg && dtg < max }
         )
 
         val finestGranularity: (Duration) -> bool = function(
-            command = { duration: Duration -> dtg.functions.toDuration().duration_ms % duration.duration_ms == 0 },
-            pre = { duration -> duration.duration_ms != NO_DURATION.duration_ms }
+            command = { duration: Duration -> dtg.functions.toDuration().duration_ms % duration.duration_ms == 0L },
+            pre = { duration -> duration != NO_DURATION }
         )
 
         val instant: () -> Interval = function(
@@ -100,7 +104,7 @@ interface DTG {
 }
 
 @Module
-interface DtgInZone {
+interface DtgInZone : Comparable<DtgInZone> {
     val date: Date
     val time: TimeInZone
 
@@ -111,7 +115,9 @@ interface DtgInZone {
     fun dtgAfterLastDate() = !(date == LastDate && time.functions.normalise()._2 == PlusOrMinus.Minus)
 
     @ComparableProperty
-    val duration_ms: nat get() = functions.normalise().functions.toDuration().duration_ms
+    val duration_ms: Long get() = functions.normalise().functions.toDuration().duration_ms
+
+    override fun compareTo(other: DtgInZone) = duration_ms.compareTo(other.duration_ms)
 
 
     @FunctionProvider(DtgInZoneFunctions::class)
@@ -134,8 +140,6 @@ interface DtgInZone {
         val format: () -> String = function<String>(
             command = { dtgInZone.date.functions.format() + "T" + dtgInZone.time.functions.format() }
         )
-
-
     }
 }
 
@@ -145,10 +149,10 @@ interface Interval {
     val ends: DTG
 
     @Invariant
-    fun zeroSizeInterval() = begins.duration_ms != ends.duration_ms
+    fun zeroSizeInterval() = begins != ends
 
     @Invariant
-    fun beginAfterEnd() = begins.duration_ms <= ends.duration_ms
+    fun beginAfterEnd() = begins <= ends
 
     @FunctionProvider(IntervalFunctions::class)
     val functions: IntervalFunctions
@@ -156,18 +160,18 @@ interface Interval {
     class IntervalFunctions(private val interval: Interval) {
         val within: (Interval) -> bool = function(
             command = { containerInterval: Interval ->
-                containerInterval.begins.duration_ms <= interval.begins.duration_ms &&
-                        interval.ends.duration_ms <= containerInterval.ends.duration_ms
+                containerInterval.begins <= interval.begins &&
+                        interval.ends <= containerInterval.ends
             },
             post = { containerInterval, result ->
-                result == (containerInterval.begins.duration_ms <= interval.begins.duration_ms
-                        && interval.ends.duration_ms <= containerInterval.ends.duration_ms)
+                result == (containerInterval.begins <= interval.begins
+                        && interval.ends <= containerInterval.ends)
             }
         )
         val overlap: (Interval) -> bool = function(
             command = { other: Interval ->
-                other.begins.duration_ms < interval.ends.duration_ms &&
-                        interval.begins.duration_ms < other.ends.duration_ms
+                other.begins < interval.ends &&
+                        interval.begins < other.ends
             },
             post = { other, result ->
                 result == exists(
@@ -177,7 +181,7 @@ interface Interval {
                     mk_Duration(it).functions.toDTG().functions.inInterval(interval)
                             && mk_Duration(it).functions.toDTG().functions.inInterval(other)
                 }
-            }
+            } // todo replace post condition here
         )
         val toDuration: () -> Duration = function(
             command = { diff(interval.begins, interval.ends) },
@@ -201,12 +205,12 @@ val diff: (DTG, DTG) -> Duration = function(
 )
 
 val minDTG: (Set1<DTG>) -> DTG = function(
-    command = { dtgs: Set1<DTG> -> mk_Duration((set(dtgs) { it.duration_ms }).min()).functions.toDTG() },
-    post = { dtgs, result -> result in dtgs && forall(dtgs) { result.duration_ms <= it.duration_ms } }
+    command = { dtgs: Set1<DTG> -> (set(dtgs) { it }).min() },
+    post = { dtgs, result -> result in dtgs && forall(dtgs) { result <= it } }
 )
 val maxDTG: (Set1<DTG>) -> DTG = function(
-    command = { dtgs: Set1<DTG> -> mk_Duration((set(dtgs) { it.duration_ms }).max()).functions.toDTG() },
-    post = { dtgs, result -> result in dtgs && forall(dtgs) { result.duration_ms >= it.duration_ms } }
+    command = { dtgs: Set1<DTG> -> (set(dtgs) { it }).max() },
+    post = { dtgs, result -> result in dtgs && forall(dtgs) { result >= it } }
 )
 
 val monthsBetween: (DTG, DTG) -> nat = function(
@@ -218,20 +222,20 @@ val monthsBetween: (DTG, DTG) -> nat = function(
                     ends.date.month - starts.date.month - 1
                 }
     },
-    pre = { starts, ends -> starts.duration_ms <= ends.duration_ms }
+    pre = { starts, ends -> starts <= ends }
 )
 
 val yearsBetween: (DTG, DTG) -> nat = function(
     command = { starts: DTG, ends: DTG ->
         if (Duration.durationUpToMonth(starts.date.year, starts.date.month).duration_ms
-            + Duration.fromDays(starts.date.day).duration_ms <=
+            + Duration.fromDays(starts.date.day.toLong()).duration_ms <=
             Duration.durationUpToMonth(ends.date.year, ends.date.month).duration_ms
-            + Duration.fromDays(ends.date.day).duration_ms
+            + Duration.fromDays(ends.date.day.toLong()).duration_ms
         ) {
             ends.date.year - starts.date.year
         } else {
             ends.date.year - starts.date.year - 1
         }
     },
-    pre = { starts, ends -> starts.duration_ms <= ends.duration_ms }
+    pre = { starts, ends -> starts <= ends }
 )

@@ -14,7 +14,6 @@ import com.anaplan.engineering.kazuki.toolkit.ISO8601.Offset_Module.mk_Offset
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.TimeInZone_Module.mk_TimeInZone
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Time_Module.mk_Time
 import junit.framework.TestCase.assertEquals
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
@@ -40,7 +39,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun dtgInRangeDayTest() {
         assertEquals(
@@ -106,7 +105,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun dtgWithinTest() {
         assertEquals(
@@ -143,7 +142,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun inIntervalTest() {
         assertEquals(
@@ -224,7 +223,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun overlapTest() {
         assertEquals(
@@ -302,7 +301,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun withinTest() {
         assertEquals(
@@ -404,7 +403,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun addTest() {
         assertEquals(
@@ -434,7 +433,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun subtractTest() {
         assertEquals(
@@ -467,7 +466,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun diffTest() {
         assertEquals(
@@ -568,7 +567,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun durMultiplyTest() {
         assertEquals(Duration.fromDays(10), Duration.fromDays(2).functions.multiply(5))
@@ -584,7 +583,7 @@ class ISO8601Test {
 
     @Test
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     fun durDivideTest() {
         assertEquals(Duration.fromDays(2), Duration.fromDays(10).functions.divide(5))
         assertEquals(Duration.fromHours(12), Duration.fromDays(10).functions.divide(20))
@@ -654,7 +653,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun durFromMinutesTest() {
         assertEquals(3600000, Duration.fromMinutes(60).duration_ms)
@@ -663,7 +662,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun durModMinutesTest() {
         assertEquals(
@@ -681,7 +680,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun toHoursTest() {
         assertEquals(10, mk_Duration(36000000).functions.toHours())
@@ -691,7 +690,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun durFromHoursTest() {
         assertEquals(216000000, Duration.fromHours(60).duration_ms)
@@ -700,7 +699,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun durModHoursTest() {
         assertEquals(
@@ -726,7 +725,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun durFromDaysTest() {
         assertEquals(864000000, Duration.fromDays(10).duration_ms)
@@ -736,7 +735,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun dateToDayOfWeekTest() {
         assertEquals(
@@ -766,7 +765,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun durModDaysTest() {
         assertEquals(
@@ -784,7 +783,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun toMonthTest() {
         assertEquals(0, Duration.fromDays(30).functions.toMonth(1990))
@@ -807,7 +806,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun toYearTest() {
         assertEquals(0, Duration.fromDays(0).functions.toYear(1990))
@@ -826,7 +825,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun toDTGTest() {
         assertEquals(
@@ -844,7 +843,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun dtgToDurTest() {
         assertEquals(
@@ -865,7 +864,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun toDateTest() {
         assertEquals(mk_Date(0, 1, 4), Duration.fromDays(3).functions.toDate())
@@ -916,7 +915,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun durFromIntervalTest() {
         assertEquals(
@@ -952,7 +951,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun finestGranularityITest() {
         assertEquals(
@@ -962,7 +961,6 @@ class ISO8601Test {
                 mk_DTG(mk_Date(1990, 1, 1), mk_Time(3, 0, 0, 0))
             ).functions.finestGranularityI(
                 Duration.fromHours(1)
-
             )
         )
         assertEquals(
@@ -978,7 +976,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun minDTGTest() {
         assertEquals(
@@ -1017,7 +1015,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun maxDTGTest() {
         assertEquals(
@@ -1057,7 +1055,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun minDateTest() {
         assertEquals(
@@ -1085,7 +1083,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun maxDateTest() {
         assertEquals(
@@ -1243,7 +1241,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun instantTest() {
         assertEquals(
@@ -1263,7 +1261,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun nextDateForYMTest() {
         assertEquals(mk_Date(1990, 2, 1), nextDateForYM(mk_Date(1990, 1, 1)))
@@ -1271,7 +1269,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun nextDateForDayTest() {
         assertEquals(mk_Date(0, 1, 4), nextDateForDay(mk_Date(0, 1, 1), 4))
@@ -1280,7 +1278,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun previousDateForYMTest() {
         assertEquals(mk_Date(1990, 1, 3), previousDateForYM(mk_Date(1990, 2, 3)))
@@ -1288,7 +1286,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun previousDateForDayTest() {
         assertEquals(mk_Date(1990, 1, 12), previousDateForDay(mk_Date(1990, 1, 31), 12))
@@ -1296,7 +1294,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun normaliseTest() {
         assertEquals(
@@ -1388,7 +1386,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun formatDtgInZoneTest() {
         assertEquals(
@@ -1493,7 +1491,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun addMonthsTest() {
         assertEquals(
@@ -1511,7 +1509,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun subtractMonthsTest() {
         assertEquals(
@@ -1529,7 +1527,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun monthsBetweenTest() {
         assertEquals(
@@ -1556,7 +1554,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun yearsBetweenTest() {
         assertEquals(
@@ -1590,7 +1588,7 @@ class ISO8601Test {
     }
 
     // Fails due to value overflowing because nat is based on int, not long
-    @Ignore
+    //@Ignore
     @Test
     fun strToDateTest() {
         assertEquals(mk_Date(2018, 4, 1), strToDate("2018-04-01"))
