@@ -10,31 +10,31 @@ enum class PlusOrMinus {
     None
 }
 
-enum class DayOfWeek {
-    Sunday,
-    Monday,
-    Tuesday,
-    Wednesday,
-    Thursday,
-    Friday,
-    Saturday
+enum class DayOfWeek(val dayNumber: int) {
+    Monday(1),
+    Tuesday(2),
+    Wednesday(3),
+    Thursday(4),
+    Friday(5),
+    Saturday(6),
+    Sunday(0)
 }
 
-const val MILLIS_PER_SECOND: nat = 1000
-const val SECONDS_PER_MINUTE: nat = 60
-const val MINUTES_PER_HOUR: nat = 60
-const val HOURS_PER_DAY: nat = 24
+const val MillisPerSecond: nat = 1000
+const val SecondsPerMinute: nat = 60
+const val MinutesPerHour: nat = 60
+const val HoursPerDay: nat = 24
 
-val DAYS_PER_MONTH: Mapping<Month, Day> = mk_Mapping(
+val DaysPerMonth: Mapping<Month, Day> = mk_Mapping(
     mk_(1, 31), mk_(2, 28), mk_(3, 31),
     mk_(4, 30), mk_(5, 31), mk_(6, 30),
     mk_(7, 31), mk_(8, 31), mk_(9, 30),
     mk_(10, 31), mk_(11, 30), mk_(12, 31)
 )
-val DAYS_PER_MONTH_LEAP: Mapping<Month, Day> = DAYS_PER_MONTH * mk_(2, 29)
+val DaysPerMonthLeap: Mapping<Month, Day> = DaysPerMonth * mk_(2, 29)
 
-val MONTHS_PER_YEAR: nat = DAYS_PER_MONTH.dom.card
-val MAX_DAYS_PER_MONTH: nat = DAYS_PER_MONTH.rng.max()
+val MonthsPerYear: nat = DaysPerMonth.dom.card
+val MaxDaysPerMonth: nat = DaysPerMonth.rng.max()
 
 const val FirstYear: nat = 0
 const val LastYear: nat = 9999
@@ -45,12 +45,14 @@ val LastDate: Date = mk_Date(LastYear, 12, 31)
 
 val FirstTime: Time = mk_Time(0, 0, 0, 0)
 
-val NO_DURATION: Duration = Duration.fromMillis(0)
+val NoDuration: Duration = Duration.fromMillis(0)
 
-val ONE_MILLISECOND: Duration = Duration.fromMillis(1)
+val OneMillisecondDuration: Duration = Duration.fromMillis(1)
 
-val ONE_MINUTE: Duration = Duration.fromMinutes(1)
+val OneSecondDuration: Duration = Duration.fromSeconds(1)
 
-val ONE_HOUR: Duration = Duration.fromHours(1)
+val OneMinuteDuration: Duration = Duration.fromMinutes(1)
 
-val ONE_DAY: Duration = Duration.fromDays(1)
+val OneHourDuration: Duration = Duration.fromHours(1)
+
+val OneDayDuration: Duration = Duration.fromDays(1)

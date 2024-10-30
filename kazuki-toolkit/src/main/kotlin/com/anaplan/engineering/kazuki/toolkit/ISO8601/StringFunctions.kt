@@ -2,103 +2,126 @@ package com.anaplan.engineering.kazuki.toolkit.ISO8601
 
 import com.anaplan.engineering.kazuki.core.bool
 import com.anaplan.engineering.kazuki.core.function
-import com.anaplan.engineering.kazuki.toolkit.ISO8601.DTG_Module.mk_DTG
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Date_Module.mk_Date
+import com.anaplan.engineering.kazuki.toolkit.ISO8601.Dtg_Module.mk_Dtg
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Time_Module.mk_Time
 
-// todo make private functions with descriptive names here
-val isDate: (String) -> bool = function(
-    command = { string: String ->
-        if (string.length != 10) {
-            false
-        } else if (string.elementAt(4) != '-' || string.elementAt(7) != '-') {
-            false
-        } else if (string.substring(0, 4).toIntOrNull() == null ||
-            string.substring(5, 7).toIntOrNull() == null ||
-            string.substring(8, 10).toIntOrNull() == null
-        ) {
-            false
-        } else if (string.substring(0, 4).toInt() < FirstYear || string.substring(0, 4).toInt() > LastYear) {
-            false
-        } else if (string.substring(5, 7).toInt() < 1 || string.substring(5, 7).toInt() > MONTHS_PER_YEAR) {
-            false
-        } else if (string.substring(8, 10).toInt() < 1 || string.substring(8, 10).toInt() > daysInMonth(
-                string.substring(0, 4).toInt(), string.substring(5, 7).toInt()
-            )
-        ) {
-            false
-        } else {
-            true
-        }
-    }
-)
-
-val isDTG: (String) -> bool = function(
-    command = { string: String ->
-        if (string.length != 19 && string.length != 23) {
-            false
-        } else if (string.elementAt(4) != '-' || string.elementAt(7) != '-' ||
-            string.elementAt(10) != 'T' || string.elementAt(13) != ':' || string.elementAt(16) != ':'
-        ) {
-            false
-        } else if (string.substring(0, 4).toIntOrNull() == null ||
-            string.substring(5, 7).toIntOrNull() == null ||
-            string.substring(8, 10).toIntOrNull() == null ||
-            string.substring(11, 13).toIntOrNull() == null ||
-            string.substring(14, 16).toIntOrNull() == null ||
-            string.substring(17, 19).toIntOrNull() == null
-        ) {
-            false
-        } else if (string.substring(0, 4).toInt() < FirstYear || string.substring(0, 4).toInt() > LastYear) {
-            false
-        } else if (string.substring(5, 7).toInt() < 1 || string.substring(5, 7).toInt() > MONTHS_PER_YEAR) {
-            false
-        } else if (string.substring(8, 10).toInt() < 1 || string.substring(8, 10).toInt() > daysInMonth(
-                string.substring(0, 4).toInt(), string.substring(5, 7).toInt()
-            )
-        ) {
-            false
-        } else if (string.substring(11, 13).toInt() < 0 || string.substring(11, 13).toInt() > HOURS_PER_DAY) {
-            false
-        } else if (string.substring(14, 16).toInt() < 0 || string.substring(14, 16).toInt() > MINUTES_PER_HOUR) {
-            false
-        } else if (string.substring(17, 19).toInt() < 0 || string.substring(17, 19).toInt() > SECONDS_PER_MINUTE) {
-            false
-        } else if (string.length == 23) {
-            if (string.elementAt(19) != '.') {
-                false
-            } else if (string.substring(20, 23).toIntOrNull() == null) {
-                false
-            } else if (string.substring(20, 23).toInt() < 0 || string.substring(20, 23).toInt() > MILLIS_PER_SECOND) {
-                false
-            } else {
-                true
-            }
-        } else {
-            true
-        }
-    }
-)
-
 val strToDate: (String) -> Date = function(
-    command = { string: String ->
-        mk_Date(string.substring(0, 4).toInt(), string.substring(5, 7).toInt(), string.substring(8, 10).toInt())
+    command = { string ->
+        val year = string.substring(0, 4).toInt()
+        val month = string.substring(5, 7).toInt()
+        val day = string.substring(8, 10).toInt()
+
+        mk_Date(year, month, day)
     },
     pre = { string -> isDate(string) }
 )
 
-val strToDTG: (String) -> DTG = function(
-    command = { string: String ->
+val strToDtg: (String) -> Dtg = function(
+    command = { string ->
+        val year = string.substring(0, 4).toInt()
+        val month = string.substring(5, 7).toInt()
+        val day = string.substring(8, 10).toInt()
+
+        val hour = string.substring(11, 13).toInt()
+        val minute = string.substring(14, 16).toInt()
+        val second = string.substring(17, 19).toInt()
         val millisecond = if (string.length == 19) 0 else string.substring(20, 23).toInt()
-        mk_DTG(
-            mk_Date(string.substring(0, 4).toInt(), string.substring(5, 7).toInt(), string.substring(8, 10).toInt()),
-            mk_Time(
-                string.substring(11, 13).toInt(),
-                string.substring(14, 16).toInt(),
-                string.substring(17, 19).toInt(),
-                millisecond
-            )
-        )
+
+        mk_Dtg(mk_Date(year, month, day), mk_Time(hour, minute, second, millisecond))
     },
-    pre = { string -> isDTG(string) }
+    pre = { string -> isDtg(string) }
+)
+
+val isDate: (String) -> bool = function(
+    command = { string ->
+        !(dateFormattedWrong(string) || dateNumberNull(string) || dateOutOfRange(string))
+    }
+)
+
+val isDtg: (String) -> bool = function(
+    command = { string ->
+        if (dtgFormattedWrong(string) || dtgNumberNull(string) || dateOutOfRange(string) || timeOutOfRange(string)) {
+            false
+        } else if (string.length == 23) { // So if it contains a millisecond value
+            !(millisecondFormattedWrong(string) || millisecondNumberNull(string) || millisecondOutOfRange(string))
+        } else {
+            true
+        }
+    }
+)
+
+private val dateFormattedWrong: (String) -> bool = function(
+    command = { string -> string.length != 10 || string.elementAt(4) != '-' || string.elementAt(7) != '-' }
+)
+private val dtgFormattedWrong: (String) -> bool = function(
+    command = { string ->
+        if (string.length != 19 && string.length != 23) {
+            true
+        } else if (string.elementAt(4) != '-' || string.elementAt(7) != '-' ||
+            string.elementAt(10) != 'T' || string.elementAt(13) != ':' || string.elementAt(16) != ':'
+        ) {
+            true
+        } else {
+            false
+        }
+    }
+)
+private val millisecondFormattedWrong: (String) -> bool = function(
+    command = { string -> string.elementAt(19) != '.' }
+)
+private val dateNumberNull: (String) -> bool = function(
+    command = { string ->
+        string.substring(0, 4).toIntOrNull() == null ||
+                string.substring(5, 7).toIntOrNull() == null ||
+                string.substring(8, 10).toIntOrNull() == null
+    }
+)
+private val dtgNumberNull: (String) -> bool = function(
+    command = { string ->
+        string.substring(0, 4).toIntOrNull() == null || string.substring(5, 7).toIntOrNull() == null ||
+                string.substring(8, 10).toIntOrNull() == null || string.substring(11, 13).toIntOrNull() == null ||
+                string.substring(14, 16).toIntOrNull() == null || string.substring(17, 19).toIntOrNull() == null
+    }
+)
+private val millisecondNumberNull: (String) -> bool = function(
+    command = { string -> string.substring(20, 23).toIntOrNull() == null }
+)
+private val dateOutOfRange: (String) -> bool = function(
+    command = { string ->
+        val year = string.substring(0, 4).toInt()
+        val month = string.substring(5, 7).toInt()
+        val day = string.substring(8, 10).toInt()
+        if (year < FirstYear || year > LastYear) {
+            true
+        } else if (month < 1 || month > MonthsPerYear) {
+            true
+        } else if (day < 1 || day > daysInMonth(year, month)) {
+            true
+        } else {
+            false
+        }
+    }
+)
+private val timeOutOfRange: (String) -> bool = function(
+    command = { string ->
+        val hour = string.substring(11, 13).toInt()
+        val minute = string.substring(14, 16).toInt()
+        val second = string.substring(17, 19).toInt()
+        if (hour < 0 || hour > HoursPerDay) {
+            true
+        } else if (minute < 0 || minute > MinutesPerHour) {
+            true
+        } else if (second < 0 || second > SecondsPerMinute) {
+            true
+        } else {
+            false
+        }
+    }
+)
+private val millisecondOutOfRange: (String) -> bool = function(
+    command = { string ->
+        val millisecond = string.substring(20, 23).toInt()
+        millisecond < 0 || millisecond > MillisPerSecond
+    }
 )

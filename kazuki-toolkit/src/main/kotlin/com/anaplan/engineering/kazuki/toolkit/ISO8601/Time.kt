@@ -1,7 +1,8 @@
 package com.anaplan.engineering.kazuki.toolkit.ISO8601
 
 import com.anaplan.engineering.kazuki.core.*
-import com.anaplan.engineering.kazuki.toolkit.ISO8601.Offset_Module.mk_Offset
+import com.anaplan.engineering.kazuki.toolkit.ISO8601.NormalisedTime_Module.mk_NormalisedTime
+
 
 @Module
 interface Time : Comparable<Time> {
@@ -10,10 +11,10 @@ interface Time : Comparable<Time> {
     val second: Second
     val millisecond: Millisecond
 
-    @ComparableProperty
-    val duration_ms: Long get() = functions.toDuration().duration_ms
+    private val timeComparator
+        get() = compareBy<Time> { it.hour }.thenBy { it.minute }.thenBy { it.second }.thenBy { it.millisecond }
 
-    override fun compareTo(other: Time) = duration_ms.compareTo(other.duration_ms)
+    override fun compareTo(other: Time) = timeComparator.compare(this, other)
 
     @FunctionProvider(TimeFunctions::class)
     val functions: TimeFunctions
@@ -21,9 +22,9 @@ interface Time : Comparable<Time> {
     class TimeFunctions(private val time: Time) {
         val toDuration: () -> Duration = function<Duration>(
             command = {
-                Duration.fromHours(time.hour.toLong()).functions.add(
-                    Duration.fromMinutes(time.minute.toLong()).functions.add(
-                        Duration.fromSeconds(time.second.toLong()).functions.add(
+                Duration.fromHours(time.hour.toLong()).functions.addDuration(
+                    Duration.fromMinutes(time.minute.toLong()).functions.addDuration(
+                        Duration.fromSeconds(time.second.toLong()).functions.addDuration(
                             Duration.fromMillis(time.millisecond.toLong())
                         )
                     )
@@ -46,12 +47,9 @@ interface TimeInZone : Comparable<TimeInZone> {
     val time: Time
     val offset: Offset
 
-    val normalisedTime: Time get() = functions.normalise()._1
+    val normalisedTime: Time get() = functions.normaliseTimeInZone().time
 
-    @ComparableProperty
-    val duration_ms: Long get() = normalisedTime.functions.toDuration().duration_ms
-
-    override fun compareTo(other: TimeInZone) = duration_ms.compareTo(other.duration_ms)
+    override fun compareTo(other: TimeInZone) = normalisedTime.compareTo(other.normalisedTime)
 
     @FunctionProvider(TimeInZoneFunctions::class)
     val functions: TimeInZoneFunctions
@@ -59,70 +57,70 @@ interface TimeInZone : Comparable<TimeInZone> {
     class TimeInZoneFunctions(private val timeInZone: TimeInZone) {
 
         val toDuration: () -> Duration = function(
-            command = { timeInZone.functions.normalise()._1.functions.toDuration() },
+            command = { timeInZone.functions.normaliseTimeInZone().time.functions.toDuration() },
             post = { result -> result.functions.toTime() == timeInZone.normalisedTime }
         )
-        val normalise: () -> Tuple2<Time, PlusOrMinus> = function<Tuple2<Time, PlusOrMinus>>(
+
+        private val normaliseTimeInZonePlus: (Duration, Duration) -> NormalisedTime = function(
+            command = { utcTimeDuration, offsetDuration ->
+                if (offsetDuration <= utcTimeDuration) mk_NormalisedTime(
+                    utcTimeDuration.functions.subtractDuration(offsetDuration).functions.toTime(),
+                    PlusOrMinus.None
+                ) else mk_NormalisedTime(
+                    utcTimeDuration.functions.addDuration(OneDayDuration).functions.subtractDuration(offsetDuration).functions.toTime(),
+                    PlusOrMinus.Plus
+                )
+            }
+        )
+        private val normaliseTimeInZoneMinus: (Duration, Duration) -> NormalisedTime = function(
+            command = { utcTimeDuration, offsetDuration ->
+                val adjusted = utcTimeDuration.functions.addDuration(offsetDuration)
+                if (adjusted < OneDayDuration) mk_NormalisedTime(
+                    adjusted.functions.toTime(),
+                    PlusOrMinus.None
+                ) else mk_NormalisedTime(
+                    adjusted.functions.subtractDuration(OneDayDuration).functions.toTime(),
+                    PlusOrMinus.Minus
+                )
+            }
+        )
+
+        val normaliseTimeInZone: () -> NormalisedTime = function<NormalisedTime>(
             command = {
                 val utcTimeDuration = timeInZone.time.functions.toDuration()
-                val offset = timeInZone.offset.delta
-                when (timeInZone.offset) {
-                    mk_Offset(offset, PlusOrMinus.Plus) ->
-                        if (offset <= utcTimeDuration) {
-                            mk_(utcTimeDuration.functions.subtract(offset).functions.toTime(), PlusOrMinus.None)
-                        } else {
-                            mk_(
-                                utcTimeDuration.functions.add(ONE_DAY).functions.subtract(offset).functions.toTime(),
-                                PlusOrMinus.Plus
-                            )
-                        }
-
-                    mk_Offset(offset, PlusOrMinus.Minus) -> {
-                        val adjusted = utcTimeDuration.functions.add(offset)
-                        if (adjusted < ONE_DAY) {
-                            mk_(adjusted.functions.toTime(), PlusOrMinus.None)
-                        } else {
-                            mk_(adjusted.functions.subtract(ONE_DAY).functions.toTime(), PlusOrMinus.Minus)
-                        }
-                    }
-
-                    else -> mk_(timeInZone.time, PlusOrMinus.None)
+                val offsetDuration = timeInZone.offset.offsetDuration
+                when (timeInZone.offset.offsetDirection) {
+                    PlusOrMinus.Plus -> normaliseTimeInZonePlus(utcTimeDuration, offsetDuration)
+                    PlusOrMinus.Minus -> normaliseTimeInZoneMinus(utcTimeDuration, offsetDuration)
+                    PlusOrMinus.None -> mk_NormalisedTime(timeInZone.time, PlusOrMinus.None)
                 }
             }
         )
         val format: () -> String = function<String>(
             command = {
                 timeInZone.time.functions.format() +
-                        if (timeInZone.offset.delta == NO_DURATION) {
-                            "Z"
-                        } else {
-                            timeInZone.offset.functions.format()
-                        }
+                        if (timeInZone.offset.offsetDuration == NoDuration) "Z" else timeInZone.offset.functions.format()
             }
         )
     }
 }
 
 @Module
+interface NormalisedTime {
+    val time: Time
+    val plusOrMinusADay: PlusOrMinus
+}
+
+@Module
 interface Offset {
-    val delta: Duration
-    val pm: PlusOrMinus
+    val offsetDuration: Duration
+    val offsetDirection: PlusOrMinus
 
     @Invariant
-    fun offsetMoreThanDay() = delta < ONE_DAY
+    fun offsetMoreThanDay() = offsetDuration < OneDayDuration
 
     @Invariant
-    fun offsetZero() = delta.functions.modMinutes() == NO_DURATION
-
-    @ComparableProperty
-    val comp: Long
-        get() = when (pm) {
-            PlusOrMinus.Plus -> delta.duration_ms
-            PlusOrMinus.Minus -> -delta.duration_ms
-            PlusOrMinus.None -> delta.duration_ms
-        }
-
-    fun compareTo(other: Offset) = comp.compareTo(other.comp)
+    fun offsetZero() = offsetDuration.functions.modMinutes() == NoDuration
 
     @FunctionProvider(OffsetFunctions::class)
     val functions: OffsetFunctions
@@ -131,11 +129,9 @@ interface Offset {
 
         val format: () -> String = function<String>(
             command = {
-                val hourMinute = offset.delta.functions.toTime()
-                val sign = when (offset.pm) {
-                    PlusOrMinus.Plus -> "+"
-                    PlusOrMinus.Minus -> "-"
-                    else -> ""
+                val hourMinute = offset.offsetDuration.functions.toTime()
+                val sign = when (offset.offsetDirection) {
+                    PlusOrMinus.Plus -> "+"; PlusOrMinus.Minus -> "-"; PlusOrMinus.None -> ""
                 }
                 String.format("%s%02d:%02d", sign, hourMinute.hour, hourMinute.minute)
             }
@@ -144,22 +140,22 @@ interface Offset {
 }
 
 @PrimitiveInvariant(name = "Hour", base = nat::class)
-fun hourNotInRange(hour: nat) = hour < HOURS_PER_DAY
+fun hourNotInRange(hour: nat) = hour < HoursPerDay
 
 @PrimitiveInvariant(name = "Minute", base = nat::class)
-fun minuteNotInRange(minute: nat) = minute < MINUTES_PER_HOUR
+fun minuteNotInRange(minute: nat) = minute < MinutesPerHour
 
 @PrimitiveInvariant(name = "Second", base = nat::class)
-fun secondNotInRange(second: nat) = second < SECONDS_PER_MINUTE
+fun secondNotInRange(second: nat) = second < SecondsPerMinute
 
 @PrimitiveInvariant(name = "Millisecond", base = nat::class)
-fun millisecondNotInRange(millisecond: nat) = millisecond < MILLIS_PER_SECOND
+fun millisecondNotInRange(millisecond: nat) = millisecond < MillisPerSecond
 
 val minTime: (Set1<Time>) -> Time = function(
-    command = { times: Set1<Time> -> (set(times) { it }).min() },
+    command = { times -> times.min() },
     post = { times, result -> result in times && forall(times) { result <= it } }
 )
 val maxTime: (Set1<Time>) -> Time = function(
-    command = { times: Set1<Time> -> (set(times) { it }).max() },
+    command = { times -> times.max() },
     post = { times, result -> result in times && forall(times) { result >= it } }
 )
