@@ -1560,6 +1560,9 @@ class ISO8601Test {
         assertEquals(false, isStringIsoDate("2018-AA-01"))
         assertEquals(false, isStringIsoDate("20.8-04-01"))
         assertEquals(false, isStringIsoDate("-128-04-01"))
+        assertEquals(false, isStringIsoDate("2018-24-01"))
+        assertEquals(false, isStringIsoDate("2018-04-66"))
+
     }
 
     @Test

@@ -51,7 +51,6 @@ val isStringIsoDtg: (String) -> bool = function(
     }
 )
 
-
 private val isoDateFormattedCorrectly: (String) -> bool = function(
     command = { string ->
         val correctIsoLength = string.length == 10
@@ -76,16 +75,13 @@ private val isoDateNumbersNonNull: (String) -> bool = function(
         string.substring(0, 4).toIntOrNull() != null &&
                 string.substring(5, 7).toIntOrNull() != null &&
                 string.substring(8, 10).toIntOrNull() != null
-    },
-    pre = { string -> isoDateFormattedCorrectly(string) }
+    }
 )
 private val isoDtgNumbersNonNull: (String) -> bool = function(
     command = { string ->
-        string.substring(0, 4).toIntOrNull() != null && string.substring(5, 7).toIntOrNull() != null &&
-                string.substring(8, 10).toIntOrNull() != null && string.substring(11, 13).toIntOrNull() != null &&
+        isoDateNumbersNonNull(string) && string.substring(11, 13).toIntOrNull() != null &&
                 string.substring(14, 16).toIntOrNull() != null && string.substring(17, 19).toIntOrNull() != null
-    },
-    pre = { string -> isoDtgFormattedCorrectly(string) }
+    }
 )
 private val isoDateNumbersValid: (String) -> bool = function(
     command = { string ->
@@ -96,23 +92,13 @@ private val isoDateNumbersValid: (String) -> bool = function(
 
         val yearValid = year in FirstYear..LastYear
         val monthValid = month in 1..MonthsPerYear
-        val dayValid = day in 1..daysInMonth(year, month)
+        val dayValid = (yearValid && monthValid) implies { day in 1..daysInMonth(year, month) }
 
         yearValid && monthValid && dayValid
-    },
-    pre = { string -> isoDateFormattedCorrectly(string) && isoDateNumbersNonNull(string) }
+    }
 )
 private val isoDtgTimeNumbersValid: (String) -> bool = function(
     command = { string ->
-        val year = string.substring(0, 4).toInt()
-        val yearValid =
-            year in FirstYear..LastYear
-        val month = string.substring(5, 7).toInt()
-        val monthValid = month in 1..MonthsPerYear
-        val day = string.substring(8, 10).toInt()
-        val dayValid = (yearValid && monthValid) implies { day in 1..daysInMonth(year, month) }
-
-        val dateValid = yearValid && monthValid && dayValid
 
         val hour = string.substring(11, 13).toInt()
         val hourValid = hour in 0 until HoursPerDay
@@ -121,27 +107,21 @@ private val isoDtgTimeNumbersValid: (String) -> bool = function(
         val second = string.substring(17, 19).toInt()
         val secondValid = second in 0 until SecondsPerMinute
 
-        val timeValid = hourValid && minuteValid && secondValid
-
-        dateValid && timeValid
+        isoDateNumbersValid(string) && hourValid && minuteValid && secondValid
     },
-    pre = { string -> isoDtgFormattedCorrectly(string) && isoDtgNumbersNonNull(string) }
 )
 private val isoDtgContainsMilliseconds: (String) -> bool = function(
     command = { string -> string.length == 23 }
 )
 private val isoDtgMillisecondFormattedCorrectly: (String) -> bool = function(
-    command = { string -> string.elementAt(19) == '.' },
-    pre = { string -> isoDtgContainsMilliseconds(string) }
+    command = { string -> string.elementAt(19) == '.' }
 )
 private val isDtgMillisecondNumbersNotNull: (String) -> bool = function(
-    command = { string -> string.substring(20, 23).toIntOrNull() != null },
-    pre = { string -> isoDtgContainsMilliseconds(string) }
+    command = { string -> string.substring(20, 23).toIntOrNull() != null }
 )
 private val isoMillisecondValid: (String) -> bool = function(
     command = { string ->
         val millisecond = string.substring(20, 23).toInt()
         millisecond in 0 until MillisPerSecond
-    },
-    pre = { string -> isoDtgContainsMilliseconds(string) }
+    }
 )
