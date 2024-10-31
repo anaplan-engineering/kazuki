@@ -113,14 +113,14 @@ val maxDate: (Set1<Date>) -> Date = function(
 )
 
 // TODO Review below functions
-val nextDateForYM: (Date) -> Date = function(
-    command = { date -> nextDateForDay(date, date.day) }
+val nextDateWithSameDayAsGivenDate: (Date) -> Date = function(
+    command = { date -> nextDateFromGivenYearMonthDayForGivenDay(date.year, date.month, date.day, date.day) }
 )
-val nextDateForDay: (Date, Day) -> Date = function(
-    command = { date, day -> nextYMDForDay(date.year, date.month, date.day, day) },
+val nextDateWithSameDayAsGivenDay: (Date, Day) -> Date = function(
+    command = { date, day -> nextDateFromGivenYearMonthDayForGivenDay(date.year, date.month, date.day, day) },
     pre = { _, day -> day <= MaxDaysPerMonth }
 )
-val nextYMDForDay: (Year, Month, Day, Day) -> Date by lazy {
+val nextDateFromGivenYearMonthDayForGivenDay: (Year, Month, Day, Day) -> Date by lazy {
     function(
         command = { dateYear, dateMonth, dateDay, targetDay ->
             val nextMonth = if (dateMonth == MonthsPerYear) 1 else dateMonth + 1
@@ -131,7 +131,7 @@ val nextYMDForDay: (Year, Month, Day, Day) -> Date by lazy {
             } else if (targetDay == 1) {
                 mk_Date(nextYear, nextMonth, targetDay)
             } else {
-                nextYMDForDay(nextYear, nextMonth, 1, targetDay)
+                nextDateFromGivenYearMonthDayForGivenDay(nextYear, nextMonth, 1, targetDay)
             }
         },
         pre = { dateYear, dateMonth, dateDay, _ -> dateDay <= daysInMonth(dateYear, dateMonth) },
@@ -139,14 +139,14 @@ val nextYMDForDay: (Year, Month, Day, Day) -> Date by lazy {
     )
 }
 
-val previousDateWithSameDay: (Date) -> Date = function(
-    command = { date -> previousDateWithDayMatchingDay(date, date.day) }
+val previousDateWithSameDayAsGivenDate: (Date) -> Date = function(
+    command = { date -> previousDateFromGivenYearMonthDayForGivenDay(date.year, date.month, date.day, date.day) }
 )
-val previousDateWithDayMatchingDay: (Date, Day) -> Date = function(
-    command = { date, day -> previousYMDForDay(date.year, date.month, date.day, day) },
+val previousDateWithSameDayAsGivenDay: (Date, Day) -> Date = function(
+    command = { date, day -> previousDateFromGivenYearMonthDayForGivenDay(date.year, date.month, date.day, day) },
     pre = { _, day -> day <= MaxDaysPerMonth }
 )
-val previousYMDForDay: (Year, Month, Day, Day) -> Date by lazy {
+val previousDateFromGivenYearMonthDayForGivenDay: (Year, Month, Day, Day) -> Date by lazy {
     function(
         command = { dateYear, dateMonth, dateDay, targetDay ->
             val prevMonth = if (dateMonth > 1) dateMonth - 1 else MonthsPerYear
@@ -157,7 +157,7 @@ val previousYMDForDay: (Year, Month, Day, Day) -> Date by lazy {
             } else if (targetDay <= daysInMonth(prevYear, prevMonth)) {
                 mk_Date(prevYear, prevMonth, targetDay)
             } else {
-                previousYMDForDay(prevYear, prevMonth, 1, targetDay)
+                previousDateFromGivenYearMonthDayForGivenDay(prevYear, prevMonth, 1, targetDay)
             }
         },
         pre = { dateYear, dateMonth, dateDay, _ -> dateDay <= daysInMonth(dateYear, dateMonth) },

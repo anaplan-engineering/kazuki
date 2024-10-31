@@ -2,6 +2,7 @@ package com.anaplan.engineering.kazuki.toolkit.ISO8601
 
 import com.anaplan.engineering.kazuki.core.bool
 import com.anaplan.engineering.kazuki.core.function
+import com.anaplan.engineering.kazuki.core.implies
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Date_Module.mk_Date
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Dtg_Module.mk_Dtg
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Time_Module.mk_Time
@@ -14,7 +15,7 @@ val strToDate: (String) -> Date = function(
 
         mk_Date(year, month, day)
     },
-    pre = { string -> isDate(string) }
+    pre = { string -> isStringIsoDate(string) }
 )
 
 val strToDtg: (String) -> Dtg = function(
@@ -30,98 +31,117 @@ val strToDtg: (String) -> Dtg = function(
 
         mk_Dtg(mk_Date(year, month, day), mk_Time(hour, minute, second, millisecond))
     },
-    pre = { string -> isDtg(string) }
+    pre = { string -> isStringIsoDtg(string) }
 )
 
-val isDate: (String) -> bool = function(
+val isStringIsoDate: (String) -> bool = function(
     command = { string ->
-        !(dateFormattedWrong(string) || dateNumberNull(string) || dateOutOfRange(string))
+        isoDateFormattedCorrectly(string) && isoDateNumbersNonNull(string) && isoDateNumbersValid(string)
     }
 )
 
-val isDtg: (String) -> bool = function(
+val isStringIsoDtg: (String) -> bool = function(
     command = { string ->
-        if (dtgFormattedWrong(string) || dtgNumberNull(string) || dateOutOfRange(string) || timeOutOfRange(string)) {
-            false
-        } else if (string.length == 23) { // So if it contains a millisecond value
-            !(millisecondFormattedWrong(string) || millisecondNumberNull(string) || millisecondOutOfRange(string))
-        } else {
-            true
+        isoDtgFormattedCorrectly(string) && isoDtgNumbersNonNull(string) && isoDtgTimeNumbersValid(string) &&
+                (isoDtgContainsMilliseconds(string)) implies {
+            isoDtgMillisecondFormattedCorrectly(string) &&
+                    isDtgMillisecondNumbersNotNull(string) &&
+                    isoMillisecondValid(string)
         }
     }
 )
 
-private val dateFormattedWrong: (String) -> bool = function(
-    command = { string -> string.length != 10 || string.elementAt(4) != '-' || string.elementAt(7) != '-' }
-)
-private val dtgFormattedWrong: (String) -> bool = function(
+
+private val isoDateFormattedCorrectly: (String) -> bool = function(
     command = { string ->
-        if (string.length != 19 && string.length != 23) {
-            true
-        } else if (string.elementAt(4) != '-' || string.elementAt(7) != '-' ||
-            string.elementAt(10) != 'T' || string.elementAt(13) != ':' || string.elementAt(16) != ':'
-        ) {
-            true
-        } else {
-            false
-        }
+        val correctIsoLength = string.length == 10
+        val isoSeparatorsPresent = if (correctIsoLength) {
+            string.elementAt(4) == '-' && string.elementAt(7) == '-'
+        } else false
+        correctIsoLength && isoSeparatorsPresent
     }
 )
-private val millisecondFormattedWrong: (String) -> bool = function(
-    command = { string -> string.elementAt(19) != '.' }
-)
-private val dateNumberNull: (String) -> bool = function(
+private val isoDtgFormattedCorrectly: (String) -> bool = function(
     command = { string ->
-        string.substring(0, 4).toIntOrNull() == null ||
-                string.substring(5, 7).toIntOrNull() == null ||
-                string.substring(8, 10).toIntOrNull() == null
+        val correctIsoLength = string.length == 19 || string.length == 23
+        val isoSeparatorsPresent = if (correctIsoLength) {
+            string.elementAt(4) == '-' && string.elementAt(7) == '-' &&
+                    string.elementAt(10) == 'T' && string.elementAt(13) == ':' && string.elementAt(16) == ':'
+        } else false
+        correctIsoLength && isoSeparatorsPresent
     }
 )
-private val dtgNumberNull: (String) -> bool = function(
+private val isoDateNumbersNonNull: (String) -> bool = function(
     command = { string ->
-        string.substring(0, 4).toIntOrNull() == null || string.substring(5, 7).toIntOrNull() == null ||
-                string.substring(8, 10).toIntOrNull() == null || string.substring(11, 13).toIntOrNull() == null ||
-                string.substring(14, 16).toIntOrNull() == null || string.substring(17, 19).toIntOrNull() == null
-    }
+        string.substring(0, 4).toIntOrNull() != null &&
+                string.substring(5, 7).toIntOrNull() != null &&
+                string.substring(8, 10).toIntOrNull() != null
+    },
+    pre = { string -> isoDateFormattedCorrectly(string) }
 )
-private val millisecondNumberNull: (String) -> bool = function(
-    command = { string -> string.substring(20, 23).toIntOrNull() == null }
-)
-private val dateOutOfRange: (String) -> bool = function(
+private val isoDtgNumbersNonNull: (String) -> bool = function(
     command = { string ->
+        string.substring(0, 4).toIntOrNull() != null && string.substring(5, 7).toIntOrNull() != null &&
+                string.substring(8, 10).toIntOrNull() != null && string.substring(11, 13).toIntOrNull() != null &&
+                string.substring(14, 16).toIntOrNull() != null && string.substring(17, 19).toIntOrNull() != null
+    },
+    pre = { string -> isoDtgFormattedCorrectly(string) }
+)
+private val isoDateNumbersValid: (String) -> bool = function(
+    command = { string ->
+
         val year = string.substring(0, 4).toInt()
         val month = string.substring(5, 7).toInt()
         val day = string.substring(8, 10).toInt()
-        if (year < FirstYear || year > LastYear) {
-            true
-        } else if (month < 1 || month > MonthsPerYear) {
-            true
-        } else if (day < 1 || day > daysInMonth(year, month)) {
-            true
-        } else {
-            false
-        }
-    }
+
+        val yearValid = year in FirstYear..LastYear
+        val monthValid = month in 1..MonthsPerYear
+        val dayValid = day in 1..daysInMonth(year, month)
+
+        yearValid && monthValid && dayValid
+    },
+    pre = { string -> isoDateFormattedCorrectly(string) && isoDateNumbersNonNull(string) }
 )
-private val timeOutOfRange: (String) -> bool = function(
+private val isoDtgTimeNumbersValid: (String) -> bool = function(
     command = { string ->
+        val year = string.substring(0, 4).toInt()
+        val yearValid =
+            year in FirstYear..LastYear
+        val month = string.substring(5, 7).toInt()
+        val monthValid = month in 1..MonthsPerYear
+        val day = string.substring(8, 10).toInt()
+        val dayValid = (yearValid && monthValid) implies { day in 1..daysInMonth(year, month) }
+
+        val dateValid = yearValid && monthValid && dayValid
+
         val hour = string.substring(11, 13).toInt()
+        val hourValid = hour in 0 until HoursPerDay
         val minute = string.substring(14, 16).toInt()
+        val minuteValid = minute in 0 until MinutesPerHour
         val second = string.substring(17, 19).toInt()
-        if (hour < 0 || hour > HoursPerDay) {
-            true
-        } else if (minute < 0 || minute > MinutesPerHour) {
-            true
-        } else if (second < 0 || second > SecondsPerMinute) {
-            true
-        } else {
-            false
-        }
-    }
+        val secondValid = second in 0 until SecondsPerMinute
+
+        val timeValid = hourValid && minuteValid && secondValid
+
+        dateValid && timeValid
+    },
+    pre = { string -> isoDtgFormattedCorrectly(string) && isoDtgNumbersNonNull(string) }
 )
-private val millisecondOutOfRange: (String) -> bool = function(
+private val isoDtgContainsMilliseconds: (String) -> bool = function(
+    command = { string -> string.length == 23 }
+)
+private val isoDtgMillisecondFormattedCorrectly: (String) -> bool = function(
+    command = { string -> string.elementAt(19) == '.' },
+    pre = { string -> isoDtgContainsMilliseconds(string) }
+)
+private val isDtgMillisecondNumbersNotNull: (String) -> bool = function(
+    command = { string -> string.substring(20, 23).toIntOrNull() != null },
+    pre = { string -> isoDtgContainsMilliseconds(string) }
+)
+private val isoMillisecondValid: (String) -> bool = function(
     command = { string ->
         val millisecond = string.substring(20, 23).toInt()
-        millisecond < 0 || millisecond > MillisPerSecond
-    }
+        millisecond in 0 until MillisPerSecond
+    },
+    pre = { string -> isoDtgContainsMilliseconds(string) }
 )

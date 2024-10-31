@@ -94,20 +94,15 @@ interface Duration : Comparable<Duration> {
             pre = { year -> duration < fromYear(year) }
         )
 
-        val toYear: (Year) -> nat by lazy {
+        val toYearsAfterGivenYear: (Year) -> nat by lazy {
             function(
                 command = { year ->
                     if (duration < fromYear(year)) {
                         0
                     } else {
-                        1 + duration.functions.subtractDuration(fromYear(year)).functions.toYear(year + 1)
+                        1 + duration.functions.subtractDuration(fromYear(year)).functions.toYearsAfterGivenYear(year + 1)
                     }
                 },
-//                    This post condition is slow and toYear() is recursive, so it repeats many times
-//                    post = { year, result ->
-//                        durationUpToYear(year + result).functions.subtract(durationUpToYear(year)) <= d &&
-//                                durationUpToYear(year + result + 1).functions.subtract(durationUpToYear(year)) > d
-//                    },
                 measure = { year -> LastYear - year },
             )
         }
@@ -122,7 +117,7 @@ interface Duration : Comparable<Duration> {
 
         val toDate: () -> Date = function(
             command = {
-                val year = duration.functions.toYear(FirstYear)
+                val year = duration.functions.toYearsAfterGivenYear(FirstYear)
                 val durationModYear = duration.functions.subtractDuration(durationUpToYear(year))
                 val month = durationModYear.functions.toMonthInYear(year) + 1
                 val day = (durationModYear.functions.subtractDuration(

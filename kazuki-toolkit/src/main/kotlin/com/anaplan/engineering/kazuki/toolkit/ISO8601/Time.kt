@@ -89,7 +89,8 @@ interface TimeInZone : Comparable<TimeInZone> {
             command = {
                 val utcTimeDuration = timeInZone.time.functions.toDuration()
                 val offsetDuration = timeInZone.offset.offsetDuration
-                when (timeInZone.offset.offsetDirection) {
+                val directionOfOffset = timeInZone.offset.offsetDirection
+                when (directionOfOffset) {
                     PlusOrMinus.Plus -> normaliseTimeInZonePlus(utcTimeDuration, offsetDuration)
                     PlusOrMinus.Minus -> normaliseTimeInZoneMinus(utcTimeDuration, offsetDuration)
                     PlusOrMinus.None -> mk_NormalisedTime(timeInZone.time, PlusOrMinus.None)

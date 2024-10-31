@@ -780,8 +780,8 @@ class ISO8601Test {
 
     @Test
     fun durationToYearTest() {
-        assertEquals(0, Duration.fromDays(0).functions.toYear(1990))
-        assertEquals(2, Duration.fromDays(800).functions.toYear(1990))
+        assertEquals(0, Duration.fromDays(0).functions.toYearsAfterGivenYear(1990))
+        assertEquals(2, Duration.fromDays(800).functions.toYearsAfterGivenYear(1990))
     }
 
     @Test
@@ -1184,27 +1184,27 @@ class ISO8601Test {
 
     @Test
     fun nextDateForYMTest() {
-        assertEquals(mk_Date(1990, 2, 1), nextDateForYM(mk_Date(1990, 1, 1)))
-        assertEquals(mk_Date(1990, 3, 31), nextDateForYM(mk_Date(1990, 1, 31)))
+        assertEquals(mk_Date(1990, 2, 1), nextDateWithSameDayAsGivenDate(mk_Date(1990, 1, 1)))
+        assertEquals(mk_Date(1990, 3, 31), nextDateWithSameDayAsGivenDate(mk_Date(1990, 1, 31)))
     }
 
     @Test
     fun nextDateForDayTest() {
-        assertEquals(mk_Date(0, 1, 4), nextDateForDay(mk_Date(0, 1, 1), 4))
-        assertEquals(mk_Date(1990, 3, 31), nextDateForDay(mk_Date(1990, 1, 31), 31))
-        assertEquals(mk_Date(1, 1, 14), nextDateForDay(mk_Date(0, 12, 15), 14))
+        assertEquals(mk_Date(0, 1, 4), nextDateWithSameDayAsGivenDay(mk_Date(0, 1, 1), 4))
+        assertEquals(mk_Date(1990, 3, 31), nextDateWithSameDayAsGivenDay(mk_Date(1990, 1, 31), 31))
+        assertEquals(mk_Date(1, 1, 14), nextDateWithSameDayAsGivenDay(mk_Date(0, 12, 15), 14))
     }
 
     @Test
     fun previousDateForYMTest() {
-        assertEquals(mk_Date(1990, 1, 3), previousDateWithSameDay(mk_Date(1990, 2, 3)))
-        assertEquals(mk_Date(1989, 12, 3), previousDateWithSameDay(mk_Date(1990, 1, 3)))
+        assertEquals(mk_Date(1990, 1, 3), previousDateWithSameDayAsGivenDate(mk_Date(1990, 2, 3)))
+        assertEquals(mk_Date(1989, 12, 3), previousDateWithSameDayAsGivenDate(mk_Date(1990, 1, 3)))
     }
 
     @Test
     fun previousDateForDayTest() {
-        assertEquals(mk_Date(1990, 1, 12), previousDateWithDayMatchingDay(mk_Date(1990, 1, 31), 12))
-        assertEquals(mk_Date(1989, 12, 12), previousDateWithDayMatchingDay(mk_Date(1990, 1, 4), 12))
+        assertEquals(mk_Date(1990, 1, 12), previousDateWithSameDayAsGivenDay(mk_Date(1990, 1, 31), 12))
+        assertEquals(mk_Date(1989, 12, 12), previousDateWithSameDayAsGivenDay(mk_Date(1990, 1, 4), 12))
     }
 
     @Test
@@ -1553,21 +1553,40 @@ class ISO8601Test {
 
     @Test
     fun isStringADateTest() {
-        assertEquals(true, isDate("2018-04-01"))
-        assertEquals(false, isDate("2018/04/01"))
+        assertEquals(true, isStringIsoDate("2018-04-01"))
+        assertEquals(false, isStringIsoDate("2018/04/01"))
+        assertEquals(false, isStringIsoDate("2018-04"))
+        assertEquals(false, isStringIsoDate("2018-02-30"))
+        assertEquals(false, isStringIsoDate("2018-AA-01"))
+        assertEquals(false, isStringIsoDate("20.8-04-01"))
+        assertEquals(false, isStringIsoDate("-128-04-01"))
     }
 
     @Test
     fun strToDateTest() {
         assertEquals(mk_Date(2018, 4, 1), strToDate("2018-04-01"))
+        assertFailsWith<PreconditionFailure> { strToDate("2018-04-011") }
     }
 
     @Test
     fun isStringADtgTest() {
-        assertEquals(true, isDtg("1990-01-01T00:00:00"))
-        assertEquals(true, isDtg("1990-01-01T00:00:00.000"))
-        assertEquals(false, isDtg("1990-01-01!00:00:00"))
-        assertEquals(false, isDtg("1990-01-01T00:00:00.FFF"))
+        assertEquals(true, isStringIsoDtg("1990-01-01T00:00:00"))
+        assertEquals(false, isStringIsoDtg("-990-01-01T00:00:00"))
+        assertEquals(false, isStringIsoDtg("1990-01-01!00:00:00"))
+        assertEquals(false, isStringIsoDtg("1990-01-01T"))
+        assertEquals(false, isStringIsoDtg("1990-G1-01T00:00:00"))
+        assertEquals(false, isStringIsoDtg("1990-13-01T00:00:00"))
+        assertEquals(false, isStringIsoDtg("1990-01-41T00:00:00"))
+        assertEquals(false, isStringIsoDtg("1990-01-01T24:00:00"))
+        assertEquals(false, isStringIsoDtg("1990-01-01T00:60:00"))
+        assertEquals(false, isStringIsoDtg("1990-01-01T00:00:60"))
+        assertEquals(false, isStringIsoDtg("19.0-01-01T00:00:00"))
+
+        assertEquals(true, isStringIsoDtg("1990-01-01T00:00:00.000"))
+        assertEquals(false, isStringIsoDtg("1990-01-01T00:00:00.FFF"))
+        assertEquals(false, isStringIsoDtg("1990-01-01T00:00:00-000"))
+        assertEquals(false, isStringIsoDtg("1990-01-01T00:00:00.-01"))
+
     }
 
     @Test
@@ -1580,6 +1599,7 @@ class ISO8601Test {
             mk_Dtg(mk_Date(1990, 1, 1), mk_Time(12, 23, 0, 1)),
             strToDtg("1990-01-01T12:23:00.001")
         )
+        assertFailsWith<PreconditionFailure> { strToDtg("1990-01-01T12:23:00.0011") }
     }
 }
 
