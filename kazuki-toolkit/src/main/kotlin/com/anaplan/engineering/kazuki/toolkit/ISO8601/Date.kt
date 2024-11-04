@@ -21,7 +21,7 @@ interface Date : Comparable<Date> {
 
     class DateFunctions(private val date: Date) {
 
-        val toDuration: () -> Duration = function<Duration>(
+        val toDurationSinceFirstDate: () -> Duration = function<Duration>(
             command = {
                 Duration.durationUpToYear(date.year).functions.addDuration(
                     Duration.durationUpToMonth(date.year, date.month).functions.addDuration(
@@ -32,14 +32,15 @@ interface Date : Comparable<Date> {
 //        post = { result -> result.functions.toDate() == date }
         )
 
-        val format: () -> String = function<String>(
-            command = { String.format("%04d-%02d-%02d", date.year, date.month, date.day) }
+        val format: () -> String = function(
+            command = { String.format("%04d-%02d-%02d", date.year, date.month, date.day) },
+            post = { result -> isStringIsoDate(result) }
         )
 
         val toDayOfWeek: () -> DayOfWeek = function<DayOfWeek>(
             command = {
                 DayOfWeek.entries.find {
-                    it.dayNumber == (date.functions.toDuration().functions.toDays().toInt() - 365) % 7
+                    it.dayNumber == (date.functions.toDurationSinceFirstDate().functions.toDays().toInt() - 365) % 7
                 }!!
             }
         )
@@ -65,17 +66,18 @@ interface Date : Comparable<Date> {
                 } else {
                     mk_Date(nextYear, nextMonth, date.day)
                 }
-            }
+            },
+            pre = { n -> date.year * 12 + date.month > n }
         )
 
         val addDays: (nat) -> Date = function(
-            command = { n -> date.functions.toDuration().functions.addDuration(Duration.fromDays(n.toLong())).functions.toDate() },
+            command = { n -> date.functions.toDurationSinceFirstDate().functions.addDuration(Duration.fromDays(n.toLong())).functions.toDateAfterFirstDate() },
             post = { n, result -> result.functions.subtractDays(n) == date }
         )
 
         val subtractDays: (nat) -> Date = function(
-            command = { n -> date.functions.toDuration().functions.subtractDuration(Duration.fromDays(n.toLong())).functions.toDate() },
-            pre = { n -> date.functions.toDuration() >= Duration.fromDays(n.toLong()) },
+            command = { n -> date.functions.toDurationSinceFirstDate().functions.subtractDuration(Duration.fromDays(n.toLong())).functions.toDateAfterFirstDate() },
+            pre = { n -> date.functions.toDurationSinceFirstDate().functions.toDays() >= n },
 //            post = {n, result -> result.functions.addDays(n) == date}
         )
 
@@ -85,11 +87,11 @@ interface Date : Comparable<Date> {
 @PrimitiveInvariant(name = "Year", base = nat::class)
 fun yearNotInRange(year: nat) = year in FirstYear..LastYear
 
-@PrimitiveInvariant(name = "Month", base = nat1::class)
-fun monthNotInRange(month: nat1) = month <= MonthsPerYear
+@PrimitiveInvariant(name = "Month", base = nat::class)
+fun monthNotInRange(month: nat) = month in 1..MonthsPerYear // nat1
 
 @PrimitiveInvariant(name = "Day", base = nat1::class)
-fun dayNotInRange(day: nat1) = day <= MaxDaysPerMonth
+fun dayNotInRange(day: nat1) = day in 1..MaxDaysPerMonth // nat1
 
 val isLeap: (Year) -> bool = function(
     command = { year -> year % 4 == 0 && ((year % 100 == 0) implies { year % 400 == 0 }) }
@@ -112,7 +114,6 @@ val maxDate: (Set1<Date>) -> Date = function(
     post = { dates, result -> result in dates && forall(dates) { result >= it } }
 )
 
-// TODO Review below functions
 val nextDateWithSameDayAsGivenDate: (Date) -> Date = function(
     command = { date -> nextDateFromGivenYearMonthDayForGivenDay(date.year, date.month, date.day, date.day) }
 )

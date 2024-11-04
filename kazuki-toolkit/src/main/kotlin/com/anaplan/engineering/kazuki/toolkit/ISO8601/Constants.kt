@@ -2,6 +2,7 @@ package com.anaplan.engineering.kazuki.toolkit.ISO8601
 
 import com.anaplan.engineering.kazuki.core.*
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Date_Module.mk_Date
+import com.anaplan.engineering.kazuki.toolkit.ISO8601.Dtg_Module.mk_Dtg
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Time_Module.mk_Time
 
 enum class PlusOrMinus {
@@ -40,19 +41,17 @@ const val FirstYear: nat = 0
 const val LastYear: nat = 9999
 
 val FirstDate: Date = mk_Date(FirstYear, 1, 1)
-
 val LastDate: Date = mk_Date(LastYear, 12, 31)
 
 val FirstTime: Time = mk_Time(0, 0, 0, 0)
+val LastTime: Time = mk_Time(HoursPerDay - 1, MinutesPerHour - 1, SecondsPerMinute - 1, MillisPerSecond - 1)
+
+val FirstDtg: Dtg = mk_Dtg(FirstDate, FirstTime)
+val LastDtg: Dtg = mk_Dtg(LastDate, LastTime)
 
 val NoDuration: Duration = Duration.fromMillis(0)
-
 val OneMillisecondDuration: Duration = Duration.fromMillis(1)
-
 val OneSecondDuration: Duration = Duration.fromSeconds(1)
-
 val OneMinuteDuration: Duration = Duration.fromMinutes(1)
-
 val OneHourDuration: Duration = Duration.fromHours(1)
-
 val OneDayDuration: Duration = Duration.fromDays(1)

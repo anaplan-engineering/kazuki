@@ -1,5 +1,6 @@
 package com.anaplan.engineering.kazuki.toolkit
 
+import com.anaplan.engineering.kazuki.core.InvariantFailure
 import com.anaplan.engineering.kazuki.core.PreconditionFailure
 import com.anaplan.engineering.kazuki.core.mk_Seq
 import com.anaplan.engineering.kazuki.core.mk_Set1
@@ -20,6 +21,49 @@ import kotlin.test.assertFailsWith
 class ISO8601Test {
 
     @Test
+    fun timeInvariantTest() {
+        assertFailsWith<InvariantFailure> { mk_Time(0, 0, 0, 1000) }
+        assertFailsWith<InvariantFailure> { mk_Time(0, 0, 60, 0) }
+        assertFailsWith<InvariantFailure> { mk_Time(0, 60, 0, 0) }
+        assertFailsWith<InvariantFailure> { mk_Time(24, 0, 0, 0) }
+    }
+
+    @Test
+    fun offsetInvariantTest() {
+        assertFailsWith<InvariantFailure> { mk_Offset(OneDayDuration, PlusOrMinus.Plus) }
+        assertFailsWith<InvariantFailure> { mk_Offset(OneSecondDuration, PlusOrMinus.Minus) }
+    }
+
+    @Test
+    fun dateInvariantTest() {
+        assertFailsWith<InvariantFailure> { mk_Date(-5, 1, 1) }
+//        assertFailsWith<InvariantFailure> { mk_Date(1, 13, 1) }
+        assertFailsWith<InvariantFailure> { mk_Date(1, 2, 29) }
+        assertFailsWith<InvariantFailure> { mk_Date(1, 2, 40) }
+    }
+
+    @Test
+    fun dtgInZoneInvariantTest() {
+        assertFailsWith<InvariantFailure> {
+            mk_DtgInZone(FirstDate, mk_TimeInZone(FirstTime, mk_Offset(Duration.fromHours(1), PlusOrMinus.Plus)))
+        }
+        assertFailsWith<InvariantFailure> {
+            mk_DtgInZone(LastDate, mk_TimeInZone(LastTime, mk_Offset(Duration.fromHours(1), PlusOrMinus.Minus)))
+        }
+    }
+
+    @Test
+    fun intervalInvariantTest() {
+        assertFailsWith<InvariantFailure> { mk_Interval(FirstDtg, FirstDtg) }
+        assertFailsWith<InvariantFailure> { mk_Interval(LastDtg, FirstDtg) }
+    }
+
+    @Test
+    fun durationInvariantTest() {
+        assertFailsWith<InvariantFailure> { mk_Duration(-1) }
+    }
+
+    @Test
     fun isLeapTest() {
         assertEquals(true, isLeap(1992))
         assertEquals(false, isLeap(1993))
@@ -29,6 +73,7 @@ class ISO8601Test {
     fun daysInMonthTest() {
         assertEquals(29, daysInMonth(1992, 2))
         assertEquals(28, daysInMonth(1991, 2))
+        assertEquals(30, daysInMonth(1997, 9))
     }
 
     @Test
@@ -164,34 +209,34 @@ class ISO8601Test {
     }
 
     @Test
-    fun dtgWithinTest() {
+    fun dtgWithinDurationOfDtgTest() {
         assertEquals(
             true,
-            mk_Dtg(mk_Date(1989, 1, 3), FirstTime).functions.within(
+            mk_Dtg(mk_Date(1989, 1, 3), FirstTime).functions.withinDurationOfDtg(
                 Duration.fromDays(3), mk_Dtg(mk_Date(1989, 1, 1), FirstTime)
             )
         )
         assertEquals(
             true,
-            mk_Dtg(mk_Date(1989, 12, 30), FirstTime).functions.within(
+            mk_Dtg(mk_Date(1989, 12, 30), FirstTime).functions.withinDurationOfDtg(
                 Duration.fromDays(3), mk_Dtg(mk_Date(1990, 1, 1), FirstTime)
             )
         )
         assertEquals(
             true,
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime).functions.within(
+            mk_Dtg(mk_Date(1990, 1, 1), FirstTime).functions.withinDurationOfDtg(
                 Duration.fromDays(0), mk_Dtg(mk_Date(1990, 1, 1), FirstTime)
             )
         )
         assertEquals(
             false,
-            mk_Dtg(mk_Date(1990, 1, 6), FirstTime).functions.within(
+            mk_Dtg(mk_Date(1990, 1, 6), FirstTime).functions.withinDurationOfDtg(
                 Duration.fromDays(3), mk_Dtg(mk_Date(1990, 1, 1), FirstTime)
             )
         )
         assertEquals(
             false,
-            mk_Dtg(mk_Date(1989, 12, 27), FirstTime).functions.within(
+            mk_Dtg(mk_Date(1989, 12, 27), FirstTime).functions.withinDurationOfDtg(
                 Duration.fromDays(3), mk_Dtg(mk_Date(1990, 1, 1), FirstTime)
             )
         )
@@ -453,10 +498,14 @@ class ISO8601Test {
     }
 
     @Test
-    fun dtgAddTest() {
+    fun dtgAddDurationTest() {
         assertEquals(
             mk_Dtg(mk_Date(1990, 1, 5), FirstTime),
             mk_Dtg(mk_Date(1990, 1, 2), FirstTime).functions.addDuration(Duration.fromDays(3))
+        )
+        assertEquals(
+            mk_Dtg(mk_Date(1990, 1, 2), FirstTime),
+            mk_Dtg(mk_Date(1990, 1, 2), FirstTime).functions.addDuration(Duration.fromDays(0))
         )
         assertEquals(
             mk_Dtg(mk_Date(1990, 1, 2), mk_Time(5, 20, 0, 0)),
@@ -481,10 +530,15 @@ class ISO8601Test {
     }
 
     @Test
-    fun dtgSubtractTest() {
+    fun dtgSubtractDurationTest() {
+        assertFailsWith<PreconditionFailure> { Duration.fromSeconds(1).functions.subtractDuration(Duration.fromSeconds(5)) }
         assertEquals(
             mk_Dtg(mk_Date(1990, 1, 2), FirstTime),
             mk_Dtg(mk_Date(1990, 1, 5), FirstTime).functions.subtractDuration(Duration.fromDays(3))
+        )
+        assertEquals(
+            mk_Dtg(mk_Date(1990, 1, 5), FirstTime),
+            mk_Dtg(mk_Date(1990, 1, 5), FirstTime).functions.subtractDuration(Duration.fromDays(0))
         )
         assertEquals(
             mk_Dtg(mk_Date(1990, 1, 5), mk_Time(3, 20, 0, 0)),
@@ -493,8 +547,13 @@ class ISO8601Test {
             )
         )
         assertEquals(
+            mk_Dtg(mk_Date(1990, 1, 5), mk_Time(2, 40, 0, 0)),
+            mk_Dtg(mk_Date(1990, 1, 5), mk_Time(6, 20, 0, 0)).functions.subtractDuration(
+                Duration.fromHours(3).functions.addDuration(Duration.fromMinutes(40))
+            )
+        )
+        assertEquals(
             mk_Dtg(mk_Date(1990, 1, 2), mk_Time(2, 20, 20, 5)),
-
             mk_Dtg(mk_Date(1990, 1, 6), mk_Time(5, 40, 30, 10)).functions.subtractDuration(
                 Duration.fromDays(4).functions.addDuration(
                     Duration.fromHours(3).functions.addDuration(
@@ -542,6 +601,13 @@ class ISO8601Test {
             )
         )
         assertEquals(
+            Duration.fromDays(0),
+            dtgDiff(
+                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 1, 1, 1)),
+                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 1, 1, 1))
+            )
+        )
+        assertEquals(
             Duration.fromDays(5).functions.addDuration(
                 Duration.fromHours(5).functions.addDuration(
                     Duration.fromMinutes(5).functions.addDuration(
@@ -577,6 +643,8 @@ class ISO8601Test {
     fun durationAddTest() {
         assertEquals(Duration.fromDays(5), Duration.fromDays(2).functions.addDuration(Duration.fromDays(3)))
         assertEquals(Duration.fromDays(2), Duration.fromDays(2).functions.addDuration(Duration.fromDays(0)))
+        assertEquals(Duration.fromDays(2), Duration.fromDays(0).functions.addDuration(Duration.fromDays(2)))
+        assertEquals(Duration.fromDays(3), Duration.fromDays(2).functions.addDuration(Duration.fromHours(24)))
     }
 
     @Test
@@ -590,6 +658,7 @@ class ISO8601Test {
     @Test
     fun durationMultiplyTest() {
         assertEquals(Duration.fromDays(10), Duration.fromDays(2).functions.multiply(5))
+        assertEquals(Duration.fromDays(0), Duration.fromDays(2).functions.multiply(0))
         assertEquals(Duration.fromHours(25), Duration.fromHours(5).functions.multiply(5))
         assertEquals(Duration.fromDays(5000000), Duration.fromDays(1000000).functions.multiply(5))
     }
@@ -599,11 +668,13 @@ class ISO8601Test {
         assertEquals(Duration.fromDays(2), Duration.fromDays(10).functions.divide(5))
         assertEquals(Duration.fromHours(12), Duration.fromDays(10).functions.divide(20))
         assertEquals(Duration.fromDays(1000000), Duration.fromDays(5000000).functions.divide(5))
+        assertFailsWith<PreconditionFailure> { Duration.fromDays(2).functions.divide(0) }
     }
 
     @Test
     fun durationDiffTest() {
         assertEquals(Duration.fromDays(5), durationDiff(Duration.fromDays(10), Duration.fromDays(5)))
+        assertEquals(Duration.fromDays(5), durationDiff(Duration.fromDays(0), Duration.fromDays(5)))
         assertEquals(Duration.fromDays(5), durationDiff(Duration.fromDays(5), Duration.fromDays(10)))
         assertEquals(Duration.fromDays(0), durationDiff(Duration.fromDays(10), Duration.fromDays(10)))
         assertEquals(Duration.fromDays(1999999995), durationDiff(Duration.fromDays(2000000000), Duration.fromDays(5)))
@@ -619,9 +690,9 @@ class ISO8601Test {
 
     @Test
     fun durationFromMillisTest() {
-        assertEquals(12, Duration.fromMillis(12).milliseconds)
-        assertEquals(0, Duration.fromMillis(0).milliseconds)
-        assertEquals(2000000000, Duration.fromMillis(2000000000).milliseconds)
+        assertEquals(mk_Duration(12), Duration.fromMillis(12))
+        assertEquals(mk_Duration(0), Duration.fromMillis(0))
+        assertEquals(mk_Duration(2000000000), Duration.fromMillis(2000000000))
     }
 
     @Test
@@ -633,9 +704,9 @@ class ISO8601Test {
 
     @Test
     fun durationFromSecondsTest() {
-        assertEquals(60000, Duration.fromSeconds(60).milliseconds)
-        assertEquals(0, Duration.fromSeconds(0).milliseconds)
-        assertEquals(2000000000, Duration.fromSeconds(2000000).milliseconds)
+        assertEquals(mk_Duration(60000), Duration.fromSeconds(60))
+        assertEquals(mk_Duration(0), Duration.fromSeconds(0))
+        assertEquals(mk_Duration(2000000000), Duration.fromSeconds(2000000))
     }
 
     @Test
@@ -647,9 +718,9 @@ class ISO8601Test {
 
     @Test
     fun durationFromMinutesTest() {
-        assertEquals(3600000, Duration.fromMinutes(60).milliseconds)
-        assertEquals(0, Duration.fromMinutes(0).milliseconds)
-        assertEquals(120000000000, Duration.fromMinutes(2000000).milliseconds)
+        assertEquals(mk_Duration(3600000), Duration.fromMinutes(60))
+        assertEquals(mk_Duration(0), Duration.fromMinutes(0))
+        assertEquals(mk_Duration(120000000000), Duration.fromMinutes(2000000))
     }
 
     @Test
@@ -657,6 +728,10 @@ class ISO8601Test {
         assertEquals(
             Duration.fromMillis(10),
             Duration.fromSeconds(100).functions.addDuration(Duration.fromMillis(10)).functions.modSeconds()
+        )
+        assertEquals(
+            Duration.fromHours(0),
+            Duration.fromSeconds(100).functions.modSeconds()
         )
         assertEquals(
             Duration.fromMillis(100),
@@ -674,6 +749,10 @@ class ISO8601Test {
         assertEquals(
             Duration.fromSeconds(10),
             Duration.fromMinutes(5).functions.addDuration(Duration.fromSeconds(10)).functions.modMinutes()
+        )
+        assertEquals(
+            Duration.fromDays(0),
+            Duration.fromMinutes(5).functions.modMinutes()
         )
         assertEquals(
             Duration.fromSeconds(10),
@@ -695,9 +774,9 @@ class ISO8601Test {
 
     @Test
     fun durationFromHoursTest() {
-        assertEquals(216000000, Duration.fromHours(60).milliseconds)
-        assertEquals(0, Duration.fromHours(0).milliseconds)
-        assertEquals(7200000000, Duration.fromHours(2000).milliseconds)
+        assertEquals(mk_Duration(216000000), Duration.fromHours(60))
+        assertEquals(mk_Duration(0), Duration.fromHours(0))
+        assertEquals(mk_Duration(7200000000), Duration.fromHours(2000))
     }
 
     @Test
@@ -711,8 +790,12 @@ class ISO8601Test {
             Duration.fromHours(0).functions.addDuration(Duration.fromSeconds(10)).functions.modHours()
         )
         assertEquals(
-            Duration.fromSeconds(10),
-            Duration.fromHours(2000000).functions.addDuration(Duration.fromSeconds(10)).functions.modHours()
+            Duration.fromSeconds(0),
+            Duration.fromHours(110).functions.modHours()
+        )
+        assertEquals(
+            Duration.fromSeconds(70),
+            Duration.fromHours(2000000).functions.addDuration(Duration.fromSeconds(70)).functions.modHours()
         )
     }
 
@@ -726,9 +809,9 @@ class ISO8601Test {
 
     @Test
     fun durationFromDaysTest() {
-        assertEquals(864000000, Duration.fromDays(10).milliseconds)
-        assertEquals(0, Duration.fromDays(0).milliseconds)
-        assertEquals(172800000000, Duration.fromDays(2000).milliseconds)
+        assertEquals(mk_Duration(864000000), Duration.fromDays(10))
+        assertEquals(mk_Duration(0), Duration.fromDays(0))
+        assertEquals(mk_Duration(172800000000), Duration.fromDays(2000))
     }
 
     @Test
@@ -748,8 +831,12 @@ class ISO8601Test {
             Duration.fromDays(5).functions.addDuration(Duration.fromSeconds(10)).functions.modDays()
         )
         assertEquals(
-            Duration.fromSeconds(10),
-            Duration.fromDays(0).functions.addDuration(Duration.fromSeconds(10)).functions.modDays()
+            Duration.fromMinutes(0),
+            Duration.fromDays(5).functions.modDays()
+        )
+        assertEquals(
+            Duration.fromHours(10),
+            Duration.fromDays(0).functions.addDuration(Duration.fromHours(10)).functions.modDays()
         )
         assertEquals(
             Duration.fromSeconds(10),
@@ -758,11 +845,12 @@ class ISO8601Test {
     }
 
     @Test
-    fun durationToMonthTest() {
-        assertEquals(0, Duration.fromDays(30).functions.toMonthInYear(1990))
-        assertEquals(1, Duration.fromDays(31).functions.toMonthInYear(1990))
-        assertEquals(0, Duration.fromDays(0).functions.toMonthInYear(1990))
-        assertEquals(11, Duration.fromDays(364).functions.toMonthInYear(1990))
+    fun durationToMonthsInGivenYearTest() {
+        assertEquals(0, Duration.fromDays(30).functions.toMonthsInGivenYear(1990))
+        assertEquals(1, Duration.fromDays(31).functions.toMonthsInGivenYear(1990))
+        assertEquals(0, Duration.fromDays(0).functions.toMonthsInGivenYear(1990))
+        assertEquals(11, Duration.fromDays(364).functions.toMonthsInGivenYear(1990))
+        assertFailsWith<PreconditionFailure> { Duration.fromDays(365).functions.toMonthsInGivenYear(1990) }
     }
 
     @Test
@@ -770,18 +858,30 @@ class ISO8601Test {
         assertEquals(Duration.fromDays(31), Duration.fromMonth(1990, 1))
         assertEquals(Duration.fromDays(28), Duration.fromMonth(1990, 2))
         assertEquals(Duration.fromDays(30), Duration.fromMonth(1990, 9))
+        assertEquals(Duration.fromDays(29), Duration.fromMonth(1992, 2))
     }
 
     @Test
     fun durationUpToMonthTest() {
         assertEquals(Duration.fromDays(90), Duration.durationUpToMonth(1990, 4))
         assertEquals(Duration.fromDays(59), Duration.durationUpToMonth(1990, 3))
+        assertEquals(Duration.fromDays(60), Duration.durationUpToMonth(1992, 3))
     }
 
     @Test
-    fun durationToYearTest() {
+    fun durationToYearsAfterGivenYearTest() {
         assertEquals(0, Duration.fromDays(0).functions.toYearsAfterGivenYear(1990))
         assertEquals(2, Duration.fromDays(800).functions.toYearsAfterGivenYear(1990))
+        assertEquals(0, Duration.fromDays(365).functions.toYearsAfterGivenYear(1992))
+        assertEquals(1, Duration.fromDays(365).functions.toYearsAfterGivenYear(1990))
+    }
+
+    @Test
+    fun durationToYearsAfterFirstYearTest() {
+        assertEquals(0, Duration.fromDays(0).functions.toYearsAfterFirstYear())
+        assertEquals(2, Duration.fromDays(800).functions.toYearsAfterFirstYear())
+        assertEquals(0, Duration.fromDays(365).functions.toYearsAfterFirstYear())
+        assertEquals(1, Duration.fromDays(366).functions.toYearsAfterFirstYear())
     }
 
     @Test
@@ -792,99 +892,168 @@ class ISO8601Test {
 
     @Test
     fun durationUpToYearTest() {
+        assertEquals(Duration.fromDays(1461), Duration.durationUpToYear(4))
         assertEquals(Duration.fromDays(366), Duration.durationUpToYear(1))
+        assertEquals(NoDuration, Duration.durationUpToYear(0))
     }
 
     @Test
-    fun durationToDtgTest() {
+    fun durationToDtgAfterFirstDtgTest() {
         assertEquals(
-            mk_Dtg(mk_Date(0, 1, 6), mk_Time(0, 0, 0, 0)),
-            Duration.fromDays(5).functions.toDtg()
+            mk_Dtg(mk_Date(0, 1, 6), FirstTime),
+            Duration.fromDays(5).functions.toDtgAfterFirstDtg()
         )
         assertEquals(
-            mk_Dtg(mk_Date(0, 1, 1), mk_Time(0, 0, 0, 0)),
-            Duration.fromDays(0).functions.toDtg()
+            mk_Dtg(mk_Date(0, 1, 1), FirstTime),
+            Duration.fromDays(0).functions.toDtgAfterFirstDtg()
         )
         assertEquals(
-            mk_Dtg(mk_Date(0, 2, 7), mk_Time(0, 0, 0, 0)),
-            Duration.fromDays(37).functions.toDtg()
+            mk_Dtg(mk_Date(0, 2, 7), FirstTime),
+            Duration.fromDays(37).functions.toDtgAfterFirstDtg()
+        )
+        assertEquals(
+            mk_Dtg(FirstDate, mk_Time(0, 0, 24, 0)),
+            Duration.fromSeconds(24).functions.toDtgAfterFirstDtg()
         )
     }
 
     @Test
-    fun dtgToDurationTest() {
+    fun durationToDtgAfterGivenDtgTest() {
+        assertEquals(
+            mk_Dtg(mk_Date(1000, 1, 6), FirstTime),
+            Duration.fromDays(5).functions.toDtgAfterGivenDtg(mk_Dtg(mk_Date(1000, 1, 1), FirstTime))
+        )
+        assertEquals(
+            mk_Dtg(mk_Date(100, 1, 1), FirstTime),
+            Duration.fromDays(0).functions.toDtgAfterGivenDtg(mk_Dtg(mk_Date(100, 1, 1), FirstTime))
+        )
+        assertEquals(
+            mk_Dtg(mk_Date(2000, 3, 31), FirstTime),
+            Duration.fromDays(90).functions.toDtgAfterGivenDtg(mk_Dtg(mk_Date(2000, 1, 1), FirstTime))
+        )
+        assertEquals(
+            mk_Dtg(mk_Date(2024, 12, 31), mk_Time(13, 0, 0, 0)),
+            Duration.fromHours(13).functions.toDtgAfterGivenDtg(mk_Dtg(mk_Date(2024, 12, 31), FirstTime))
+        )
+    }
+
+    @Test
+    fun dtgToDurationSinceFirstDtgTest() {
         assertEquals(
             Duration.fromDays(6),
-            mk_Dtg(mk_Date(0, 1, 7), mk_Time(0, 0, 0, 0)).functions.toDuration()
+            mk_Dtg(mk_Date(0, 1, 7), FirstTime).functions.toDurationSinceFirstDtg()
         )
         assertEquals(
             Duration.fromDays(0),
-            mk_Dtg(mk_Date(0, 1, 1), mk_Time(0, 0, 0, 0)).functions.toDuration()
+            mk_Dtg(mk_Date(0, 1, 1), FirstTime).functions.toDurationSinceFirstDtg()
         )
 
         assertEquals(
             Duration.fromDays(37),
-            mk_Dtg(mk_Date(0, 2, 7), mk_Time(0, 0, 0, 0)).functions.toDuration()
+            mk_Dtg(mk_Date(0, 2, 7), FirstTime).functions.toDurationSinceFirstDtg()
         )
     }
 
     @Test
-    fun durationToDateTest() {
-        assertEquals(mk_Date(0, 1, 4), Duration.fromDays(3).functions.toDate())
-        assertEquals(mk_Date(0, 1, 1), Duration.fromDays(0).functions.toDate())
+    fun durationToDateAfterFirstDateTest() {
+        assertEquals(mk_Date(0, 1, 4), Duration.fromDays(3).functions.toDateAfterFirstDate())
+        assertEquals(mk_Date(0, 1, 1), Duration.fromDays(0).functions.toDateAfterFirstDate())
     }
 
     @Test
-    fun durationFromDateTest() {
-        assertEquals(Duration.fromDays(3), mk_Date(0, 1, 4).functions.toDuration())
-        assertEquals(Duration.fromDays(0), mk_Date(0, 1, 1).functions.toDuration())
+    fun durationToDateAfterGivenDateTest() {
+        assertEquals(
+            mk_Date(1110, 10, 4),
+            Duration.fromDays(3).functions.toDateAfterGivenDate(mk_Date(1110, 10, 1))
+        )
+        assertEquals(
+            mk_Date(1997, 9, 16),
+            Duration.fromDays(0).functions.toDateAfterGivenDate(mk_Date(1997, 9, 16))
+        )
     }
 
     @Test
-    fun durationToTimeTest() {
-        assertEquals(mk_Time(3, 0, 0, 0), Duration.fromHours(3).functions.toTime())
-        assertEquals(mk_Time(0, 0, 0, 0), Duration.fromHours(0).functions.toTime())
+    fun dateToDurationSinceFirstDateTest() {
+        assertEquals(Duration.fromDays(3), mk_Date(0, 1, 4).functions.toDurationSinceFirstDate())
+        assertEquals(Duration.fromDays(0), mk_Date(0, 1, 1).functions.toDurationSinceFirstDate())
     }
 
     @Test
-    fun durationFromTimeTest() {
-        assertEquals(Duration.fromHours(4), mk_Time(4, 0, 0, 0).functions.toDuration())
-        assertEquals(Duration.fromHours(0), mk_Time(0, 0, 0, 0).functions.toDuration())
+    fun durationToTimeAfterFirstTimeTest() {
+        assertEquals(mk_Time(3, 0, 0, 0), Duration.fromHours(3).functions.toTimeAfterFirstTime())
+        assertEquals(FirstTime, Duration.fromHours(0).functions.toTimeAfterFirstTime())
+        assertFailsWith<PreconditionFailure> { Duration.fromHours(25).functions.toTimeAfterFirstTime() }
     }
 
     @Test
-    fun durationFromTimeInZoneTest() {
+    fun durationToTimeAfterGivenTimeTest() {
+        assertEquals(
+            mk_Time(3, 0, 0, 5),
+            Duration.fromHours(1).functions.toTimeAfterGivenTime(mk_Time(2, 0, 0, 5))
+        )
+        assertEquals(
+            mk_Time(10, 10, 10, 10),
+            Duration.fromHours(0).functions.toTimeAfterGivenTime(mk_Time(10, 10, 10, 10))
+        )
+    }
+
+    @Test
+    fun timeToDurationSinceFirstTimeTest() {
+        assertEquals(Duration.fromHours(4), mk_Time(4, 0, 0, 0).functions.toDurationSinceFirstTime())
+        assertEquals(Duration.fromHours(0), mk_Time(0, 0, 0, 0).functions.toDurationSinceFirstTime())
+    }
+
+    @Test
+    fun timeInZoneToDurationSinceFirstTimeTest() {
         assertEquals(
             Duration.fromHours(4),
             mk_TimeInZone(
                 mk_Time(3, 0, 0, 0),
                 mk_Offset(Duration.fromHours(1), PlusOrMinus.Minus)
-            ).functions.toDuration()
+            ).functions.toNormalisedDurationSinceFirstTime()
         )
         assertEquals(
             Duration.fromHours(2),
             mk_TimeInZone(
                 mk_Time(3, 0, 0, 0),
                 mk_Offset(Duration.fromHours(1), PlusOrMinus.Plus)
-            ).functions.toDuration()
+            ).functions.toNormalisedDurationSinceFirstTime()
+        )
+        assertEquals(
+            Duration.fromHours(1),
+            mk_TimeInZone(
+                mk_Time(23, 0, 0, 0),
+                mk_Offset(Duration.fromHours(2), PlusOrMinus.Minus)
+            ).functions.toNormalisedDurationSinceFirstTime()
+        )
+        assertEquals(
+            Duration.fromHours(23),
+            mk_TimeInZone(
+                mk_Time(1, 0, 0, 0),
+                mk_Offset(Duration.fromHours(2), PlusOrMinus.Plus)
+            ).functions.toNormalisedDurationSinceFirstTime()
         )
         assertEquals(
             Duration.fromHours(0),
             mk_TimeInZone(
-                mk_Time(0, 0, 0, 0),
+                FirstTime,
                 mk_Offset(Duration.fromHours(0), PlusOrMinus.None)
-            ).functions.toDuration()
+            ).functions.toNormalisedDurationSinceFirstTime()
         )
     }
 
     @Test
-    fun durationFromIntervalTest() {
+    fun intervalDurationTest() {
         assertEquals(
             Duration.fromDays(5),
             mk_Interval(
                 mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
                 mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
             ).functions.intervalDuration()
+        )
+        assertEquals(
+            Duration.fromMillis(1),
+            FirstDtg.functions.instant().functions.intervalDuration()
         )
         assertEquals(
             Duration.fromHours(2),
@@ -897,6 +1066,9 @@ class ISO8601Test {
 
     @Test
     fun dtgFinestGranularityTest() {
+        assertFailsWith<PreconditionFailure> {
+            FirstDtg.functions.finestGranularity(Duration.fromDays(0))
+        }
         assertEquals(
             true,
             mk_Dtg(mk_Date(0, 1, 1), mk_Time(10, 0, 0, 0)).functions.finestGranularity(
@@ -913,6 +1085,9 @@ class ISO8601Test {
 
     @Test
     fun intervalFinestGranularityTest() {
+        assertFailsWith<PreconditionFailure> {
+            FirstDtg.functions.instant().functions.finestGranularity(Duration.fromDays(0))
+        }
         assertEquals(
             true,
             mk_Interval(
@@ -1176,33 +1351,33 @@ class ISO8601Test {
         assertEquals(
             mk_Interval(
                 mk_Dtg(mk_Date(1990, 1, 1), mk_Time(23, 59, 59, 999)),
-                mk_Dtg(mk_Date(1990, 1, 2), mk_Time(0, 0, 0, 0))
+                mk_Dtg(mk_Date(1990, 1, 2), FirstTime)
             ),
             mk_Dtg(mk_Date(1990, 1, 1), mk_Time(23, 59, 59, 999)).functions.instant()
         )
     }
 
     @Test
-    fun nextDateForYMTest() {
+    fun nextDateWithSameDayAsGivenDateTest() {
         assertEquals(mk_Date(1990, 2, 1), nextDateWithSameDayAsGivenDate(mk_Date(1990, 1, 1)))
         assertEquals(mk_Date(1990, 3, 31), nextDateWithSameDayAsGivenDate(mk_Date(1990, 1, 31)))
     }
 
     @Test
-    fun nextDateForDayTest() {
+    fun nextDateWithSameDayAsGivenDayTest() {
         assertEquals(mk_Date(0, 1, 4), nextDateWithSameDayAsGivenDay(mk_Date(0, 1, 1), 4))
         assertEquals(mk_Date(1990, 3, 31), nextDateWithSameDayAsGivenDay(mk_Date(1990, 1, 31), 31))
         assertEquals(mk_Date(1, 1, 14), nextDateWithSameDayAsGivenDay(mk_Date(0, 12, 15), 14))
     }
 
     @Test
-    fun previousDateForYMTest() {
+    fun previousDateWithSameDayAsGivenDateTest() {
         assertEquals(mk_Date(1990, 1, 3), previousDateWithSameDayAsGivenDate(mk_Date(1990, 2, 3)))
         assertEquals(mk_Date(1989, 12, 3), previousDateWithSameDayAsGivenDate(mk_Date(1990, 1, 3)))
     }
 
     @Test
-    fun previousDateForDayTest() {
+    fun previousDateWithSameDayAsGivenDayTest() {
         assertEquals(mk_Date(1990, 1, 12), previousDateWithSameDayAsGivenDay(mk_Date(1990, 1, 31), 12))
         assertEquals(mk_Date(1989, 12, 12), previousDateWithSameDayAsGivenDay(mk_Date(1990, 1, 4), 12))
     }
@@ -1232,7 +1407,7 @@ class ISO8601Test {
             mk_DtgInZone(
                 mk_Date(1990, 1, 1),
                 mk_TimeInZone(
-                    mk_Time(5, 0, 0, 0), mk_Offset(Duration.fromHours(0), PlusOrMinus.Minus)
+                    mk_Time(5, 0, 0, 0), mk_Offset(Duration.fromHours(0), PlusOrMinus.None)
                 )
             ).functions.normalise()
         )
@@ -1255,7 +1430,7 @@ class ISO8601Test {
         assertEquals(
             mk_NormalisedTime(mk_Time(23, 23, 12, 0), PlusOrMinus.None),
             mk_TimeInZone(
-                mk_Time(23, 23, 12, 0), mk_Offset(Duration.fromHours(0), PlusOrMinus.Minus)
+                mk_Time(23, 23, 12, 0), mk_Offset(Duration.fromHours(0), PlusOrMinus.None)
             ).functions.normaliseTimeInZone()
         )
         assertEquals(
@@ -1280,12 +1455,16 @@ class ISO8601Test {
             mk_Dtg(mk_Date(1990, 1, 1), mk_Time(3, 0, 0, 0)).functions.format()
         )
         assertEquals(
-            "1990-01-01T03:00:00",
-            mk_Dtg(mk_Date(1990, 1, 1), mk_Time(3, 0, 0, 0)).functions.format()
+            "1990-10-11T03:00:01",
+            mk_Dtg(mk_Date(1990, 10, 11), mk_Time(3, 0, 1, 0)).functions.format()
         )
         assertEquals(
             "0000-01-01T03:00:00",
             mk_Dtg(mk_Date(0, 1, 1), mk_Time(3, 0, 0, 0)).functions.format()
+        )
+        assertEquals(
+            "9999-01-01T03:00:00.010",
+            mk_Dtg(mk_Date(9999, 1, 1), mk_Time(3, 0, 0, 10)).functions.format()
         )
     }
 
@@ -1356,6 +1535,13 @@ class ISO8601Test {
     }
 
     @Test
+    fun formatOffsetTest() {
+        assertEquals("+02:00", mk_Offset(Duration.fromHours(2), PlusOrMinus.Plus).functions.format())
+        assertEquals("-03:00", mk_Offset(Duration.fromHours(3), PlusOrMinus.Minus).functions.format())
+        assertEquals("00:00", mk_Offset(NoDuration, PlusOrMinus.None).functions.format())
+    }
+
+    @Test
     fun formatIntervalTest() {
         assertEquals(
             "1990-01-01T00:00:00/1990-01-06T00:00:00",
@@ -1365,10 +1551,10 @@ class ISO8601Test {
             ).functions.format()
         )
         assertEquals(
-            "1990-01-01T00:00:00/1990-01-06T05:00:00",
+            "1990-10-10T00:00:00/1991-01-06T05:00:00",
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(0, 0, 0, 0)),
-                mk_Dtg(mk_Date(1990, 1, 6), mk_Time(5, 0, 0, 0))
+                mk_Dtg(mk_Date(1990, 10, 10), mk_Time(0, 0, 0, 0)),
+                mk_Dtg(mk_Date(1991, 1, 6), mk_Time(5, 0, 0, 0))
             ).functions.format()
         )
     }
@@ -1401,6 +1587,7 @@ class ISO8601Test {
 
     @Test
     fun dtgSubtractMonthsTest() {
+        assertFailsWith<PreconditionFailure> { FirstDtg.functions.subtractMonths(1) }
         assertEquals(
             mk_Dtg(mk_Date(1990, 2, 2), FirstTime),
             mk_Dtg(mk_Date(1990, 4, 2), FirstTime).functions.subtractMonths(2)
@@ -1421,6 +1608,9 @@ class ISO8601Test {
             mk_Date(1990, 3, 31), mk_Date(1990, 1, 31).functions.addMonths(2)
         )
         assertEquals(
+            mk_Date(1990, 1, 31), mk_Date(1990, 1, 31).functions.addMonths(0)
+        )
+        assertEquals(
             mk_Date(1990, 3, 28), mk_Date(1990, 1, 31).functions.addMonths(1).functions.addMonths(1)
         )
         assertEquals(
@@ -1430,6 +1620,10 @@ class ISO8601Test {
 
     @Test
     fun dateSubtractMonthsTest() {
+        assertFailsWith<PreconditionFailure> { FirstDate.functions.subtractMonths(1) }
+        assertEquals(
+            mk_Date(1990, 4, 2), mk_Date(1990, 4, 2).functions.subtractMonths(0)
+        )
         assertEquals(
             mk_Date(1990, 2, 2), mk_Date(1990, 4, 2).functions.subtractMonths(2)
         )
@@ -1444,12 +1638,16 @@ class ISO8601Test {
     @Test
     fun dtgAddDays() {
         assertEquals(
+            mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
+            mk_Dtg(mk_Date(1990, 1, 1), FirstTime).functions.addDays(0)
+        )
+        assertEquals(
             mk_Dtg(mk_Date(1990, 1, 10), FirstTime),
             mk_Dtg(mk_Date(1990, 1, 1), FirstTime).functions.addDays(9)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 2, 1), FirstTime),
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime).functions.addDays(31)
+            mk_Dtg(mk_Date(1990, 2, 1), LastTime),
+            mk_Dtg(mk_Date(1990, 1, 1), LastTime).functions.addDays(31)
         )
         assertEquals(
             mk_Dtg(mk_Date(1990, 2, 2), FirstTime),
@@ -1467,6 +1665,11 @@ class ISO8601Test {
 
     @Test
     fun dtgSubtractDays() {
+        assertFailsWith<PreconditionFailure> { FirstDtg.functions.subtractDays(5) }
+        assertEquals(
+            mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
+            mk_Dtg(mk_Date(1990, 1, 1), FirstTime).functions.subtractDays(0)
+        )
         assertEquals(
             mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
             mk_Dtg(mk_Date(1990, 1, 10), FirstTime).functions.subtractDays(9)
@@ -1491,6 +1694,7 @@ class ISO8601Test {
 
     @Test
     fun dateAddDays() {
+        assertEquals(mk_Date(1990, 1, 1), mk_Date(1990, 1, 1).functions.addDays(0))
         assertEquals(mk_Date(1990, 1, 10), mk_Date(1990, 1, 1).functions.addDays(9))
         assertEquals(mk_Date(1990, 2, 1), mk_Date(1990, 1, 1).functions.addDays(31))
         assertEquals(mk_Date(1990, 2, 2), mk_Date(1990, 1, 1).functions.addDays(32))
@@ -1500,6 +1704,8 @@ class ISO8601Test {
 
     @Test
     fun dateSubtractDays() {
+        assertFailsWith<PreconditionFailure> { FirstDate.functions.subtractDays(5) }
+        assertEquals(mk_Date(1990, 1, 1), mk_Date(1990, 1, 1).functions.subtractDays(0))
         assertEquals(mk_Date(1990, 1, 1), mk_Date(1990, 1, 10).functions.subtractDays(9))
         assertEquals(mk_Date(1990, 1, 1), mk_Date(1990, 2, 1).functions.subtractDays(31))
         assertEquals(mk_Date(1990, 1, 1), mk_Date(1990, 2, 2).functions.subtractDays(32))
@@ -1508,7 +1714,8 @@ class ISO8601Test {
     }
 
     @Test
-    fun monthsBetweenDatesTest() {
+    fun monthsBetweenDtgsTest() {
+        assertFailsWith<PreconditionFailure> { monthsBetweenDtgs(LastDtg, FirstDtg) }
         assertEquals(
             0,
             monthsBetweenDtgs(
@@ -1530,23 +1737,27 @@ class ISO8601Test {
     }
 
     @Test
-    fun yearsBetweenDatesTest() {
+    fun yearsBetweenDtgsTest() {
+        assertFailsWith<PreconditionFailure> { yearsBetweenDtgs(LastDtg, FirstDtg) }
         assertEquals(
             0,
             yearsBetweenDtgs(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime), mk_Dtg(mk_Date(1990, 1, 1), FirstTime)
+                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
+                mk_Dtg(mk_Date(1990, 1, 1), FirstTime)
             )
         )
         assertEquals(
             0,
             yearsBetweenDtgs(
-                mk_Dtg(mk_Date(1990, 1, 12), FirstTime), mk_Dtg(mk_Date(1990, 12, 1), FirstTime)
+                mk_Dtg(mk_Date(1990, 1, 12), FirstTime),
+                mk_Dtg(mk_Date(1990, 12, 1), FirstTime)
             )
         )
         assertEquals(
             2,
             yearsBetweenDtgs(
-                mk_Dtg(mk_Date(1990, 1, 12), FirstTime), mk_Dtg(mk_Date(1992, 3, 13), FirstTime)
+                mk_Dtg(mk_Date(1990, 1, 12), FirstTime),
+                mk_Dtg(mk_Date(1992, 3, 13), FirstTime)
             )
         )
     }
@@ -1566,9 +1777,9 @@ class ISO8601Test {
     }
 
     @Test
-    fun strToDateTest() {
-        assertEquals(mk_Date(2018, 4, 1), strToDate("2018-04-01"))
-        assertFailsWith<PreconditionFailure> { strToDate("2018-04-011") }
+    fun stringToDateTest() {
+        assertEquals(mk_Date(2018, 4, 1), stringToDate("2018-04-01"))
+        assertFailsWith<PreconditionFailure> { stringToDate("2018-04-41") }
     }
 
     @Test
@@ -1593,16 +1804,16 @@ class ISO8601Test {
     }
 
     @Test
-    fun strToDtgTest() {
+    fun stringToDtgTest() {
         assertEquals(
             mk_Dtg(mk_Date(1990, 1, 1), mk_Time(12, 23, 0, 0)),
-            strToDtg("1990-01-01T12:23:00")
+            stringToDtg("1990-01-01T12:23:00")
         )
         assertEquals(
             mk_Dtg(mk_Date(1990, 1, 1), mk_Time(12, 23, 0, 1)),
-            strToDtg("1990-01-01T12:23:00.001")
+            stringToDtg("1990-01-01T12:23:00.001")
         )
-        assertFailsWith<PreconditionFailure> { strToDtg("1990-01-01T12:23:00.0011") }
+        assertFailsWith<PreconditionFailure> { stringToDtg("1990-01-01T25:24:00.001") }
     }
 }
 

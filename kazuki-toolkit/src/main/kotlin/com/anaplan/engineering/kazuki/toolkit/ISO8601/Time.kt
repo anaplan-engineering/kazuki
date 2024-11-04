@@ -20,7 +20,7 @@ interface Time : Comparable<Time> {
     val functions: TimeFunctions
 
     class TimeFunctions(private val time: Time) {
-        val toDuration: () -> Duration = function<Duration>(
+        val toDurationSinceFirstTime: () -> Duration = function<Duration>(
             command = {
                 Duration.fromHours(time.hour.toLong()).functions.addDuration(
                     Duration.fromMinutes(time.minute.toLong()).functions.addDuration(
@@ -56,18 +56,18 @@ interface TimeInZone : Comparable<TimeInZone> {
 
     class TimeInZoneFunctions(private val timeInZone: TimeInZone) {
 
-        val toDuration: () -> Duration = function(
-            command = { timeInZone.functions.normaliseTimeInZone().time.functions.toDuration() },
-            post = { result -> result.functions.toTime() == timeInZone.normalisedTime }
+        val toNormalisedDurationSinceFirstTime: () -> Duration = function(
+            command = { timeInZone.functions.normaliseTimeInZone().time.functions.toDurationSinceFirstTime() },
+            post = { result -> result.functions.toTimeAfterFirstTime() == timeInZone.normalisedTime }
         )
 
         private val normaliseTimeInZonePlus: (Duration, Duration) -> NormalisedTime = function(
             command = { utcTimeDuration, offsetDuration ->
                 if (offsetDuration <= utcTimeDuration) mk_NormalisedTime(
-                    utcTimeDuration.functions.subtractDuration(offsetDuration).functions.toTime(),
+                    utcTimeDuration.functions.subtractDuration(offsetDuration).functions.toTimeAfterFirstTime(),
                     PlusOrMinus.None
                 ) else mk_NormalisedTime(
-                    utcTimeDuration.functions.addDuration(OneDayDuration).functions.subtractDuration(offsetDuration).functions.toTime(),
+                    utcTimeDuration.functions.addDuration(OneDayDuration).functions.subtractDuration(offsetDuration).functions.toTimeAfterFirstTime(),
                     PlusOrMinus.Plus
                 )
             }
@@ -76,10 +76,10 @@ interface TimeInZone : Comparable<TimeInZone> {
             command = { utcTimeDuration, offsetDuration ->
                 val adjusted = utcTimeDuration.functions.addDuration(offsetDuration)
                 if (adjusted < OneDayDuration) mk_NormalisedTime(
-                    adjusted.functions.toTime(),
+                    adjusted.functions.toTimeAfterFirstTime(),
                     PlusOrMinus.None
                 ) else mk_NormalisedTime(
-                    adjusted.functions.subtractDuration(OneDayDuration).functions.toTime(),
+                    adjusted.functions.subtractDuration(OneDayDuration).functions.toTimeAfterFirstTime(),
                     PlusOrMinus.Minus
                 )
             }
@@ -87,7 +87,7 @@ interface TimeInZone : Comparable<TimeInZone> {
 
         val normaliseTimeInZone: () -> NormalisedTime = function<NormalisedTime>(
             command = {
-                val utcTimeDuration = timeInZone.time.functions.toDuration()
+                val utcTimeDuration = timeInZone.time.functions.toDurationSinceFirstTime()
                 val offsetDuration = timeInZone.offset.offsetDuration
                 val directionOfOffset = timeInZone.offset.offsetDirection
                 when (directionOfOffset) {
@@ -100,7 +100,7 @@ interface TimeInZone : Comparable<TimeInZone> {
         val format: () -> String = function<String>(
             command = {
                 timeInZone.time.functions.format() +
-                        if (timeInZone.offset.offsetDuration == NoDuration) "Z" else timeInZone.offset.functions.format()
+                        if (timeInZone.offset.offsetDuration != NoDuration) timeInZone.offset.functions.format() else "Z"
             }
         )
     }
@@ -121,7 +121,7 @@ interface Offset {
     fun offsetMoreThanDay() = offsetDuration < OneDayDuration
 
     @Invariant
-    fun offsetZero() = offsetDuration.functions.modMinutes() == NoDuration
+    fun offsetGranularityTooFine() = offsetDuration.functions.modMinutes() == NoDuration
 
     @FunctionProvider(OffsetFunctions::class)
     val functions: OffsetFunctions
@@ -130,7 +130,7 @@ interface Offset {
 
         val format: () -> String = function<String>(
             command = {
-                val hourMinute = offset.offsetDuration.functions.toTime()
+                val hourMinute = offset.offsetDuration.functions.toTimeAfterFirstTime()
                 val sign = when (offset.offsetDirection) {
                     PlusOrMinus.Plus -> "+"; PlusOrMinus.Minus -> "-"; PlusOrMinus.None -> ""
                 }

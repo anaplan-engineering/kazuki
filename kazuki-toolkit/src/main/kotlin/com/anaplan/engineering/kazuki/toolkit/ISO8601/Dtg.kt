@@ -18,21 +18,21 @@ interface Dtg : Comparable<Dtg> {
     class DtgFunctions(private val dtg: Dtg) {
 
         val addDuration: (Duration) -> Dtg = function(
-            command = { duration -> dtg.functions.toDuration().functions.addDuration(duration).functions.toDtg() },
+            command = { duration -> dtg.functions.toDurationSinceFirstDtg().functions.addDuration(duration).functions.toDtgAfterFirstDtg() },
             post = { duration, result -> result.functions.subtractDuration(duration) == dtg }
         )
 
         val subtractDuration: (Duration) -> Dtg = function(
-            command = { duration -> dtg.functions.toDuration().functions.subtractDuration(duration).functions.toDtg() },
-            pre = { duration -> duration <= dtg.functions.toDuration() },
+            command = { duration -> dtg.functions.toDurationSinceFirstDtg().functions.subtractDuration(duration).functions.toDtgAfterFirstDtg() },
+            pre = { duration -> duration <= dtg.functions.toDurationSinceFirstDtg() },
 //        post = { duration, result -> result.functions.addDuration(duration) == dtg }
         )
 
-        val toDuration: () -> Duration = function<Duration>(
-            command = { dtg.date.functions.toDuration().functions.addDuration(dtg.time.functions.toDuration()) },
+        val toDurationSinceFirstDtg: () -> Duration = function<Duration>(
+            command = { dtg.date.functions.toDurationSinceFirstDate().functions.addDuration(dtg.time.functions.toDurationSinceFirstTime()) },
         )
 
-        val within: (Duration, Dtg) -> bool = function(
+        val withinDurationOfDtg: (Duration, Dtg) -> bool = function(
             command = { duration, targetDtg ->
                 if (duration.milliseconds == 0L) {
                     dtg == targetDtg
@@ -65,8 +65,8 @@ interface Dtg : Comparable<Dtg> {
         )
 
         val finestGranularity: (Duration) -> bool = function(
-            command = { duration -> dtg.functions.toDuration().milliseconds % duration.milliseconds == 0L },
-            pre = { duration -> duration != NoDuration }
+            command = { granularity -> dtg.functions.toDurationSinceFirstDtg().milliseconds % granularity.milliseconds == 0L },
+            pre = { granularity -> granularity != NoDuration }
         )
 
         val instant: () -> Interval = function(
@@ -74,8 +74,9 @@ interface Dtg : Comparable<Dtg> {
             post = { result -> result.functions.contains(dtg) }
         )
 
-        val format: () -> String = function<String>(
-            command = { dtg.date.functions.format() + "T" + dtg.time.functions.format() }
+        val format: () -> String = function(
+            command = { dtg.date.functions.format() + "T" + dtg.time.functions.format() },
+            post = { result -> isStringIsoDtg(result) }
         )
 
         val addMonths: (nat) -> Dtg = function(
@@ -88,6 +89,7 @@ interface Dtg : Comparable<Dtg> {
             command = { n ->
                 mk_Dtg(dtg.date.functions.subtractMonths(n), dtg.time)
             },
+            pre = { n -> dtg.date.year * 12 + dtg.date.month > n }
         )
 
         val addDays: (nat) -> Dtg = function(
@@ -96,7 +98,7 @@ interface Dtg : Comparable<Dtg> {
         )
         val subtractDays: (nat) -> Dtg = function(
             command = { n -> mk_Dtg(dtg.date.functions.subtractDays(n), dtg.time) },
-            pre = { n -> dtg.functions.toDuration() >= Duration.fromDays(n.toLong()) },
+            pre = { n -> dtg.functions.toDurationSinceFirstDtg().functions.toDays() >= n },
 //            post = { n, result -> result.functions.addDays(n) == dtg }
 
         )
@@ -176,10 +178,11 @@ interface Interval {
             post = { result -> interval.begins.functions.addDuration(result) == interval.ends }
         )
         val finestGranularity: (Duration) -> bool = function(
-            command = { duration ->
-                interval.begins.functions.finestGranularity(duration) &&
-                        interval.ends.functions.finestGranularity(duration)
-            }
+            command = { granularity ->
+                interval.begins.functions.finestGranularity(granularity) &&
+                        interval.ends.functions.finestGranularity(granularity)
+            },
+            pre = { granularity -> granularity != NoDuration }
         )
 
         val contains: (Dtg) -> bool = function(
@@ -194,7 +197,12 @@ interface Interval {
 }
 
 val dtgDiff: (Dtg, Dtg) -> Duration = function(
-    command = { dtg1, dtg2 -> durationDiff(dtg1.functions.toDuration(), dtg2.functions.toDuration()) }
+    command = { dtg1, dtg2 ->
+        durationDiff(
+            dtg1.functions.toDurationSinceFirstDtg(),
+            dtg2.functions.toDurationSinceFirstDtg()
+        )
+    }
 )
 
 val minDtg: (Set1<Dtg>) -> Dtg = function(
@@ -222,12 +230,16 @@ val monthsBetweenDtgs: (Dtg, Dtg) -> nat = function(
 val yearsBetweenDtgs: (Dtg, Dtg) -> nat = function(
     command = { earlierDtg, laterDtg ->
 
-        val millisInYearUpToEarlierDtg =
-            earlierDtg.functions.toDuration().milliseconds - Duration.durationUpToYear(earlierDtg.date.year).milliseconds
-        val millisInYearUpToLaterDtg =
-            laterDtg.functions.toDuration().milliseconds - Duration.durationUpToYear(laterDtg.date.year).milliseconds
+        val durationInYearUpToEarlierDtg =
+            earlierDtg.functions.toDurationSinceFirstDtg().functions.subtractDuration(
+                Duration.durationUpToYear(
+                    earlierDtg.date.year
+                )
+            )
+        val durationInYearUpToLaterDtg =
+            laterDtg.functions.toDurationSinceFirstDtg().functions.subtractDuration(Duration.durationUpToYear(laterDtg.date.year))
 
-        if (millisInYearUpToEarlierDtg <= millisInYearUpToLaterDtg) {
+        if (durationInYearUpToEarlierDtg <= durationInYearUpToLaterDtg) {
             laterDtg.date.year - earlierDtg.date.year
         } else {
             laterDtg.date.year - earlierDtg.date.year - 1

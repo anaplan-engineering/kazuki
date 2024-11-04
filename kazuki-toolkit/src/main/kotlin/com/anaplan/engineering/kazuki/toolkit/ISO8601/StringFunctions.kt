@@ -7,7 +7,7 @@ import com.anaplan.engineering.kazuki.toolkit.ISO8601.Date_Module.mk_Date
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Dtg_Module.mk_Dtg
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Time_Module.mk_Time
 
-val strToDate: (String) -> Date = function(
+val stringToDate: (String) -> Date = function(
     command = { string ->
         val year = string.substring(0, 4).toInt()
         val month = string.substring(5, 7).toInt()
@@ -18,7 +18,7 @@ val strToDate: (String) -> Date = function(
     pre = { string -> isStringIsoDate(string) }
 )
 
-val strToDtg: (String) -> Dtg = function(
+val stringToDtg: (String) -> Dtg = function(
     command = { string ->
         val year = string.substring(0, 4).toInt()
         val month = string.substring(5, 7).toInt()
