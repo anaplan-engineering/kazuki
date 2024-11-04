@@ -64,13 +64,13 @@ interface OtherGenericRecord<T> {
 }
 
 @Module
-interface RecordDblExtension: RecordExtension, Tuple3<Int, String, Double> {
+interface RecordDblExtension : RecordExtension, Tuple3<Int, String, Double> {
     val c: Double
 }
 
 interface Animal
-open class Cat: Animal
-class MaineCoon: Cat()
+open class Cat : Animal
+class MaineCoon : Cat()
 
 @Module
 interface AnimalRecord {
@@ -78,17 +78,17 @@ interface AnimalRecord {
 }
 
 @Module
-interface CatRecord: AnimalRecord {
+interface CatRecord : AnimalRecord {
     override val me: Cat
 }
 
 @Module
-interface MaineCoonRecord: CatRecord {
+interface MaineCoonRecord : CatRecord {
     override val me: MaineCoon
 }
 
 @Module
-interface MoggyRecord: CatRecord {
+interface MoggyRecord : CatRecord {
 
 }
 
@@ -100,37 +100,64 @@ interface UnmakeableRecord {
 }
 
 @Module
-interface UnmakeableExtAllFields: UnmakeableRecord {
+interface UnmakeableExtAllFields : UnmakeableRecord {
     val d: Int
 }
 
 @Module
-interface UnmakeableExtWithDynamic: UnmakeableRecord {
+interface UnmakeableExtWithDynamic : UnmakeableRecord {
     val d: Int
     override val b: Int get() = 2
 }
 
 @Module
-interface UnmakeableInvOnlyAllFields: UnmakeableRecord {
+interface UnmakeableInvOnlyAllFields : UnmakeableRecord {
     @Invariant
     fun notZero() = a != 0
 }
 
 @Module
-interface UnmakeableInvOnlyWithDynamic: UnmakeableRecord {
+interface UnmakeableInvOnlyWithDynamic : UnmakeableRecord {
     @Invariant
     fun notZero() = a != 0
     override val b: Int get() = 2
 }
 
 @Module
-interface UnmakeableExtAllFieldsC: UnmakeableExtAllFields
+interface UnmakeableExtAllFieldsC : UnmakeableExtAllFields
+
 @Module
-interface UnmakeableExtWithDynamicC: UnmakeableExtWithDynamic
+interface UnmakeableExtWithDynamicC : UnmakeableExtWithDynamic
+
 @Module
-interface UnmakeableInvOnlyAllFieldsC: UnmakeableInvOnlyAllFields
+interface UnmakeableInvOnlyAllFieldsC : UnmakeableInvOnlyAllFields
+
 @Module
-interface UnmakeableInvOnlyWithDynamicC: UnmakeableInvOnlyWithDynamic
+interface UnmakeableInvOnlyWithDynamicC : UnmakeableInvOnlyWithDynamic
 
 
+@Module(makeable = false)
+interface GenericUnmakeableRecord<I, S> {
+    val a: I
+    val b: Sequence<S>
+}
+
+@Module
+interface SetExt<T> : Set<T>
+
+@Module
+interface GenericUnmakeableExtReusedGeneric<I, S : Set<I>> : GenericUnmakeableRecord<I, S>
+
+typealias AliasedGenericUnmakeableRecord = GenericUnmakeableRecord<Int, Set<Int>>
+
+@Module
+interface AliasedGenericUnmakeableRecordExt_InvOnly : AliasedGenericUnmakeableRecord {
+    @Invariant
+    fun aLt5() = a < 5
+}
+
+@Module
+interface AliasedGenericUnmakeableRecordExt_WithField : AliasedGenericUnmakeableRecord {
+    val c: String
+}
 

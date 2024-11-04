@@ -1,6 +1,7 @@
 package com.anaplan.engineering.kazuki.ksp.type.property
 
 import com.anaplan.engineering.kazuki.core.FunctionProvider
+import com.anaplan.engineering.kazuki.ksp.getClassDeclaration
 import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeParameterNames
 import com.anaplan.engineering.kazuki.ksp.superModules
 import com.anaplan.engineering.kazuki.ksp.type.TypeGenerationContext
@@ -35,7 +36,7 @@ internal fun getFunctionProviderProperties(
         FunctionProviderProperty(it, it.type.toTypeName(localTypeParameterResolver))
     }
     val superFunctionProviderProperties = classDcl.superModules.flatMap { type ->
-        val superClassDcl = type.resolve().declaration as KSClassDeclaration
+        val superClassDcl = getClassDeclaration(type)
         val superTypeParameterResolver = superClassDcl.typeParameters.toTypeParameterResolver()
         val superProperties = superClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
         val superFunctionProviderProperties = superProperties.filter { it.isAnnotationPresent(FunctionProvider::class) }

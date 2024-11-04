@@ -2,12 +2,15 @@ package com.anaplan.engineering.kazuki.ksp.type
 
 import com.anaplan.engineering.kazuki.core.ComparableProperty
 import com.anaplan.engineering.kazuki.core.ComparableTypeLimit
+import com.anaplan.engineering.kazuki.ksp.getClassDeclaration
 import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeParameterNames
 import com.anaplan.engineering.kazuki.ksp.superModules
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.google.devtools.ksp.symbol.KSTypeAlias
+import com.google.devtools.ksp.symbol.KSTypeReference
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
@@ -32,7 +35,7 @@ internal fun TypeSpec.Builder.addComparableWith(
     val comparableTypeLimit = if (comparableProperty == null) {
         getExplicitComparableTypeLimit(classDcl, typeGenerationContext)
     } else {
-        comparableProperty.parentDeclaration as KSClassDeclaration
+        getClassDeclaration(comparableProperty.parentDeclaration!!)
     }
     val comparableTypeLimitClassName = comparableTypeLimit?.toClassName() ?: default
     val comparableTypeLimitTypeName = if (comparableTypeLimit == null || comparableTypeLimit.typeParameters.isEmpty()) {
@@ -65,7 +68,7 @@ fun getExplicitComparableTypeLimit(
             classDcl
         } else {
             val comparableTypeLimits = classDcl.superTypes.map {
-                getExplicitComparableTypeLimit(it.resolve().declaration as KSClassDeclaration, typeGenerationContext)
+                getExplicitComparableTypeLimit(getClassDeclaration(it), typeGenerationContext)
             }.filterNotNull().toList()
 
             if (comparableTypeLimits.size > 1) {
@@ -90,7 +93,7 @@ internal fun getComparableProperty(
     }
     return if (localComparableProperties.isEmpty()) {
         val nonOverriddenSuperComparableProperties = classDcl.superModules.flatMap { type ->
-            val superClassDcl = type.resolve().declaration as KSClassDeclaration
+            val superClassDcl = getClassDeclaration(type)
             val superProperties = superClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
             val superFunctionProviderProperties =
                 superProperties.filter { it.isAnnotationPresent(ComparableProperty::class) }
@@ -107,3 +110,4 @@ internal fun getComparableProperty(
         localComparableProperties.singleOrNull()
     }
 }
+

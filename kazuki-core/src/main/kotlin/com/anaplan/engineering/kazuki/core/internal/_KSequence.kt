@@ -3,12 +3,15 @@ package com.anaplan.engineering.kazuki.core.internal
 import com.anaplan.engineering.kazuki.core.*
 import kotlin.reflect.KClass
 
-interface _KSequence<T, S : Sequence<T>>: Sequence<T>, _KazukiObject {
+interface _KSequence<T, S : Sequence<T>> : Sequence<T>, _KazukiObject {
     fun construct(elements: List<T>): S
 
     val elements: List<T>
 
     val comparableWith: KClass<*>
+
+    override val tuples: Sequence<Tuple2<nat1, T>>
+        get() = as_Seq(elements.mapIndexed { index, t -> mk_(index + 1, t) })
 }
 
 internal fun <T, S : Sequence<T>> S.transformSequence(fn: (_KSequence<T, S>) -> List<T>): S {
@@ -74,7 +77,8 @@ internal class __KSequence<T>(override val elements: List<T>) : Sequence<T>, Lis
     override fun toString() = "seq$elements"
 }
 
-internal class __KSequence1<T>(override val elements: List<T>) : Sequence1<T>, _KSequence<T, Sequence1<T>>, List<T> by elements {
+internal class __KSequence1<T>(override val elements: List<T>) : Sequence1<T>, _KSequence<T, Sequence1<T>>,
+    List<T> by elements {
 
     override fun construct(elements: List<T>) = __KSequence1(elements)
 

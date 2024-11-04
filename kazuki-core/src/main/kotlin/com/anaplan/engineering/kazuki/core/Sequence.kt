@@ -14,6 +14,8 @@ interface Sequence<out T> : List<T> {
 
     val inds: Set<nat1>
 
+    val tuples: Sequence<Tuple2<nat1, @UnsafeVariance T>>
+
     override fun indexOf(element: @UnsafeVariance T): nat1
 
     override fun lastIndexOf(element: @UnsafeVariance T): nat1
@@ -27,6 +29,8 @@ interface Sequence1<out T> : Sequence<T> {
     override val elems: Set1<@UnsafeVariance T>
 
     override val inds: Set1<nat1>
+
+//    override val tuples: Sequence1<Tuple2<nat1, @UnsafeVariance T>>
 
     override operator fun get(index: nat1): T
 
@@ -100,7 +104,7 @@ fun <T, S : Sequence<T>> S.insert(s: S, i: nat1) =
     }
 
 fun <T, S : Sequence<T>> S.filter(fn: (T) -> Boolean) = transformSequence {
-    val filtered  = it.elements.filter(fn)
+    val filtered = it.elements.filter(fn)
     if (filtered.isEmpty() && this is Sequence1<*>) {
         throw PreconditionFailure("Cannot create empty seq1")
     }
@@ -159,6 +163,8 @@ fun <T> Sequence<T>.first(): T {
     return this[1]
 }
 
+fun <T> Sequence<T>.firstOr(onEmpty: T) = if (isEmpty()) onEmpty else this[1]
+
 fun <T> Sequence<T>.single(): T {
     if (len != 1) {
         throw PreconditionFailure("Cannot get single item for sequence with length $len")
@@ -176,6 +182,8 @@ fun <T> Sequence<T>.last(): T {
 fun <T> Sequence<T>.head() = first()
 
 fun <T> Sequence<T>.tail() = drop(1)
+
+fun <T> Sequence1<T>.tail(): Sequence<T> = if (size > 1) drop(1) else mk_Seq()
 
 fun <T, S : Sequence<T>> dcat(seqs: Sequence1<S>) =
     if (seqs.size == 1) {

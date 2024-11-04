@@ -3,7 +3,7 @@ package com.anaplan.engineering.kazuki.core.internal
 import com.anaplan.engineering.kazuki.core.*
 
 interface _KMapping<D, R, M : Mapping<D, R>> : Mapping<D, R>, _KRelation<D, R, M> {
-    fun construct(base: Map<D, R>): M
+    fun construct(baseMap: Map<D, R>): M
 
     override fun construct(elements: Set<Tuple2<D, R>>): M =
         construct(LinkedHashMap<D, R>().apply {
@@ -55,7 +55,7 @@ internal class __KMapping<D, R>(override val baseMap: Map<D, R>) : _KMapping<D, 
 
     override val comparableWith = Set::class
 
-    override fun construct(base: Map<D, R>) = __KMapping(base)
+    override fun construct(baseMap: Map<D, R>) = __KMapping(baseMap)
 
 
     override fun get(d: D) = baseMap.get(d) ?: throw PreconditionFailure("$d not in mapping domain")
@@ -104,7 +104,7 @@ internal class __KInjectiveMapping<D, R>(override val baseMap: Map<D, R>) :
 
     override val comparableWith = Set::class
 
-    override fun construct(base: Map<D, R>) = __KInjectiveMapping(base)
+    override fun construct(baseMap: Map<D, R>) = __KInjectiveMapping(baseMap)
 
     override fun get(d: D) = baseMap.get(d) ?: throw PreconditionFailure("$d not in mapping domain")
 
@@ -160,7 +160,7 @@ internal class __KInjectiveMapping1<D, R>(override val baseMap: Map<D, R>) :
 
     override val comparableWith = Set::class
 
-    override fun construct(base: Map<D, R>) = __KInjectiveMapping1(base)
+    override fun construct(baseMap: Map<D, R>) = __KInjectiveMapping1(baseMap)
 
     override fun get(d: D) = baseMap.get(d) ?: throw PreconditionFailure("$d not in mapping domain")
 
@@ -219,7 +219,7 @@ internal class __KMapping1<D, R>(override val baseMap: Map<D, R>) : Mapping1<D, 
 
     override fun get(d: D) = baseMap.get(d) ?: throw PreconditionFailure("$d not in mapping domain")
 
-    override fun construct(base: Map<D, R>) = __KMapping1(base)
+    override fun construct(baseMap: Map<D, R>) = __KMapping1(baseMap)
 
     override val card: nat1 by lazy { baseMap.size }
 

@@ -2,6 +2,8 @@ package com.anaplan.engineering.kazuki.ksp.type.property
 
 import com.anaplan.engineering.kazuki.core.FunctionProvider
 import com.anaplan.engineering.kazuki.core.internal._Record
+import com.anaplan.engineering.kazuki.ksp.allSuperTypes
+import com.anaplan.engineering.kazuki.ksp.getClassDeclaration
 import com.anaplan.engineering.kazuki.ksp.superModules
 import com.anaplan.engineering.kazuki.ksp.type.TypeGenerationContext
 import com.google.devtools.ksp.*
@@ -33,7 +35,7 @@ internal class PropertyProcessor(
 
         val allInterfaceProperties = classDcl.getAllProperties().toList()
         val propertyBuilders = classDcl.superModules.reversed().map { type ->
-            val superClassDcl = type.resolve().declaration as KSClassDeclaration
+            val superClassDcl = getClassDeclaration(type)
             val superProperties = if (superClassDcl.containingFile == null && allowFields) {
                 // Properties in class file have arbitrary order so identify correct order from generated record
                 // TODO - We only care about order if we're allowing fields, but is it bad to assume record?

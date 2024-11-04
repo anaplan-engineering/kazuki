@@ -11,6 +11,7 @@ import com.anaplan.engineering.kazuki.ksp.findUnusedGenericName
 import com.anaplan.engineering.kazuki.ksp.superModules
 import com.anaplan.engineering.kazuki.ksp.type.property.PropertyProcessor
 import com.anaplan.engineering.kazuki.ksp.type.property.addFunctionProviders
+import com.anaplan.engineering.kazuki.ksp.uncheckedCastAnnotation
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -19,6 +20,7 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
+import com.squareup.kotlinpoet.ksp.toTypeParameterResolver
 import com.squareup.kotlinpoet.ksp.toTypeVariableName
 
 internal fun TypeSpec.Builder.addRecordType(
@@ -28,7 +30,8 @@ internal fun TypeSpec.Builder.addRecordType(
 ) {
     // TODO -- fail if class·is·not interface
     val interfaceType = interfaceClassDcl.asType(emptyList())
-    val interfaceTypeArguments = interfaceClassDcl.typeParameters.map { it.toTypeVariableName() }
+    val interfaceTypeArguments =
+        interfaceClassDcl.typeParameters.map { it.toTypeVariableName(interfaceClassDcl.typeParameters.toTypeParameterResolver()) }
     val interfaceTypeName = if (interfaceTypeArguments.isEmpty()) {
         interfaceClassDcl.toClassName()
     } else {
@@ -167,6 +170,7 @@ internal fun TypeSpec.Builder.addRecordType(
                     ParameterSpec.builder(otherParameterName, Any::class.asTypeName().copy(nullable = true))
                         .build()
                 )
+                .addAnnotation(uncheckedCastAnnotation())
                 .returns(Boolean::class).addCode(CodeBlock.builder().apply {
                     beginControlFlow("if (this === %N)", otherParameterName)
                     addStatement("return true")
@@ -233,6 +237,7 @@ internal fun TypeSpec.Builder.addRecordType(
         if (interfaceTypeArguments.isNotEmpty()) {
             addTypeVariables(interfaceTypeArguments)
         }
+        addAnnotation(uncheckedCastAnnotation())
         receiver(interfaceTypeName)
         returns(tupleType)
         addCode(CodeBlock.builder().apply {
@@ -254,6 +259,7 @@ internal fun TypeSpec.Builder.addRecordType(
                 addTypeVariables(interfaceTypeArguments)
             }
             addParameter(otherParameterName, Any::class)
+            addAnnotation(uncheckedCastAnnotation())
             returns(Boolean::class)
             addCode(CodeBlock.builder().apply {
                 beginControlFlow("if (%N·!is·%T)", otherParameterName, erasedTupleType)
@@ -319,6 +325,7 @@ internal fun TypeSpec.Builder.addRecordType(
                 }
                 addParameter(otherParameterName, Any::class.asClassName())
                 returns(interfaceTypeName)
+                addAnnotation(uncheckedCastAnnotation())
                 addCode(CodeBlock.builder().apply {
                     val typeArgs = if (interfaceTypeArguments.isEmpty()) {
                         ""
@@ -365,6 +372,7 @@ internal fun TypeSpec.Builder.addRecordType(
                     }.build())
                 }
                 returns(t)
+                addAnnotation(uncheckedCastAnnotation())
                 addCode(CodeBlock.builder().apply {
                     val constructableClassName = ClassName(
                         coreInternalPackage,
@@ -409,6 +417,8 @@ internal fun TypeSpec.Builder.addRecordType(
         )
     }
 }
+
+
 
 private const val otherParameterName = "other"
 private const val isRelatedFunctionName = "isRelated"
