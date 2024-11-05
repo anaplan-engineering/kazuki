@@ -38,8 +38,8 @@ fun <I1, I2, I3, O> set(
 fun <I1, I2, O> tupleAdapter(fn: (I1, I2) -> O): (Tuple2<I1, I2>) -> O = { t -> fn(t._1, t._2) }
 fun <I1, I2, I3, O> tupleAdapter(fn: (I1, I2, I3) -> O): (Tuple3<I1, I2, I3>) -> O = { t -> fn(t._1, t._2, t._3) }
 
-private fun <T1, T2> cross(l: Iterable<T1>, r: Iterable<T2>) = l.flatMap { t -> r.map { u -> mk_(t, u) } }
-private fun <T1, T2, T3> cross(i1: Iterable<T1>, i2: Iterable<T2>, i3: Iterable<T3>) =
+internal fun <T1, T2> cross(l: Iterable<T1>, r: Iterable<T2>) = l.flatMap { t -> r.map { u -> mk_(t, u) } }
+internal fun <T1, T2, T3> cross(i1: Iterable<T1>, i2: Iterable<T2>, i3: Iterable<T3>) =
     i1.flatMap { t1 ->
         i2.flatMap { t2 ->
             i3.map { t3 -> mk_(t1, t2, t3) }

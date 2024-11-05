@@ -247,6 +247,15 @@ class TestSequence(
     }
 
     @Test
+    fun firstOr() {
+        if (allowsEmpty) {
+            assertEquals(0, create().firstOr(0))
+        }
+        assertEquals(1, create(1).firstOr(0))
+        assertEquals(2, create(2, 5, 6).firstOr(0))
+    }
+
+    @Test
     fun last() {
         if (allowsEmpty) {
             causesPreconditionFailure { create().last() }
@@ -299,6 +308,15 @@ class TestSequence(
         }
         assertEquals(create(1, 1), dcat(mk_Seq1(create(1), create(1))))
         assertEquals(create(1, 2, 1), dcat(mk_Seq1(create(1), create(2), create(1))))
+    }
+
+    @Test
+    fun tuples() {
+        if (allowsEmpty) {
+            assertEquals(mk_Seq(), create().tuples)
+        }
+        assertEquals(mk_Seq(mk_(1, 3), mk_(2, 2), mk_(3, 1)), create(3, 2, 1).tuples)
+        assertEquals(mk_Seq(mk_(1, 1), mk_(2, 1), mk_(3, 1)), create(1, 1, 1).tuples)
     }
 
     @Test

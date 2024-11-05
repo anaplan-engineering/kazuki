@@ -1,6 +1,8 @@
 package com.anaplan.engineering.kazuki.core.test
 
-import com.anaplan.engineering.kazuki.core.Cat
+import com.anaplan.engineering.kazuki.core.*
+import com.anaplan.engineering.kazuki.core.AliasedGenericUnmakeableRecordExt_InvOnly_Module.mk_AliasedGenericUnmakeableRecordExt_InvOnly
+import com.anaplan.engineering.kazuki.core.AliasedGenericUnmakeableRecordExt_WithField_Module.mk_AliasedGenericUnmakeableRecordExt_WithField
 import com.anaplan.engineering.kazuki.core.CatRecord_Module.mk_CatRecord
 import com.anaplan.engineering.kazuki.core.GenericRecordExtension_Module.component1
 import com.anaplan.engineering.kazuki.core.GenericRecordExtension_Module.component2
@@ -11,7 +13,7 @@ import com.anaplan.engineering.kazuki.core.GenericRecordInvOnlyExtension_Module.
 import com.anaplan.engineering.kazuki.core.GenericRecord_Module.as_GenericRecord
 import com.anaplan.engineering.kazuki.core.GenericRecord_Module.is_GenericRecord
 import com.anaplan.engineering.kazuki.core.GenericRecord_Module.mk_GenericRecord
-import com.anaplan.engineering.kazuki.core.MaineCoon
+import com.anaplan.engineering.kazuki.core.GenericUnmakeableExtReusedGeneric_Module.mk_GenericUnmakeableExtReusedGeneric
 import com.anaplan.engineering.kazuki.core.MaineCoonRecord_Module.mk_MaineCoonRecord
 import com.anaplan.engineering.kazuki.core.MoggyRecord_Module.mk_MoggyRecord
 import com.anaplan.engineering.kazuki.core.OtherGenericRecord_Module.mk_OtherGenericRecord
@@ -28,7 +30,7 @@ import com.anaplan.engineering.kazuki.core.RecordInvOnlyExtension_Module.mk_Reco
 import com.anaplan.engineering.kazuki.core.Record_Module.as_Record
 import com.anaplan.engineering.kazuki.core.Record_Module.is_Record
 import com.anaplan.engineering.kazuki.core.Record_Module.mk_Record
-import com.anaplan.engineering.kazuki.core.Tuple4
+import com.anaplan.engineering.kazuki.core.SetExt_Module.mk_SetExt
 import com.anaplan.engineering.kazuki.core.UnmakeableExtAllFieldsC_Module.mk_UnmakeableExtAllFieldsC
 import com.anaplan.engineering.kazuki.core.UnmakeableExtAllFields_Module.mk_UnmakeableExtAllFields
 import com.anaplan.engineering.kazuki.core.UnmakeableExtWithDynamicC_Module.mk_UnmakeableExtWithDynamicC
@@ -37,7 +39,6 @@ import com.anaplan.engineering.kazuki.core.UnmakeableInvOnlyAllFieldsC_Module.mk
 import com.anaplan.engineering.kazuki.core.UnmakeableInvOnlyAllFields_Module.mk_UnmakeableInvOnlyAllFields
 import com.anaplan.engineering.kazuki.core.UnmakeableInvOnlyWithDynamicC_Module.mk_UnmakeableInvOnlyWithDynamicC
 import com.anaplan.engineering.kazuki.core.UnmakeableInvOnlyWithDynamic_Module.mk_UnmakeableInvOnlyWithDynamic
-import com.anaplan.engineering.kazuki.core.mk_Set
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -218,5 +219,22 @@ class TestRecordExtension {
                 assertEquals(4, it._4)
             }
         }
+    }
+
+    @Test
+    fun extendingGenericUnmakeableWithReusedLocalGeneric() {
+        val r = mk_GenericUnmakeableExtReusedGeneric(3, mk_Seq(mk_SetExt(1, 2)))
+        assertEquals(3, r.a)
+        assertEquals(mk_Seq(mk_SetExt(1, 2)), r.b)
+    }
+
+    @Test
+    fun extendingAliasedGenericUnmakeable() {
+        val r = mk_AliasedGenericUnmakeableRecordExt_InvOnly(3, mk_Seq(mk_Set(1, 2)))
+        assertEquals(3, r.a)
+        assertEquals(mk_Seq(mk_Set(1, 2)), r.b)
+        val s = mk_AliasedGenericUnmakeableRecordExt_WithField(3, mk_Seq(mk_Set(1, 2)), "d")
+        assertEquals(3, s.a)
+        assertEquals(mk_Seq(mk_Set(1, 2)), s.b)
     }
 }

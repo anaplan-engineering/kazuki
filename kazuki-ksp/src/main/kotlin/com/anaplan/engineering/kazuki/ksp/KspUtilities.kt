@@ -6,6 +6,8 @@ import com.anaplan.engineering.kazuki.core.Module
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSDeclaration
+import com.google.devtools.ksp.symbol.KSTypeAlias
 import com.google.devtools.ksp.symbol.KSTypeArgument
 import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.google.devtools.ksp.symbol.KSTypeReference
@@ -18,15 +20,23 @@ import com.squareup.kotlinpoet.ksp.toTypeVariableName
 // TODO -- extract KSP utilities to separate project and test independently!
 
 internal val KSClassDeclaration.allSuperTypes
-    get(): List<KSTypeReference> =
-        superTypes.flatMap {
-            val st = it.resolve().declaration
-            mutableListOf(it).apply {
-                if (st is KSClassDeclaration) {
-                    addAll(st.allSuperTypes)
+    get(): List<KSTypeReference>  {
+
+        fun getAllSuperTypes(reference: KSTypeReference): List<KSTypeReference> {
+            val st = reference.resolve().declaration
+            return if (st is KSTypeAlias) {
+                getAllSuperTypes(st.type)
+            } else {
+                mutableListOf(reference).apply {
+                    if (st is KSClassDeclaration) {
+                        addAll(st.allSuperTypes)
+                    }
                 }
             }
-        }.toList()
+        }
+
+        return superTypes.flatMap { getAllSuperTypes(it) }.toList()
+    }
 
 
 internal fun KSClassDeclaration.getSuperTypePathTo(qualifiedClassName: String): List<KSTypeReference>? =
@@ -35,14 +45,17 @@ internal fun KSClassDeclaration.getSuperTypePathTo(qualifiedClassName: String): 
     }.filterNotNull().firstOrNull() ?: throw IllegalStateException("No super type path found to $qualifiedClassName")
 
 internal fun KSTypeReference.getSuperTypePathTo(qualifiedClassName: String): List<KSTypeReference>? {
-    val classDeclaration = resolve().declaration
-    if (classDeclaration !is KSClassDeclaration) {
+    val declaration = resolve().declaration
+    if (declaration is KSTypeAlias) {
+        return declaration.type.getSuperTypePathTo(qualifiedClassName)
+    }
+    if (declaration !is KSClassDeclaration) {
         return null
     }
-    return if (classDeclaration.qualifiedName?.asString() == qualifiedClassName) {
+    return if (declaration.qualifiedName?.asString() == qualifiedClassName) {
         listOf(this)
     } else {
-        classDeclaration.superTypes.map {
+        declaration.superTypes.map {
             val superPath = it.getSuperTypePathTo(qualifiedClassName)
             if (superPath == null) {
                 null
@@ -104,7 +117,7 @@ internal fun KSClassDeclaration.resolveAncestorTypeParameterNames(
         }
 
         path = path.drop(1)
-        childClassDcl = parentType.resolve().declaration as KSClassDeclaration
+        childClassDcl = getClassDeclaration(parentType)
     }
 
     val childTypeParameters = childClassDcl.typeParameters
@@ -134,3 +147,13 @@ internal fun findUnusedGenericName(usedTypeVariableNames: List<TypeVariableName>
     val usedNames = usedTypeVariableNames.map { it.name }.toSet()
     return (candidates - usedNames).first()
 }
+
+internal fun getClassDeclaration(reference: KSTypeReference) =
+    getClassDeclaration(reference.resolve().declaration)
+
+internal fun getClassDeclaration(declaration: KSDeclaration): KSClassDeclaration =
+    when (declaration) {
+        is KSClassDeclaration -> declaration
+        is KSTypeAlias -> getClassDeclaration(declaration.type)
+        else -> throw IllegalStateException("Unexpected declaration: $declaration")
+    }
