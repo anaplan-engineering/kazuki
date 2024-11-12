@@ -79,17 +79,12 @@ interface Dtg : Comparable<Dtg> {
             post = { result -> isStringIsoDtg(result) }
         )
 
-        val addMonths: (nat) -> Dtg = function(
-            command = { n ->
-                mk_Dtg(dtg.date.functions.addMonths(n), dtg.time)
-            },
+        val addMonths: (int) -> Dtg = function(
+            command = { n -> mk_Dtg(dtg.date.functions.addMonths(n), dtg.time) },
         )
 
-        val subtractMonths: (nat) -> Dtg = function(
-            command = { n ->
-                mk_Dtg(dtg.date.functions.subtractMonths(n), dtg.time)
-            },
-            pre = { n -> dtg.date.year * 12 + dtg.date.month > n }
+        val subtractMonths: (int) -> Dtg = function(
+            command = { n -> dtg.functions.addMonths(-n) },
         )
 
         val addDays: (nat) -> Dtg = function(
@@ -232,12 +227,16 @@ val yearsBetweenDtgs: (Dtg, Dtg) -> nat = function(
 
         val durationInYearUpToEarlierDtg =
             earlierDtg.functions.toDurationSinceFirstDtg().functions.subtractDuration(
-                Duration.durationUpToYear(
+                Duration.durationFromFirstYearUpToStartOfYear(
                     earlierDtg.date.year
                 )
             )
         val durationInYearUpToLaterDtg =
-            laterDtg.functions.toDurationSinceFirstDtg().functions.subtractDuration(Duration.durationUpToYear(laterDtg.date.year))
+            laterDtg.functions.toDurationSinceFirstDtg().functions.subtractDuration(
+                Duration.durationFromFirstYearUpToStartOfYear(
+                    laterDtg.date.year
+                )
+            )
 
         if (durationInYearUpToEarlierDtg <= durationInYearUpToLaterDtg) {
             laterDtg.date.year - earlierDtg.date.year

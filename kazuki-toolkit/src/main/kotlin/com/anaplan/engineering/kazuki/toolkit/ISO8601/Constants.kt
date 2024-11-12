@@ -11,6 +11,8 @@ enum class PlusOrMinus {
     None
 }
 
+typealias OffsetDirection = PlusOrMinus
+
 enum class DayOfWeek(val dayNumber: int) {
     Monday(1),
     Tuesday(2),

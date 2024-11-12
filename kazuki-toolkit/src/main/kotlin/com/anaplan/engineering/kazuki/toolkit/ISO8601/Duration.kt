@@ -48,7 +48,7 @@ interface Duration : Comparable<Duration> {
             command = { year, month -> fromDays(daysInMonth(year, month).toLong()) }
         )
 
-        val durationUpToMonth: (Year, Month) -> Duration = function(
+        val durationInYearUpToStartOfMonth: (Year, Month) -> Duration = function(
             command = { year, month -> sumDuration(seq(1 until month) { fromMonth(year, it) }) }
         )
 
@@ -56,7 +56,7 @@ interface Duration : Comparable<Duration> {
             command = { year -> fromDays(daysInYear(year).toLong()) }
         )
 
-        val durationUpToYear: (Year) -> Duration = function(
+        val durationFromFirstYearUpToStartOfYear: (Year) -> Duration = function(
             command = { year -> sumDuration(seq(FirstYear until year) { fromYear(it) }) }
         )
     }
@@ -92,7 +92,9 @@ interface Duration : Comparable<Duration> {
 
         val toMonthsInGivenYear: (Year) -> nat1 = function(
             command = { year ->
-                (set(1..MonthsPerYear, filter = { durationUpToMonth(year, it) <= duration }) { it }).max() - 1
+                (set(
+                    1..MonthsPerYear,
+                    filter = { durationInYearUpToStartOfMonth(year, it) <= duration }) { it }).max() - 1
             },
             pre = { year -> duration < fromYear(year) }
         )
@@ -152,10 +154,11 @@ interface Duration : Comparable<Duration> {
             command = { givenDate ->
                 val totalDuration = givenDate.functions.toDurationSinceFirstDate().functions.addDuration(duration)
                 val year = totalDuration.functions.toYearsAfterGivenYear(FirstYear)
-                val totalDurationModYear = totalDuration.functions.subtractDuration(durationUpToYear(year))
+                val totalDurationModYear =
+                    totalDuration.functions.subtractDuration(durationFromFirstYearUpToStartOfYear(year))
                 val month = totalDurationModYear.functions.toMonthsInGivenYear(year) + 1
                 val day = (totalDurationModYear.functions.subtractDuration(
-                    durationUpToMonth(year, month)
+                    durationInYearUpToStartOfMonth(year, month)
                 ).functions.toDays() + 1).toInt()
                 mk_Date(year, month, day)
             },
@@ -270,11 +273,11 @@ val sumDuration: (Sequence<Duration>) -> Duration = function(
     command = { durationSequence -> mk_Duration((seq(durationSequence) { it.milliseconds }).sum()) },
     post = { durationSequence, result -> forall(durationSequence) { result >= it } }
 )
-
 val durationDiff: (Duration, Duration) -> Duration = function(
     command = { duration1, duration2 -> mk_Duration(abs(duration1.milliseconds - duration2.milliseconds)) },
-    post = { duration1, duration2, result ->
-        ((duration1 <= duration2) implies (duration1.functions.addDuration(result) == duration2)) &&
-                ((duration2 <= duration1) implies (duration2.functions.addDuration(result) == duration1))
+    post = { duration1, duration2, difference ->
+        val smallerDuration = minDuration(mk_Set1(duration1, duration2))
+        val largerDuration = maxDuration(mk_Set1(duration1, duration2))
+        smallerDuration.functions.addDuration(difference) == largerDuration
     }
 )

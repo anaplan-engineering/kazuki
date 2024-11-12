@@ -65,10 +65,10 @@ interface TimeInZone : Comparable<TimeInZone> {
             command = { utcTimeDuration, offsetDuration ->
                 if (offsetDuration <= utcTimeDuration) mk_NormalisedTime(
                     utcTimeDuration.functions.subtractDuration(offsetDuration).functions.toTimeAfterFirstTime(),
-                    PlusOrMinus.None
+                    OffsetDirection.None
                 ) else mk_NormalisedTime(
                     utcTimeDuration.functions.addDuration(OneDayDuration).functions.subtractDuration(offsetDuration).functions.toTimeAfterFirstTime(),
-                    PlusOrMinus.Plus
+                    OffsetDirection.Plus
                 )
             }
         )
@@ -77,10 +77,10 @@ interface TimeInZone : Comparable<TimeInZone> {
                 val adjusted = utcTimeDuration.functions.addDuration(offsetDuration)
                 if (adjusted < OneDayDuration) mk_NormalisedTime(
                     adjusted.functions.toTimeAfterFirstTime(),
-                    PlusOrMinus.None
+                    OffsetDirection.None
                 ) else mk_NormalisedTime(
                     adjusted.functions.subtractDuration(OneDayDuration).functions.toTimeAfterFirstTime(),
-                    PlusOrMinus.Minus
+                    OffsetDirection.Minus
                 )
             }
         )
@@ -91,9 +91,9 @@ interface TimeInZone : Comparable<TimeInZone> {
                 val offsetDuration = timeInZone.offset.offsetDuration
                 val directionOfOffset = timeInZone.offset.offsetDirection
                 when (directionOfOffset) {
-                    PlusOrMinus.Plus -> normaliseTimeInZonePlus(utcTimeDuration, offsetDuration)
-                    PlusOrMinus.Minus -> normaliseTimeInZoneMinus(utcTimeDuration, offsetDuration)
-                    PlusOrMinus.None -> mk_NormalisedTime(timeInZone.time, PlusOrMinus.None)
+                    OffsetDirection.Plus -> normaliseTimeInZonePlus(utcTimeDuration, offsetDuration)
+                    OffsetDirection.Minus -> normaliseTimeInZoneMinus(utcTimeDuration, offsetDuration)
+                    OffsetDirection.None -> mk_NormalisedTime(timeInZone.time, OffsetDirection.None)
                 }
             }
         )
@@ -115,7 +115,7 @@ interface NormalisedTime {
 @Module
 interface Offset {
     val offsetDuration: Duration
-    val offsetDirection: PlusOrMinus
+    val offsetDirection: OffsetDirection
 
     @Invariant
     fun offsetMoreThanDay() = offsetDuration < OneDayDuration
@@ -132,7 +132,7 @@ interface Offset {
             command = {
                 val hourMinute = offset.offsetDuration.functions.toTimeAfterFirstTime()
                 val sign = when (offset.offsetDirection) {
-                    PlusOrMinus.Plus -> "+"; PlusOrMinus.Minus -> "-"; PlusOrMinus.None -> ""
+                    OffsetDirection.Plus -> "+"; OffsetDirection.Minus -> "-"; OffsetDirection.None -> ""
                 }
                 String.format("%s%02d:%02d", sign, hourMinute.hour, hourMinute.minute)
             }

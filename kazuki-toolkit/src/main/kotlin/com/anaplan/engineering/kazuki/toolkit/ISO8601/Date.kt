@@ -2,6 +2,7 @@ package com.anaplan.engineering.kazuki.toolkit.ISO8601
 
 import com.anaplan.engineering.kazuki.core.*
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Date_Module.mk_Date
+import kotlin.math.min
 
 @Module
 interface Date : Comparable<Date> {
@@ -23,8 +24,8 @@ interface Date : Comparable<Date> {
 
         val toDurationSinceFirstDate: () -> Duration = function<Duration>(
             command = {
-                Duration.durationUpToYear(date.year).functions.addDuration(
-                    Duration.durationUpToMonth(date.year, date.month).functions.addDuration(
+                Duration.durationFromFirstYearUpToStartOfYear(date.year).functions.addDuration(
+                    Duration.durationInYearUpToStartOfMonth(date.year, date.month).functions.addDuration(
                         Duration.fromDays(date.day - 1L)
                     )
                 )
@@ -45,29 +46,19 @@ interface Date : Comparable<Date> {
             }
         )
 
-        val addMonths: (nat) -> Date = function(
+        val addMonths: (int) -> Date = function(
             command = { n ->
-                val nextMonth = ((date.month + n - 1) % MonthsPerYear) + 1
-                val nextYear = date.year + (date.month + n - 1) / MonthsPerYear
-                if (date.day > daysInMonth(nextYear, nextMonth)) {
-                    mk_Date(nextYear, nextMonth, daysInMonth(nextYear, nextMonth))
-                } else {
-                    mk_Date(nextYear, nextMonth, date.day)
-                }
+                val nextMonth = (date.month + n - 1).mod(MonthsPerYear) + 1
+                val yearShift = (date.month + n - 1).floorDiv(MonthsPerYear)
+                val nextYear = date.year + yearShift
+                val nextDay = min(date.day, daysInMonth(nextYear, nextMonth))
+                mk_Date(nextYear, nextMonth, nextDay)
             },
+            pre = { n -> date.year * 12 + date.month + n > 0 }
         )
 
-        val subtractMonths: (nat) -> Date = function(
-            command = { n ->
-                val nextMonth = (date.month - n - 1).mod(MonthsPerYear) + 1
-                val nextYear = date.year + (date.month - n - 12) / MonthsPerYear
-                if (date.day > daysInMonth(nextYear, nextMonth)) {
-                    mk_Date(nextYear, nextMonth, daysInMonth(nextYear, nextMonth))
-                } else {
-                    mk_Date(nextYear, nextMonth, date.day)
-                }
-            },
-            pre = { n -> date.year * 12 + date.month > n }
+        val subtractMonths: (int) -> Date = function(
+            command = { n -> date.functions.addMonths(-n) },
         )
 
         val addDays: (nat) -> Date = function(
@@ -94,14 +85,19 @@ fun monthNotInRange(month: nat) = month in 1..MonthsPerYear // nat1
 fun dayNotInRange(day: nat1) = day in 1..MaxDaysPerMonth // nat1
 
 val isLeap: (Year) -> bool = function(
-    command = { year -> year % 4 == 0 && ((year % 100 == 0) implies { year % 400 == 0 }) }
+    command = { year ->
+        val multipleOfFour = year % 4 == 0
+        val multipleOfOneHundred = year % 100 == 0
+        val multipleOfFourHundred = year % 400 == 0
+        multipleOfFour && (multipleOfOneHundred implies multipleOfFourHundred)
+    }
 )
 
 val daysInYear: (Year) -> nat1 = function(
     command = { year -> seq(1..MonthsPerYear) { daysInMonth(year, it) }.sum() }
 )
 
-val daysInMonth: (Year, Month) -> nat1 = function(
+val daysInMonth: (Year, Month) -> Day = function(
     command = { year, month -> if (isLeap(year)) DaysPerMonthLeap[month] else DaysPerMonth[month] }
 )
 

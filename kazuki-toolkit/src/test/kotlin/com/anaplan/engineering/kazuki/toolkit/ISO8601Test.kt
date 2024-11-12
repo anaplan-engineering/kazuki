@@ -37,7 +37,7 @@ class ISO8601Test {
     @Test
     fun dateInvariantTest() {
         assertFailsWith<InvariantFailure> { mk_Date(-5, 1, 1) }
-//        assertFailsWith<InvariantFailure> { mk_Date(1, 13, 1) }
+//        assertFailsWith<InvariantFailure> { mk_Date(1, 13, 1) } // Will pass when @PrimitiveInvariants trigger InvariantFailures
         assertFailsWith<InvariantFailure> { mk_Date(1, 2, 29) }
         assertFailsWith<InvariantFailure> { mk_Date(1, 2, 40) }
     }
@@ -769,7 +769,7 @@ class ISO8601Test {
         assertEquals(10, mk_Duration(36000000).functions.toHours())
         assertEquals(0, mk_Duration(0).functions.toHours())
         assertEquals(200, mk_Duration(720000000).functions.toHours())
-        assertEquals(876600, Duration.durationUpToYear(100).functions.toHours())
+        assertEquals(876600, Duration.durationFromFirstYearUpToStartOfYear(100).functions.toHours())
     }
 
     @Test
@@ -863,9 +863,9 @@ class ISO8601Test {
 
     @Test
     fun durationUpToMonthTest() {
-        assertEquals(Duration.fromDays(90), Duration.durationUpToMonth(1990, 4))
-        assertEquals(Duration.fromDays(59), Duration.durationUpToMonth(1990, 3))
-        assertEquals(Duration.fromDays(60), Duration.durationUpToMonth(1992, 3))
+        assertEquals(Duration.fromDays(90), Duration.durationInYearUpToStartOfMonth(1990, 4))
+        assertEquals(Duration.fromDays(59), Duration.durationInYearUpToStartOfMonth(1990, 3))
+        assertEquals(Duration.fromDays(60), Duration.durationInYearUpToStartOfMonth(1992, 3))
     }
 
     @Test
@@ -892,9 +892,9 @@ class ISO8601Test {
 
     @Test
     fun durationUpToYearTest() {
-        assertEquals(Duration.fromDays(1461), Duration.durationUpToYear(4))
-        assertEquals(Duration.fromDays(366), Duration.durationUpToYear(1))
-        assertEquals(NoDuration, Duration.durationUpToYear(0))
+        assertEquals(Duration.fromDays(1461), Duration.durationFromFirstYearUpToStartOfYear(4))
+        assertEquals(Duration.fromDays(366), Duration.durationFromFirstYearUpToStartOfYear(1))
+        assertEquals(NoDuration, Duration.durationFromFirstYearUpToStartOfYear(0))
     }
 
     @Test
@@ -1605,10 +1605,10 @@ class ISO8601Test {
     @Test
     fun dateAddMonthsTest() {
         assertEquals(
-            mk_Date(1990, 3, 31), mk_Date(1990, 1, 31).functions.addMonths(2)
+            mk_Date(1990, 1, 31), mk_Date(1990, 1, 31).functions.addMonths(0)
         )
         assertEquals(
-            mk_Date(1990, 1, 31), mk_Date(1990, 1, 31).functions.addMonths(0)
+            mk_Date(1990, 3, 31), mk_Date(1990, 1, 31).functions.addMonths(2)
         )
         assertEquals(
             mk_Date(1990, 3, 28), mk_Date(1990, 1, 31).functions.addMonths(1).functions.addMonths(1)
