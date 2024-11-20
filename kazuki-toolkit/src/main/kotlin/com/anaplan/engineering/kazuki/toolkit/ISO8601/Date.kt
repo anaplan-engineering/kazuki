@@ -2,6 +2,7 @@ package com.anaplan.engineering.kazuki.toolkit.ISO8601
 
 import com.anaplan.engineering.kazuki.core.*
 import com.anaplan.engineering.kazuki.toolkit.ISO8601.Date_Module.mk_Date
+import com.anaplan.engineering.kazuki.toolkit.ISO8601.Dtg_Module.mk_Dtg
 import kotlin.math.min
 
 @Module
@@ -31,6 +32,9 @@ interface Date : Comparable<Date> {
                 )
             },
 //        post = { result -> result.functions.toDate() == date }
+//        This post condition uses a function whose post condition uses this function as a post condition.
+//        If not commented, the two functions will recur until a stack overflow error occurs.
+//        However, it is still a valid post condition so is left here for completeness.
         )
 
         val format: () -> String = function(
@@ -40,9 +44,9 @@ interface Date : Comparable<Date> {
 
         val toDayOfWeek: () -> DayOfWeek = function<DayOfWeek>(
             command = {
-                DayOfWeek.entries.find {
-                    it.dayNumber == (date.functions.toDurationSinceFirstDate().functions.toDays().toInt() - 365) % 7
-                }!!
+                iota(DayOfWeek.entries) { day ->
+                    day.ordinal == ((date.functions.toDurationSinceFirstDate().functions.toDays().toInt() - 365) % 7)
+                }
             }
         )
 
@@ -70,6 +74,14 @@ interface Date : Comparable<Date> {
             command = { n -> date.functions.toDurationSinceFirstDate().functions.subtractDuration(Duration.fromDays(n.toLong())).functions.toDateAfterFirstDate() },
             pre = { n -> date.functions.toDurationSinceFirstDate().functions.toDays() >= n },
 //            post = {n, result -> result.functions.addDays(n) == date}
+//        This post condition uses a function whose post condition uses this function as a post condition.
+//        If not commented, the two functions will recur until a stack overflow error occurs.
+//        However, it is still a valid post condition so is left here for completeness.
+
+        )
+
+        val toDtgAtStartOfDay: () -> Dtg = function<Dtg>(
+            command = { mk_Dtg(date, FirstTime) }
         )
 
     }
@@ -78,11 +90,11 @@ interface Date : Comparable<Date> {
 @PrimitiveInvariant(name = "Year", base = nat::class)
 fun yearNotInRange(year: nat) = year in FirstYear..LastYear
 
-@PrimitiveInvariant(name = "Month", base = nat::class)
-fun monthNotInRange(month: nat) = month in 1..MonthsPerYear // nat1
+@PrimitiveInvariant(name = "Month", base = nat1::class)
+fun monthNotInRange(month: nat1) = month in 1..MonthsPerYear
 
 @PrimitiveInvariant(name = "Day", base = nat1::class)
-fun dayNotInRange(day: nat1) = day in 1..MaxDaysPerMonth // nat1
+fun dayNotInRange(day: nat1) = day in 1..DaysPerMonth.rng.max()
 
 val isLeap: (Year) -> bool = function(
     command = { year ->
@@ -115,7 +127,7 @@ val nextDateWithSameDayAsGivenDate: (Date) -> Date = function(
 )
 val nextDateWithSameDayAsGivenDay: (Date, Day) -> Date = function(
     command = { date, day -> nextDateFromGivenYearMonthDayForGivenDay(date.year, date.month, date.day, day) },
-    pre = { _, day -> day <= MaxDaysPerMonth }
+    pre = { _, day -> day <= DaysPerMonth.rng.max() }
 )
 val nextDateFromGivenYearMonthDayForGivenDay: (Year, Month, Day, Day) -> Date by lazy {
     function(
@@ -141,7 +153,7 @@ val previousDateWithSameDayAsGivenDate: (Date) -> Date = function(
 )
 val previousDateWithSameDayAsGivenDay: (Date, Day) -> Date = function(
     command = { date, day -> previousDateFromGivenYearMonthDayForGivenDay(date.year, date.month, date.day, day) },
-    pre = { _, day -> day <= MaxDaysPerMonth }
+    pre = { _, day -> day <= DaysPerMonth.rng.max() }
 )
 val previousDateFromGivenYearMonthDayForGivenDay: (Year, Month, Day, Day) -> Date by lazy {
     function(

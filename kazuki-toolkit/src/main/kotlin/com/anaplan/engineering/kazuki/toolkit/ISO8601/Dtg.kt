@@ -25,7 +25,10 @@ interface Dtg : Comparable<Dtg> {
         val subtractDuration: (Duration) -> Dtg = function(
             command = { duration -> dtg.functions.toDurationSinceFirstDtg().functions.subtractDuration(duration).functions.toDtgAfterFirstDtg() },
             pre = { duration -> duration <= dtg.functions.toDurationSinceFirstDtg() },
-//        post = { duration, result -> result.functions.addDuration(duration) == dtg }
+//          post = { duration, result -> result.functions.addDuration(duration) == dtg }
+//          This post condition uses a function whose post condition uses this function as a post condition.
+//          If not commented, the two functions will recur until a stack overflow error occurs.
+//          However, it is still a valid post condition so is left here for completeness.
         )
 
         val toDurationSinceFirstDtg: () -> Duration = function<Duration>(
@@ -94,7 +97,10 @@ interface Dtg : Comparable<Dtg> {
         val subtractDays: (nat) -> Dtg = function(
             command = { n -> mk_Dtg(dtg.date.functions.subtractDays(n), dtg.time) },
             pre = { n -> dtg.functions.toDurationSinceFirstDtg().functions.toDays() >= n },
-//            post = { n, result -> result.functions.addDays(n) == dtg }
+//          post = { n, result -> result.functions.addDays(n) == dtg }
+//          This post condition uses a function whose post condition uses this function as a post condition.
+//          If not commented, the two functions will recur until a stack overflow error occurs.
+//          However, it is still a valid post condition so is left here for completeness.
 
         )
 
@@ -182,7 +188,11 @@ interface Interval {
 
         val contains: (Dtg) -> bool = function(
             command = { dtg -> dtg.functions.inInterval(interval) },
-//            post = {dtg, result -> dtg.functions.inInterval(interval) == result}
+//          post = {dtg, result -> dtg.functions.inInterval(interval) == result}
+//          This post condition uses a function whose post condition uses this function as a post condition.
+//          If not commented, the two functions will recur until a stack overflow error occurs.
+//          However, it is still a valid post condition so is left here for completeness.
+
         )
 
         val format: () -> String = function<String>(

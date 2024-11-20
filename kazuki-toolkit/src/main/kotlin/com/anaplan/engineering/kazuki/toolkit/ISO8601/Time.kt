@@ -31,6 +31,9 @@ interface Time : Comparable<Time> {
                 )
             },
 //        post = { result -> result.functions.toTime() == time }
+//        This post condition uses a function whose post condition uses this function as a post condition.
+//        If not commented, the two functions will recur until a stack overflow error occurs.
+//        However, it is still a valid post condition so is left here for completeness.
         )
 
         val format: () -> String = function<String>(

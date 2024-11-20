@@ -13,14 +13,15 @@ enum class PlusOrMinus {
 
 typealias OffsetDirection = PlusOrMinus
 
-enum class DayOfWeek(val dayNumber: int) {
-    Monday(1),
-    Tuesday(2),
-    Wednesday(3),
-    Thursday(4),
-    Friday(5),
-    Saturday(6),
-    Sunday(0)
+
+enum class DayOfWeek { // Date.functions.toDayOfWeek depends on this ordering - don't change it!
+    Sunday,
+    Monday,
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+    Saturday,
 }
 
 const val MillisPerSecond: nat = 1000
@@ -37,7 +38,6 @@ val DaysPerMonth: Mapping<Month, Day> = mk_Mapping(
 val DaysPerMonthLeap: Mapping<Month, Day> = DaysPerMonth * mk_(2, 29)
 
 val MonthsPerYear: nat = DaysPerMonth.dom.card
-val MaxDaysPerMonth: nat = DaysPerMonth.rng.max()
 
 const val FirstYear: nat = 0
 const val LastYear: nat = 9999

@@ -22,26 +22,43 @@ interface Duration : Comparable<Duration> {
         val fromMillis: (Long) -> Duration = function(
             command = { milliseconds -> mk_Duration(milliseconds) },
 //        post = { millisecond, result -> result.functions.toMillis() == millisecond }
+//        This post condition uses a function whose post condition uses this function as a post condition.
+//        If not commented, the two functions will recur until a stack overflow error occurs.
+//        However, it is still a valid post condition so is left here for completeness.
+
         )
 
         val fromSeconds: (Long) -> Duration = function(
             command = { seconds -> fromMillis(seconds * MillisPerSecond) },
 //        post = { second, result -> result.functions.toSeconds() == second }
+//        This post condition uses a function whose post condition uses this function as a post condition.
+//        If not commented, the two functions will recur until a stack overflow error occurs.
+//        However, it is still a valid post condition so is left here for completeness.
+
         )
 
         val fromMinutes: (Long) -> Duration = function(
             command = { minutes -> fromSeconds(minutes * SecondsPerMinute) },
 //        post = { minutes, result -> result.functions.toMinutes() == minutes }
+//        This post condition uses a function whose post condition uses this function as a post condition.
+//        If not commented, the two functions will recur until a stack overflow error occurs.
+//        However, it is still a valid post condition so is left here for completeness.
         )
 
         val fromHours: (Long) -> Duration = function(
             command = { hours -> fromMinutes(hours * MinutesPerHour) },
 //        post = { hour, result -> result.functions.toHours() == hour }
+//        This post condition uses a function whose post condition uses this function as a post condition.
+//        If not commented, the two functions will recur until a stack overflow error occurs.
+//        However, it is still a valid post condition so is left here for completeness.
         )
 
         val fromDays: (Long) -> Duration = function(
             command = { days -> fromHours(days * HoursPerDay) },
 //        post = { day, result -> result.functions.toDays() == day }
+//        This post condition uses a function whose post condition uses this function as a post condition.
+//        If not commented, the two functions will recur until a stack overflow error occurs.
+//        However, it is still a valid post condition so is left here for completeness.
         )
 
         val fromMonth: (Year, Month) -> Duration = function(
@@ -195,7 +212,6 @@ interface Duration : Comparable<Duration> {
         val addDuration: (Duration) -> Duration = function(
             command = { plusDuration -> mk_Duration(duration.milliseconds + plusDuration.milliseconds) },
             post = { plusDuration, result ->
-//            durationDiff(result, d) == duration && durationDiff(result, duration) == d &&
                 result.functions.subtractDuration(plusDuration) == duration
                         && result.functions.subtractDuration(duration) == plusDuration
             }
@@ -204,7 +220,11 @@ interface Duration : Comparable<Duration> {
         val subtractDuration: (Duration) -> Duration = function(
             command = { minusDuration -> mk_Duration(duration.milliseconds - minusDuration.milliseconds) },
             pre = { minusDuration -> duration >= minusDuration },
-//        post = { subtractDuration, result -> result.functions.addDuration(duration) == d }
+//          post = { subtractDuration, result -> result.functions.addDuration(duration) == d }
+//          This post condition uses a function whose post condition uses this function as a post condition.
+//          If not commented, the two functions will recur until a stack overflow error occurs.
+//          However, it is still a valid post condition so is left here for completeness.
+
         )
 
         val multiply: (nat) -> Duration = function(
@@ -216,6 +236,9 @@ interface Duration : Comparable<Duration> {
             command = { n -> mk_Duration(duration.milliseconds / n) },
             pre = { n -> n != 0 }
 //        post = { n, result -> result.functions.multiply(n) <= duration && duration < result.functions.multiply(n+1)}
+//        This post condition uses a function whose post condition uses this function as a post condition.
+//        If not commented, the two functions will recur until a stack overflow error occurs.
+//        However, it is still a valid post condition so is left here for completeness.
         )
 
         val modSeconds: () -> Duration = function(

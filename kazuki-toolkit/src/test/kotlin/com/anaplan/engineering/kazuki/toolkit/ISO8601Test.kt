@@ -37,9 +37,11 @@ class ISO8601Test {
     @Test
     fun dateInvariantTest() {
         assertFailsWith<InvariantFailure> { mk_Date(-5, 1, 1) }
-//        assertFailsWith<InvariantFailure> { mk_Date(1, 13, 1) } // Will pass when @PrimitiveInvariants trigger InvariantFailures
+//        assertFailsWith<InvariantFailure> { mk_Date(1,13,1) } // See TestPrimitiveInvariant.kt for more
+// As Date's invariant is tested before Month's invariant, it throws an exception, because 13 is not in the domain of the mapping used in Date's invariant
         assertFailsWith<InvariantFailure> { mk_Date(1, 2, 29) }
         assertFailsWith<InvariantFailure> { mk_Date(1, 2, 40) }
+        assertFailsWith<InvariantFailure> { mk_Date(1, 2, -40) }
     }
 
     @Test
@@ -87,30 +89,30 @@ class ISO8601Test {
     fun dtgInRangeDayTest() {
         assertEquals(
             true,
-            mk_Dtg(mk_Date(1990, 1, 3), FirstTime).functions.inRange(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+            mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay().functions.inRange(
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
             )
         )
         assertEquals(
             false,
-            mk_Dtg(mk_Date(1990, 1, 7), FirstTime).functions.inRange(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+            mk_Date(1990, 1, 7).functions.toDtgAtStartOfDay().functions.inRange(
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
             )
         )
         assertEquals(
             true,
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime).functions.inRange(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+            mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay().functions.inRange(
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
             )
         )
         assertEquals(
             false,
-            mk_Dtg(mk_Date(1990, 1, 3), FirstTime).functions.inRange(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 3), FirstTime)
+            mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay().functions.inRange(
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay()
             )
         )
     }
@@ -152,31 +154,31 @@ class ISO8601Test {
         assertEquals(
             true,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
-            ).functions.contains(mk_Dtg(mk_Date(1990, 1, 3), FirstTime))
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
+            ).functions.contains(mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay())
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
-            ).functions.contains(mk_Dtg(mk_Date(1990, 1, 7), FirstTime))
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
+            ).functions.contains(mk_Date(1990, 1, 7).functions.toDtgAtStartOfDay())
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
-            ).functions.contains(mk_Dtg(mk_Date(1990, 1, 1), FirstTime))
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
+            ).functions.contains(mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay())
 
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 3), FirstTime)
-            ).functions.contains(mk_Dtg(mk_Date(1990, 1, 3), FirstTime))
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay()
+            ).functions.contains(mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay())
         )
         assertEquals(
             true,
@@ -212,32 +214,32 @@ class ISO8601Test {
     fun dtgWithinDurationOfDtgTest() {
         assertEquals(
             true,
-            mk_Dtg(mk_Date(1989, 1, 3), FirstTime).functions.withinDurationOfDtg(
-                Duration.fromDays(3), mk_Dtg(mk_Date(1989, 1, 1), FirstTime)
+            mk_Date(1989, 1, 3).functions.toDtgAtStartOfDay().functions.withinDurationOfDtg(
+                Duration.fromDays(3), mk_Date(1989, 1, 1).functions.toDtgAtStartOfDay()
             )
         )
         assertEquals(
             true,
-            mk_Dtg(mk_Date(1989, 12, 30), FirstTime).functions.withinDurationOfDtg(
-                Duration.fromDays(3), mk_Dtg(mk_Date(1990, 1, 1), FirstTime)
+            mk_Date(1989, 12, 30).functions.toDtgAtStartOfDay().functions.withinDurationOfDtg(
+                Duration.fromDays(3), mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay()
             )
         )
         assertEquals(
             true,
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime).functions.withinDurationOfDtg(
-                Duration.fromDays(0), mk_Dtg(mk_Date(1990, 1, 1), FirstTime)
+            mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay().functions.withinDurationOfDtg(
+                Duration.fromDays(0), mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay()
             )
         )
         assertEquals(
             false,
-            mk_Dtg(mk_Date(1990, 1, 6), FirstTime).functions.withinDurationOfDtg(
-                Duration.fromDays(3), mk_Dtg(mk_Date(1990, 1, 1), FirstTime)
+            mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay().functions.withinDurationOfDtg(
+                Duration.fromDays(3), mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay()
             )
         )
         assertEquals(
             false,
-            mk_Dtg(mk_Date(1989, 12, 27), FirstTime).functions.withinDurationOfDtg(
-                Duration.fromDays(3), mk_Dtg(mk_Date(1990, 1, 1), FirstTime)
+            mk_Date(1989, 12, 27).functions.toDtgAtStartOfDay().functions.withinDurationOfDtg(
+                Duration.fromDays(3), mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay()
             )
         )
     }
@@ -246,38 +248,38 @@ class ISO8601Test {
     fun dtgInIntervalTest() {
         assertEquals(
             true,
-            mk_Dtg(mk_Date(1990, 1, 3), FirstTime).functions.inInterval(
+            mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay().functions.inInterval(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                    mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
                 )
             )
         )
         assertEquals(
             false,
-            mk_Dtg(mk_Date(1990, 1, 7), FirstTime).functions.inInterval(
+            mk_Date(1990, 1, 7).functions.toDtgAtStartOfDay().functions.inInterval(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                    mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
                 )
             )
         )
         assertEquals(
             true,
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime).functions.inInterval(
+            mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay().functions.inInterval(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                    mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
                 )
             )
 
         )
         assertEquals(
             false,
-            mk_Dtg(mk_Date(1990, 1, 3), FirstTime).functions.inInterval(
+            mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay().functions.inInterval(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 3), FirstTime)
+                    mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay()
                 )
             )
         )
@@ -326,72 +328,72 @@ class ISO8601Test {
         assertEquals(
             true,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 2), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 4), FirstTime)
+                mk_Date(1990, 1, 2).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 4).functions.toDtgAtStartOfDay()
             ).functions.overlap(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 3), FirstTime)
+                    mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay()
                 )
             )
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 3), FirstTime)
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay()
             ).functions.overlap(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 2), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 4), FirstTime)
+                    mk_Date(1990, 1, 2).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 4).functions.toDtgAtStartOfDay()
                 )
             )
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
             ).functions.overlap(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 2), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 4), FirstTime)
+                    mk_Date(1990, 1, 2).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 4).functions.toDtgAtStartOfDay()
                 )
             )
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
             ).functions.overlap(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                    mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
                 )
             )
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
             ).functions.overlap(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 6), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 8), FirstTime)
+                    mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 8).functions.toDtgAtStartOfDay()
                 )
             )
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
             ).functions.overlap(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 8), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 10), FirstTime)
+                    mk_Date(1990, 1, 8).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 10).functions.toDtgAtStartOfDay()
                 )
             )
         )
@@ -402,96 +404,96 @@ class ISO8601Test {
         assertEquals(
             true,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 3), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
             ).functions.within(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 10), FirstTime)
+                    mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 10).functions.toDtgAtStartOfDay()
                 )
             )
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 12), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 14), FirstTime)
+                mk_Date(1990, 1, 12).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 14).functions.toDtgAtStartOfDay()
             ).functions.within(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 10), FirstTime)
+                    mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 10).functions.toDtgAtStartOfDay()
                 )
             )
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 3), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
             ).functions.within(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 5), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 10), FirstTime)
+                    mk_Date(1990, 1, 5).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 10).functions.toDtgAtStartOfDay()
                 )
             )
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 8), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 12), FirstTime)
+                mk_Date(1990, 1, 8).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 12).functions.toDtgAtStartOfDay()
             ).functions.within(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 5), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 10), FirstTime)
+                    mk_Date(1990, 1, 5).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 10).functions.toDtgAtStartOfDay()
                 )
             )
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 3), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
             ).functions.within(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 3), FirstTime)
+                    mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay()
                 )
             )
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 3), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
             ).functions.within(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 3), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                    mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
                 )
             )
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 3), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                mk_Date(1990, 1, 3).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
             ).functions.within(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 2), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                    mk_Date(1990, 1, 2).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
                 )
             )
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 2), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 5), FirstTime)
+                mk_Date(1990, 1, 2).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 5).functions.toDtgAtStartOfDay()
             ).functions.within(
                 mk_Interval(
-                    mk_Dtg(mk_Date(1990, 1, 2), FirstTime),
-                    mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                    mk_Date(1990, 1, 2).functions.toDtgAtStartOfDay(),
+                    mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
                 )
             )
         )
@@ -500,12 +502,12 @@ class ISO8601Test {
     @Test
     fun dtgAddDurationTest() {
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 5), FirstTime),
-            mk_Dtg(mk_Date(1990, 1, 2), FirstTime).functions.addDuration(Duration.fromDays(3))
+            mk_Date(1990, 1, 5).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 1, 2).functions.toDtgAtStartOfDay().functions.addDuration(Duration.fromDays(3))
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 2), FirstTime),
-            mk_Dtg(mk_Date(1990, 1, 2), FirstTime).functions.addDuration(Duration.fromDays(0))
+            mk_Date(1990, 1, 2).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 1, 2).functions.toDtgAtStartOfDay().functions.addDuration(Duration.fromDays(0))
         )
         assertEquals(
             mk_Dtg(mk_Date(1990, 1, 2), mk_Time(5, 20, 0, 0)),
@@ -533,12 +535,12 @@ class ISO8601Test {
     fun dtgSubtractDurationTest() {
         assertFailsWith<PreconditionFailure> { Duration.fromSeconds(1).functions.subtractDuration(Duration.fromSeconds(5)) }
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 2), FirstTime),
-            mk_Dtg(mk_Date(1990, 1, 5), FirstTime).functions.subtractDuration(Duration.fromDays(3))
+            mk_Date(1990, 1, 2).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 1, 5).functions.toDtgAtStartOfDay().functions.subtractDuration(Duration.fromDays(3))
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 5), FirstTime),
-            mk_Dtg(mk_Date(1990, 1, 5), FirstTime).functions.subtractDuration(Duration.fromDays(0))
+            mk_Date(1990, 1, 5).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 1, 5).functions.toDtgAtStartOfDay().functions.subtractDuration(Duration.fromDays(0))
         )
         assertEquals(
             mk_Dtg(mk_Date(1990, 1, 5), mk_Time(3, 20, 0, 0)),
@@ -825,6 +827,15 @@ class ISO8601Test {
     }
 
     @Test
+    fun dateToDtgTest() {
+        assertEquals(mk_Dtg(mk_Date(1, 1, 1), FirstTime), mk_Date(1, 1, 1).functions.toDtgAtStartOfDay())
+        assertEquals(mk_Dtg(mk_Date(1000, 12, 11), FirstTime), mk_Date(1000, 12, 11).functions.toDtgAtStartOfDay())
+        assertEquals(mk_Dtg(mk_Date(2000, 2, 29), FirstTime), mk_Date(2000, 2, 29).functions.toDtgAtStartOfDay())
+        assertEquals(mk_Dtg(mk_Date(9999, 12, 31), FirstTime), mk_Date(9999, 12, 31).functions.toDtgAtStartOfDay())
+        assertEquals(mk_Dtg(mk_Date(2001, 2, 28), FirstTime), mk_Date(2001, 2, 28).functions.toDtgAtStartOfDay())
+    }
+
+    @Test
     fun durationModDaysTest() {
         assertEquals(
             Duration.fromSeconds(10),
@@ -900,15 +911,15 @@ class ISO8601Test {
     @Test
     fun durationToDtgAfterFirstDtgTest() {
         assertEquals(
-            mk_Dtg(mk_Date(0, 1, 6), FirstTime),
+            mk_Date(0, 1, 6).functions.toDtgAtStartOfDay(),
             Duration.fromDays(5).functions.toDtgAfterFirstDtg()
         )
         assertEquals(
-            mk_Dtg(mk_Date(0, 1, 1), FirstTime),
+            mk_Date(0, 1, 1).functions.toDtgAtStartOfDay(),
             Duration.fromDays(0).functions.toDtgAfterFirstDtg()
         )
         assertEquals(
-            mk_Dtg(mk_Date(0, 2, 7), FirstTime),
+            mk_Date(0, 2, 7).functions.toDtgAtStartOfDay(),
             Duration.fromDays(37).functions.toDtgAfterFirstDtg()
         )
         assertEquals(
@@ -920,20 +931,20 @@ class ISO8601Test {
     @Test
     fun durationToDtgAfterGivenDtgTest() {
         assertEquals(
-            mk_Dtg(mk_Date(1000, 1, 6), FirstTime),
-            Duration.fromDays(5).functions.toDtgAfterGivenDtg(mk_Dtg(mk_Date(1000, 1, 1), FirstTime))
+            mk_Date(1000, 1, 6).functions.toDtgAtStartOfDay(),
+            Duration.fromDays(5).functions.toDtgAfterGivenDtg(mk_Date(1000, 1, 1).functions.toDtgAtStartOfDay())
         )
         assertEquals(
-            mk_Dtg(mk_Date(100, 1, 1), FirstTime),
-            Duration.fromDays(0).functions.toDtgAfterGivenDtg(mk_Dtg(mk_Date(100, 1, 1), FirstTime))
+            mk_Date(100, 1, 1).functions.toDtgAtStartOfDay(),
+            Duration.fromDays(0).functions.toDtgAfterGivenDtg(mk_Date(100, 1, 1).functions.toDtgAtStartOfDay())
         )
         assertEquals(
-            mk_Dtg(mk_Date(2000, 3, 31), FirstTime),
-            Duration.fromDays(90).functions.toDtgAfterGivenDtg(mk_Dtg(mk_Date(2000, 1, 1), FirstTime))
+            mk_Date(2000, 3, 31).functions.toDtgAtStartOfDay(),
+            Duration.fromDays(90).functions.toDtgAfterGivenDtg(mk_Date(2000, 1, 1).functions.toDtgAtStartOfDay())
         )
         assertEquals(
             mk_Dtg(mk_Date(2024, 12, 31), mk_Time(13, 0, 0, 0)),
-            Duration.fromHours(13).functions.toDtgAfterGivenDtg(mk_Dtg(mk_Date(2024, 12, 31), FirstTime))
+            Duration.fromHours(13).functions.toDtgAfterGivenDtg(mk_Date(2024, 12, 31).functions.toDtgAtStartOfDay())
         )
     }
 
@@ -941,16 +952,16 @@ class ISO8601Test {
     fun dtgToDurationSinceFirstDtgTest() {
         assertEquals(
             Duration.fromDays(6),
-            mk_Dtg(mk_Date(0, 1, 7), FirstTime).functions.toDurationSinceFirstDtg()
+            mk_Date(0, 1, 7).functions.toDtgAtStartOfDay().functions.toDurationSinceFirstDtg()
         )
         assertEquals(
             Duration.fromDays(0),
-            mk_Dtg(mk_Date(0, 1, 1), FirstTime).functions.toDurationSinceFirstDtg()
+            mk_Date(0, 1, 1).functions.toDtgAtStartOfDay().functions.toDurationSinceFirstDtg()
         )
 
         assertEquals(
             Duration.fromDays(37),
-            mk_Dtg(mk_Date(0, 2, 7), FirstTime).functions.toDurationSinceFirstDtg()
+            mk_Date(0, 2, 7).functions.toDtgAtStartOfDay().functions.toDurationSinceFirstDtg()
         )
     }
 
@@ -1047,8 +1058,8 @@ class ISO8601Test {
         assertEquals(
             Duration.fromDays(5),
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
             ).functions.intervalDuration()
         )
         assertEquals(
@@ -1351,7 +1362,7 @@ class ISO8601Test {
         assertEquals(
             mk_Interval(
                 mk_Dtg(mk_Date(1990, 1, 1), mk_Time(23, 59, 59, 999)),
-                mk_Dtg(mk_Date(1990, 1, 2), FirstTime)
+                mk_Date(1990, 1, 2).functions.toDtgAtStartOfDay()
             ),
             mk_Dtg(mk_Date(1990, 1, 1), mk_Time(23, 59, 59, 999)).functions.instant()
         )
@@ -1546,8 +1557,8 @@ class ISO8601Test {
         assertEquals(
             "1990-01-01T00:00:00/1990-01-06T00:00:00",
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 6), FirstTime)
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 6).functions.toDtgAtStartOfDay()
             ).functions.format()
         )
         assertEquals(
@@ -1572,16 +1583,16 @@ class ISO8601Test {
     @Test
     fun dtgAddMonthsTest() {
         assertEquals(
-            mk_Dtg(mk_Date(1990, 3, 31), FirstTime),
-            mk_Dtg(mk_Date(1990, 1, 31), FirstTime).functions.addMonths(2)
+            mk_Date(1990, 3, 31).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 1, 31).functions.toDtgAtStartOfDay().functions.addMonths(2)
         )
         assertEquals(
             mk_Dtg(mk_Date(1990, 3, 28), mk_Time(3, 0, 0, 0)),
             mk_Dtg(mk_Date(1990, 1, 31), mk_Time(3, 0, 0, 0)).functions.addMonths(1).functions.addMonths(1)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1991, 1, 30), FirstTime),
-            mk_Dtg(mk_Date(1990, 11, 30), FirstTime).functions.addMonths(2)
+            mk_Date(1991, 1, 30).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 11, 30).functions.toDtgAtStartOfDay().functions.addMonths(2)
         )
     }
 
@@ -1589,16 +1600,16 @@ class ISO8601Test {
     fun dtgSubtractMonthsTest() {
         assertFailsWith<PreconditionFailure> { FirstDtg.functions.subtractMonths(1) }
         assertEquals(
-            mk_Dtg(mk_Date(1990, 2, 2), FirstTime),
-            mk_Dtg(mk_Date(1990, 4, 2), FirstTime).functions.subtractMonths(2)
+            mk_Date(1990, 2, 2).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 4, 2).functions.toDtgAtStartOfDay().functions.subtractMonths(2)
         )
         assertEquals(
             mk_Dtg(mk_Date(1990, 1, 28), mk_Time(3, 0, 0, 0)),
             (mk_Dtg(mk_Date(1990, 3, 31), mk_Time(3, 0, 0, 0))).functions.subtractMonths(1).functions.subtractMonths(1)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 11, 2), FirstTime),
-            mk_Dtg(mk_Date(1991, 1, 2), FirstTime).functions.subtractMonths(2)
+            mk_Date(1990, 11, 2).functions.toDtgAtStartOfDay(),
+            mk_Date(1991, 1, 2).functions.toDtgAtStartOfDay().functions.subtractMonths(2)
         )
     }
 
@@ -1638,28 +1649,28 @@ class ISO8601Test {
     @Test
     fun dtgAddDays() {
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime).functions.addDays(0)
+            mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay().functions.addDays(0)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 10), FirstTime),
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime).functions.addDays(9)
+            mk_Date(1990, 1, 10).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay().functions.addDays(9)
         )
         assertEquals(
             mk_Dtg(mk_Date(1990, 2, 1), LastTime),
             mk_Dtg(mk_Date(1990, 1, 1), LastTime).functions.addDays(31)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 2, 2), FirstTime),
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime).functions.addDays(32)
+            mk_Date(1990, 2, 2).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay().functions.addDays(32)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1992, 3, 1), FirstTime),
-            mk_Dtg(mk_Date(1992, 2, 1), FirstTime).functions.addDays(29)
+            mk_Date(1992, 3, 1).functions.toDtgAtStartOfDay(),
+            mk_Date(1992, 2, 1).functions.toDtgAtStartOfDay().functions.addDays(29)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1991, 1, 2), FirstTime),
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime).functions.addDays(366)
+            mk_Date(1991, 1, 2).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay().functions.addDays(366)
         )
     }
 
@@ -1667,28 +1678,28 @@ class ISO8601Test {
     fun dtgSubtractDays() {
         assertFailsWith<PreconditionFailure> { FirstDtg.functions.subtractDays(5) }
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime).functions.subtractDays(0)
+            mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay().functions.subtractDays(0)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-            mk_Dtg(mk_Date(1990, 1, 10), FirstTime).functions.subtractDays(9)
+            mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 1, 10).functions.toDtgAtStartOfDay().functions.subtractDays(9)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-            mk_Dtg(mk_Date(1990, 2, 1), FirstTime).functions.subtractDays(31)
+            mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 2, 1).functions.toDtgAtStartOfDay().functions.subtractDays(31)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-            mk_Dtg(mk_Date(1990, 2, 2), FirstTime).functions.subtractDays(32)
+            mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+            mk_Date(1990, 2, 2).functions.toDtgAtStartOfDay().functions.subtractDays(32)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1992, 2, 1), FirstTime),
-            mk_Dtg(mk_Date(1992, 3, 1), FirstTime).functions.subtractDays(29)
+            mk_Date(1992, 2, 1).functions.toDtgAtStartOfDay(),
+            mk_Date(1992, 3, 1).functions.toDtgAtStartOfDay().functions.subtractDays(29)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-            mk_Dtg(mk_Date(1991, 1, 2), FirstTime).functions.subtractDays(366)
+            mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+            mk_Date(1991, 1, 2).functions.toDtgAtStartOfDay().functions.subtractDays(366)
         )
     }
 
@@ -1719,19 +1730,19 @@ class ISO8601Test {
         assertEquals(
             0,
             monthsBetweenDtgs(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime), mk_Dtg(mk_Date(1990, 1, 1), FirstTime)
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(), mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay()
             )
         )
         assertEquals(
             0,
             monthsBetweenDtgs(
-                mk_Dtg(mk_Date(1990, 1, 12), FirstTime), mk_Dtg(mk_Date(1990, 2, 1), FirstTime)
+                mk_Date(1990, 1, 12).functions.toDtgAtStartOfDay(), mk_Date(1990, 2, 1).functions.toDtgAtStartOfDay()
             )
         )
         assertEquals(
             6,
             monthsBetweenDtgs(
-                mk_Dtg(mk_Date(1990, 12, 12), FirstTime), mk_Dtg(mk_Date(1991, 6, 13), FirstTime)
+                mk_Date(1990, 12, 12).functions.toDtgAtStartOfDay(), mk_Date(1991, 6, 13).functions.toDtgAtStartOfDay()
             )
         )
     }
@@ -1742,22 +1753,22 @@ class ISO8601Test {
         assertEquals(
             0,
             yearsBetweenDtgs(
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime),
-                mk_Dtg(mk_Date(1990, 1, 1), FirstTime)
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 1, 1).functions.toDtgAtStartOfDay()
             )
         )
         assertEquals(
             0,
             yearsBetweenDtgs(
-                mk_Dtg(mk_Date(1990, 1, 12), FirstTime),
-                mk_Dtg(mk_Date(1990, 12, 1), FirstTime)
+                mk_Date(1990, 1, 12).functions.toDtgAtStartOfDay(),
+                mk_Date(1990, 12, 1).functions.toDtgAtStartOfDay()
             )
         )
         assertEquals(
             2,
             yearsBetweenDtgs(
-                mk_Dtg(mk_Date(1990, 1, 12), FirstTime),
-                mk_Dtg(mk_Date(1992, 3, 13), FirstTime)
+                mk_Date(1990, 1, 12).functions.toDtgAtStartOfDay(),
+                mk_Date(1992, 3, 13).functions.toDtgAtStartOfDay()
             )
         )
     }
