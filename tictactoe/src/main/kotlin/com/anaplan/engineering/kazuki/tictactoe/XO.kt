@@ -1,6 +1,14 @@
 package com.anaplan.engineering.kazuki.tictactoe
 
 import com.anaplan.engineering.kazuki.core.*
+import com.anaplan.engineering.kazuki.tictactoe.XO.hasTurn
+import com.anaplan.engineering.kazuki.tictactoe.XO.hasWon
+import com.anaplan.engineering.kazuki.tictactoe.XO.isDraw
+import com.anaplan.engineering.kazuki.tictactoe.XO.isWon
+import com.anaplan.engineering.kazuki.tictactoe.XO.moveCountLeft
+import com.anaplan.engineering.kazuki.tictactoe.XO.moveCountSoFar
+import com.anaplan.engineering.kazuki.tictactoe.XO.movesForPlayer
+import com.anaplan.engineering.kazuki.tictactoe.XO.movesSoFar
 import com.anaplan.engineering.kazuki.tictactoe.XO_Module.mk_Game
 import com.anaplan.engineering.kazuki.tictactoe.XO_Module.mk_Position
 
@@ -50,11 +58,13 @@ object XO {
     val S: Set<nat1> = as_Set(1..Size)
 
     val winningLines: Set<Set<Position>> = dunion(
-        set(S) { r: nat1 -> set(S) { c: nat1 -> mk_Position(r, c) } },
-        set(S) { c: nat1 -> set(S) { r: nat1 -> mk_Position(r, c) } },
         mk_Set(
-            as_Set(set(S) { x: nat1 -> mk_Position(x, x) }),
-            as_Set(set(S) { x: nat1 -> mk_Position(x, Size - x + 1) })
+            set(S) { r: nat1 -> set(S) { c: nat1 -> mk_Position(r, c) } },
+            set(S) { c: nat1 -> set(S) { r: nat1 -> mk_Position(r, c) } },
+            mk_Set(
+                as_Set(set(S) { x: nat1 -> mk_Position(x, x) }),
+                as_Set(set(S) { x: nat1 -> mk_Position(x, Size - x + 1) })
+            )
         ),
     )
 

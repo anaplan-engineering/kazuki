@@ -283,23 +283,7 @@ class TestSequence(
     }
 
     @Test
-    fun dcat_vararg() {
-        if (allowsEmpty) {
-            assertEquals(create(), dcat(create(), create()))
-            assertEquals(create(1, 2), dcat(create(1), create(), create(2)))
-            assertEquals(create(1), dcat(create(1), create(), create()))
-            assertEquals(create(2), dcat(create(), create(), create(2)))
-        }
-        assertEquals(create(1, 1), dcat(create(1), create(1)))
-        assertEquals(create(1, 2, 1), dcat(create(1), create(2), create(1)))
-
-        causesPreconditionFailure {
-            dcat<Int, Sequence<Int>>()
-        }
-    }
-
-    @Test
-    fun dcat_seq() {
+    fun dcat() {
         if (allowsEmpty) {
             assertEquals(create(), dcat(mk_Seq1(create(), create())))
             assertEquals(create(1, 2), dcat(mk_Seq1(create(1), create(), create(2))))

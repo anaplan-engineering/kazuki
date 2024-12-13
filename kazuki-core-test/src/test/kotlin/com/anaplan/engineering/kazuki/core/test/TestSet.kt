@@ -102,13 +102,14 @@ class TestSet(
     @Test
     fun dunion() {
         if (allowsEmpty) {
-            assertEquals(create(), dunion(create()))
-            assertEquals(create(1), dunion(create(), create(1)))
+            assertEquals(mk_Set(), dunion(mk_Set<Set<Int>>()))
+            assertEquals(create(), dunion(mk_Set(create())))
+            assertEquals(create(1), dunion(mk_Set(create(), create(1))))
         }
         assertEquals(create(1, 2, 3), dunion(mk_Set1(create(1, 2), create(3))))
-        assertEquals(create(1, 2, 3), dunion(create(1, 2, 3)))
-        assertEquals(create(create(1), 2, 3), dunion(mk_Set1(create(1), 2), create(3)))
-        assertEquals(create(create(1, 2), 3), dunion(create(create(1, 2), 3)))
+        assertEquals(create(1, 2, 3), dunion(mk_Set(create(1, 2, 3))))
+        assertEquals(create(create(1), 2, 3), dunion(mk_Set(mk_Set1(create(1), 2), create(3))))
+        assertEquals(create(create(1, 2), 3), dunion(mk_Set(create(create(1, 2), 3))))
     }
 
     @Test

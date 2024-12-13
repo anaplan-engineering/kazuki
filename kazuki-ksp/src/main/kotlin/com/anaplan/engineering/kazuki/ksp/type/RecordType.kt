@@ -216,20 +216,6 @@ internal fun TypeSpec.Builder.addRecordType(
                 }.build()).build()
         )
 
-        addType(TypeSpec.companionObjectBuilder().apply {
-            addFunction(
-                FunSpec.builder(isRelatedFunctionName).apply {
-                    addParameter(otherParameterName, Any::class)
-                    returns(Boolean::class)
-                    addModifiers(KModifier.INTERNAL)
-                    addStatement(
-                        "return ${compatibleSuperTypes.joinToString(" || ") { "%N·is·%T" }}",
-                        *compatibleSuperTypes.flatMap { listOf(otherParameterName, it) }.toTypedArray()
-                    )
-                }.build()
-            )
-        }.build())
-
     }.build()
     addType(implTypeSpec)
 
@@ -262,11 +248,14 @@ internal fun TypeSpec.Builder.addRecordType(
             addAnnotation(uncheckedCastAnnotation())
             returns(Boolean::class)
             addCode(CodeBlock.builder().apply {
-                beginControlFlow("if (%N·!is·%T)", otherParameterName, erasedTupleType)
-                addStatement("return false")
-                endControlFlow()
-
-                beginControlFlow("if (!$implClassName.$isRelatedFunctionName($otherParameterName))")
+                val erasedInternalTupleType = internalTupleClassName.parameterizedBy(
+                    tupleComponents.map { STAR } + STAR
+                )
+                beginControlFlow(
+                    "if (%N !is %T)",
+                    otherParameterName,
+                    erasedInternalTupleType
+                )
                 addStatement("return false")
                 endControlFlow()
 
@@ -288,12 +277,27 @@ internal fun TypeSpec.Builder.addRecordType(
                 } else {
                     "<" + interfaceTypeArguments.joinToString(", ") + ">"
                 }
+                val candidateValName = "candidate"
                 addStatement(
-                    "return %N$implTypeArgs(${tupleComponents.joinToString { "%N.%N as %T" }}, false).%N()",
+                    "val %N = %N$implTypeArgs(${tupleComponents.joinToString { "%N.%N as %T" }}, false)",
+                    candidateValName,
                     implClassName,
-                    *tupleComponents.flatMap { listOf(otherParameterName, "_${it.index}", it.typeName) }.toTypedArray(),
-                    validityFunctionName
+                    *tupleComponents.flatMap { listOf(otherParameterName, "_${it.index}", it.typeName) }.toTypedArray()
                 )
+
+                beginControlFlow(
+                    "if (!(%N.%N.isInstance(%N) && %N.%N.isInstance(%N)))",
+                    otherParameterName,
+                    comparableWithPropertyName,
+                    candidateValName,
+                    candidateValName,
+                    comparableWithPropertyName,
+                    otherParameterName
+                )
+                addStatement("return false")
+                endControlFlow()
+
+                addStatement("return %N.%N()", candidateValName, validityFunctionName)
             }.build())
         }.build()
     )
@@ -417,7 +421,6 @@ internal fun TypeSpec.Builder.addRecordType(
         )
     }
 }
-
 
 
 private const val otherParameterName = "other"

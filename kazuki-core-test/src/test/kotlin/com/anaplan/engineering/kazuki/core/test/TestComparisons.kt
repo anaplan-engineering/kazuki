@@ -9,10 +9,15 @@ import com.anaplan.engineering.kazuki.core.Flight_Module.mk_Flight
 import com.anaplan.engineering.kazuki.core.Id1_Module.mk_Id1
 import com.anaplan.engineering.kazuki.core.Id2_Module.mk_Id2
 import com.anaplan.engineering.kazuki.core.Id3_Module.mk_Id3
+import com.anaplan.engineering.kazuki.core.IntRecord1_Module.is_IntRecord1
 import com.anaplan.engineering.kazuki.core.IntRecord1_Module.mk_IntRecord1
+import com.anaplan.engineering.kazuki.core.IntRecord2_Module.is_IntRecord2
 import com.anaplan.engineering.kazuki.core.IntRecord2_Module.mk_IntRecord2
+import com.anaplan.engineering.kazuki.core.IntRecord3_Module.is_IntRecord3
 import com.anaplan.engineering.kazuki.core.IntRecord3_Module.mk_IntRecord3
+import com.anaplan.engineering.kazuki.core.IntRecord4_Module.is_IntRecord4
 import com.anaplan.engineering.kazuki.core.IntRecord4_Module.mk_IntRecord4
+import com.anaplan.engineering.kazuki.core.IntRecord5_Module.is_IntRecord5
 import com.anaplan.engineering.kazuki.core.IntRecord5_Module.mk_IntRecord5
 import com.anaplan.engineering.kazuki.core.NearestMinuteTime_Module.mk_NearestMinuteTime
 import com.anaplan.engineering.kazuki.core.NonEmptyCaselessString_Module.mk_NonEmptyCaselessString
@@ -488,6 +493,50 @@ class TestComparisons {
 
         assertNotEquals(i3, i5)
         assertNotEquals(i4, i5)
+    }
+
+    @Test
+    fun intRecordConsistencyWithIs() {
+        val i1 = mk_IntRecord1(8, "a")
+        val i2 = mk_IntRecord2(8, "a")
+        val i3 = mk_IntRecord3(8, "a")
+        val i4 = mk_IntRecord4(8, "a")
+        val i5 = mk_IntRecord5(8, "a")
+
+        assertEquals(true, is_IntRecord1(mk_(8, "a")))
+        assertEquals(true, is_IntRecord1(i1))
+        assertEquals(true, is_IntRecord1(i2))
+        assertEquals(false, is_IntRecord1(i3))
+        assertEquals(false, is_IntRecord1(i4))
+        assertEquals(false, is_IntRecord1(i5))
+
+        assertEquals(true, is_IntRecord2(mk_(8, "a")))
+        assertEquals(true, is_IntRecord2(i1))
+        assertEquals(true, is_IntRecord2(i2))
+        assertEquals(false, is_IntRecord2(i3))
+        assertEquals(false, is_IntRecord2(i4))
+        assertEquals(false, is_IntRecord2(i5))
+
+        assertEquals(false, is_IntRecord3(mk_(8, "a")))
+        assertEquals(false, is_IntRecord3(i1))
+        assertEquals(false, is_IntRecord3(i2))
+        assertEquals(true, is_IntRecord3(i3))
+        assertEquals(true, is_IntRecord3(i4))
+        assertEquals(false, is_IntRecord3(i5))
+
+        assertEquals(false, is_IntRecord4(mk_(8, "a")))
+        assertEquals(false, is_IntRecord4(i1))
+        assertEquals(false, is_IntRecord4(i2))
+        assertEquals(true, is_IntRecord4(i3))
+        assertEquals(true, is_IntRecord4(i4))
+        assertEquals(false, is_IntRecord4(i5))
+
+        assertEquals(false, is_IntRecord5(mk_(8, "a")))
+        assertEquals(false, is_IntRecord5(i1))
+        assertEquals(false, is_IntRecord5(i2))
+        assertEquals(false, is_IntRecord5(i3))
+        assertEquals(false, is_IntRecord5(i4))
+        assertEquals(true, is_IntRecord5(i5))
     }
 
     // TODO - set and mapping tests
