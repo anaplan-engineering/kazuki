@@ -11,6 +11,10 @@ interface Date : Comparable<Date> {
     val month: Month
     val day: Day
 
+    // TODO - remove once full support for primitive invariants implemented
+    @Invariant
+    fun primitivesValid() = yearInRange(year) && monthInRange(month) && dayInRange(day)
+
     @Invariant
     fun isDayValid() = day <= daysInMonth(year, month)
 
@@ -88,13 +92,13 @@ interface Date : Comparable<Date> {
 }
 
 @PrimitiveInvariant(name = "Year", base = nat::class)
-fun yearNotInRange(year: nat) = year in FirstYear..LastYear
+fun yearInRange(year: nat) = year in FirstYear..LastYear
 
 @PrimitiveInvariant(name = "Month", base = nat1::class)
-fun monthNotInRange(month: nat1) = month in 1..MonthsPerYear
+fun monthInRange(month: nat1) = month in 1..MonthsPerYear
 
 @PrimitiveInvariant(name = "Day", base = nat1::class)
-fun dayNotInRange(day: nat1) = day in 1..DaysPerMonth.rng.max()
+fun dayInRange(day: nat1) = day in 1..DaysPerMonth.rng.max()
 
 val isLeap: (Year) -> bool = function(
     command = { year ->

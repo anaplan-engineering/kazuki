@@ -42,12 +42,12 @@ class TestConway {
 
 
     private val pulsar = as_Population(
-        dunion(
+        dunion(mk_Set(
             set(pQuad) { point -> point },
             set(pQuad) { point -> mk_Point(-point.x, point.y) },
             set(pQuad) { point -> mk_Point(point.x, -point.y) },
             set(pQuad) { point -> mk_Point(-point.x, -point.y) }
-        )
+        ))
     )
 
     private val diehard = mk_Population(

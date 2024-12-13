@@ -63,8 +63,6 @@ fun <T> Set<T>.single(): T {
 
 fun <T> dunion(sets: Set<Set<T>>) = as_Set(sets.flatten())
 
-fun <T> dunion(vararg sets: Set<T>) = dunion(sets.toSet())
-
 infix operator fun <T, S : Set<T>> S.plus(s: Set<T>) = transformSet { it.elements.toMutableSet().apply { addAll(s) } }
 
 infix operator fun <T, S : Set<T>> S.plus(t: T) = transformSet { it.elements.toMutableSet().apply { add(t) } }

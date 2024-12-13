@@ -194,17 +194,6 @@ fun <T, S : Sequence<T>> dcat(seqs: Sequence1<S>) =
         }
     }
 
-fun <T, S : Sequence<T>> dcat(vararg seqs: S) =
-    if (seqs.isEmpty()) {
-        throw PreconditionFailure()
-    } else if (seqs.size == 1) {
-        seqs.first()
-    } else {
-        seqs.first().transformSequence { init ->
-            seqs.drop(1).fold(init.elements) { acc, seq -> acc + seq }
-        }
-    }
-
 
 
 
