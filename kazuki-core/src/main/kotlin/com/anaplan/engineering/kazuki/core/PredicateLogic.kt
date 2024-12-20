@@ -28,10 +28,11 @@ infix fun Boolean.`∧`(other: Boolean) = this && other
 
 infix fun Boolean.implies(other: Boolean) = if (this) other else true
 
-/* Enables lazy evaluation of rhs */
-infix fun Boolean.implies(other: () -> Boolean) = if (this) other() else true
 
 infix fun Boolean.iff(other: Boolean) = if (this) other else !other
 
 
-
+/* Enables lazy evaluation of rhs */
+infix fun Boolean.implies(other: () -> Boolean) = if (this) other() else true
+infix fun Boolean.or(other: () -> Boolean): Boolean = this || other()
+infix fun Boolean.and(other: () -> Boolean): Boolean = this && other()

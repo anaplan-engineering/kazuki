@@ -86,7 +86,7 @@ val i5 = mk_IntRecord5(8, "a")
 Then the comparable type limit:
 * for `IntRecord1` and `IntRecord2` is `Tuple2`
 * for `IntRecord3` and `IntRecord4` is `IntRecord3`
-* for `IntRecord5` is `IntRecord3`
+* for `IntRecord5` is `IntRecord5`
 
 And so:
 * `i3 == i4` as they have the same comparable type limit
