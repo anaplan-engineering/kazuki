@@ -265,6 +265,15 @@ class TestSequence(
     }
 
     @Test
+    fun lastOrNull() {
+        if (allowsEmpty) {
+            assertEquals(null, create().lastOrNull())
+        }
+        assertEquals(1, create(1).lastOrNull())
+        assertEquals(6, create(2, 5, 6).lastOrNull())
+    }
+
+    @Test
     fun head() {
         if (allowsEmpty) {
             causesPreconditionFailure { create().head() }
