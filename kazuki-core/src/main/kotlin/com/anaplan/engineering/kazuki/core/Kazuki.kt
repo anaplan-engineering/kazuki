@@ -53,11 +53,11 @@ annotation class FunctionProvider(
 
 
 // TODO - create stdlib
-typealias nat1 = Int
+typealias nat1 = Long
 
-typealias nat = Int
+typealias nat = Long
 
-typealias int = Int
+typealias int = Long
 
 typealias bool = Boolean
 

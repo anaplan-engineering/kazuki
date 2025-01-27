@@ -5,7 +5,7 @@ import com.anaplan.engineering.kazuki.core.internal.__KSet
 import com.anaplan.engineering.kazuki.core.internal.transformSet
 import java.util.Collections.addAll
 
-interface Relation<D, R> : Set<Tuple2<D, R>> {
+interface Relation<D, out R> : Set<Tuple2<D, R>> {
 
     val dom: Set<D>
 

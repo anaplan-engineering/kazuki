@@ -1,24 +1,26 @@
 package com.anaplan.engineering.kazuki.core
 
+import com.anaplan.engineering.kazuki.core.internal._KSequence
 import com.anaplan.engineering.kazuki.core.internal.__KSequence
 import com.anaplan.engineering.kazuki.core.internal.__KSequence1
 import com.anaplan.engineering.kazuki.core.internal.transformSequence
-import kotlin.collections.ArrayList
 
-// TODO should sequence inherit from relation rather than list?
-interface Sequence<out T> : List<T> {
+interface Sequence<out T> : Mapping<Long, T> {
 
     val len: nat
 
-    val elems: Set<T>
+    val elems: Iterator<T>
 
-    val inds: Set<nat1>
+    val inds: Iterator<nat1>
 
-    val tuples: Sequence<Tuple2<nat1, @UnsafeVariance T>>
+    override operator fun get(index: nat1): T
 
-    override fun indexOf(element: @UnsafeVariance T): nat1
+    fun indexOf(element: @UnsafeVariance T): nat1
 
-    override fun lastIndexOf(element: @UnsafeVariance T): nat1
+    fun lastIndexOf(element: @UnsafeVariance T): nat1
+
+    @Invariant
+    fun contiguousIndices() = inds == as_Set(1..len)
 
 }
 
@@ -26,42 +28,34 @@ interface Sequence1<out T> : Sequence<T> {
 
     override val len: nat1
 
-    override val elems: Set1<@UnsafeVariance T>
+    override val rng: Set1<@UnsafeVariance T>
 
-    override val inds: Set1<nat1>
-
-//    override val tuples: Sequence1<Tuple2<nat1, @UnsafeVariance T>>
-
-    override operator fun get(index: nat1): T
+    override val dom: Set1<nat1>
 
     @Invariant
     fun atLeastOneElement() = len > 0
 
 }
 
+fun <T> mk_Seq(vararg elems: T): Sequence<T> = __KSequence(arrayOf(elems.toList()))
 
-fun <T> mk_Seq(vararg elems: T): Sequence<T> = __KSequence(elems.toList())
+fun <T> as_Seq(it: Iterable<T>): Sequence<T> = __KSequence(_KSequence.elementsFromIterable(it))
 
-fun <T> as_Seq(elems: Iterable<T>): Sequence<T> = __KSequence(toElementList(elems))
-
-private fun <T> toElementList(elems: Iterable<T>) =
-    ArrayList<T>(elems.count()).apply { addAll(elems) }
-
-fun <T> as_Seq(elems: Array<T>): Sequence<T> = __KSequence(elems.toList())
+fun <T> as_Seq(elems: Array<T>): Sequence<T> = __KSequence(arrayOf(elems.toList()))
 
 fun <T> mk_Seq1(vararg elems: T): Sequence1<T> =
     if (elems.isEmpty()) {
         throw PreconditionFailure("Cannot construct empty seq1")
     } else {
-        __KSequence1(elems.toList())
+        __KSequence1(arrayOf(elems.toList()))
     }
 
-fun <T> as_Seq1(elems: Iterable<T>): Sequence1<T> {
-    val list = toElementList(elems)
-    return if (list.isEmpty()) {
+fun <T> as_Seq1(it: Iterable<T>): Sequence1<T> {
+    val elements = _KSequence.elementsFromIterable(it)
+    return if (elements.isEmpty()) {
         throw PreconditionFailure("Cannot convert empty collection to seq1")
     } else {
-        __KSequence1(list)
+        __KSequence1(elements)
     }
 }
 
@@ -69,18 +63,20 @@ fun <T> as_Seq1(elems: Array<T>): Sequence1<T> =
     if (elems.isEmpty()) {
         throw PreconditionFailure("Cannot convert empty array to seq1")
     } else {
-        __KSequence1(elems.toList())
+        __KSequence1(arrayOf(elems.toList()))
     }
 
-// TODO -- should we use different names?
-fun <T, S : Sequence<T>> S.drop(n: Int) =
+fun <T, S : Sequence<T>> S.drop(n: nat) =
     if (this is Sequence1<*> && n >= len) {
         throw PreconditionFailure("Cannot drop all elements from seq1")
     } else {
-        transformSequence { it.elements.drop(n) }
+        transformSequence {
+            val withChunksRemoved = it.elements.drop((n / _KSequence.ChunkSize).toInt())
+            listOf(withChunksRemoved.first().drop<T>((n % _KSequence.ChunkSize).toInt())) + withChunksRemoved.drop(1)
+        }
     }
 
-fun <T, S : Sequence<T>> S.take(n: Int) =
+fun <T, S : Sequence<T>> S.take(n: nat) =
     if (this is Sequence1<*> && n < 1) {
         throw PreconditionFailure("Cannot take 0 or fewer elements from seq1")
     } else {
@@ -104,13 +100,14 @@ fun <T, S : Sequence<T>> S.insert(s: S, i: nat1) =
     }
 
 fun <T, S : Sequence<T>> S.filter(fn: (T) -> Boolean) = transformSequence {
-    val filtered = it.elements.filter(fn)
-    if (filtered.isEmpty() && this is Sequence1<*>) {
+    val filtered = it.elements.map { it.filter(fn) }
+    if (filtered.all(List<T>::isEmpty) && this is Sequence1<*>) {
         throw PreconditionFailure("Cannot create empty seq1")
     }
     filtered
 }
 
+// can be on interface
 fun <T> Sequence<T>.indexOf(s: Sequence<T>) =
     if (!(s subseq this)) {
         throw PreconditionFailure("Sequence $s is not contained in $this")
@@ -118,6 +115,7 @@ fun <T> Sequence<T>.indexOf(s: Sequence<T>) =
         (1..len).find { i -> s == drop(i - 1).take(s.len) }!!
     }
 
+// can be on interface
 infix fun <T> Sequence<T>.subseq(other: Sequence<T>) =
     this == other || (1..other.len).any { i -> this == other.drop(i - 1).take(len) }
 
@@ -166,7 +164,7 @@ fun <T> Sequence<T>.first(): T {
 fun <T> Sequence<T>.firstOr(onEmpty: T) = if (isEmpty()) onEmpty else this[1]
 
 fun <T> Sequence<T>.single(): T {
-    if (len != 1) {
+    if (len != 1L) {
         throw PreconditionFailure("Cannot get single item for sequence with length $len")
     }
     return this[1]

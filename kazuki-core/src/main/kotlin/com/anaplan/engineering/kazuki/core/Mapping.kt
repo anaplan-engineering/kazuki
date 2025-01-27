@@ -2,7 +2,7 @@ package com.anaplan.engineering.kazuki.core
 
 import com.anaplan.engineering.kazuki.core.internal.*
 
-interface Mapping<D, R> : Relation<D, R> {
+interface Mapping<D, out R> : Relation<D, R> {
 
     operator fun get(d: D): R
 
