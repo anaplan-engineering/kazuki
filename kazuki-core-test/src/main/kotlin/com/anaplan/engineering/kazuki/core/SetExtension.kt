@@ -4,6 +4,8 @@ package com.anaplan.engineering.kazuki.core
 interface SetExtension<T> : Set<T> {
 }
 
+
+
 @Module
 interface Set1Extension<T> : Set1<T> {
 }

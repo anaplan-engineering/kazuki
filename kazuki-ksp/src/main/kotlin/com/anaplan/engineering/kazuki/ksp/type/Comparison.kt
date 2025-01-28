@@ -3,14 +3,12 @@ package com.anaplan.engineering.kazuki.ksp.type
 import com.anaplan.engineering.kazuki.core.ComparableProperty
 import com.anaplan.engineering.kazuki.core.ComparableTypeLimit
 import com.anaplan.engineering.kazuki.ksp.getClassDeclaration
-import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeParameterNames
+import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeParameters
 import com.anaplan.engineering.kazuki.ksp.superModules
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
-import com.google.devtools.ksp.symbol.KSTypeAlias
-import com.google.devtools.ksp.symbol.KSTypeReference
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
@@ -44,7 +42,7 @@ internal fun TypeSpec.Builder.addComparableWith(
         val interfaceTypeArguments = comparableTypeLimit.typeParameters.map { it.toTypeVariableName() }
         comparableTypeLimit.toClassName().parameterizedBy(interfaceTypeArguments)
     } else {
-        val params = classDcl.resolveAncestorTypeParameterNames(comparableTypeLimit.qualifiedName!!.asString())
+        val params = classDcl.resolveAncestorTypeParameters(comparableTypeLimit.qualifiedName!!.asString())
         comparableTypeLimit.toClassName().parameterizedBy(params.typeNames)
     }
     addProperty(

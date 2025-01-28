@@ -39,6 +39,10 @@ annotation class PrimitiveInvariant(
     val base: KClass<*>
 )
 
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class Pretty
+
 /**
  * Note that, the provider must:
  *  - have inferable generic types (only tested where same as the module thus far)

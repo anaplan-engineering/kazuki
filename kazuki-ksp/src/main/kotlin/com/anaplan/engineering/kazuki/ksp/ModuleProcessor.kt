@@ -57,9 +57,8 @@ internal class ModuleProcessor(
     @OptIn(KspExperimental::class)
     private fun processModuleClass(clazz: KSClassDeclaration) {
         typeGenerationContext.logger.debug("Processing module: ${clazz.qualifiedName!!.asString()}")
-        val moduleClassName = "${clazz.simpleName.asString()}_Module"
         val makeable = clazz.getAnnotationsByType(Module::class).single().makeable
-        val moduleTypeSpec = TypeSpec.objectBuilder(moduleClassName).apply {
+        val moduleTypeSpec = TypeSpec.objectBuilder(clazz.moduleName).apply {
             when (clazz.kazukiType()) {
                 KazukiType.Sequence1Type -> addSeq1Type(clazz, makeable, typeGenerationContext)
                 KazukiType.SequenceType -> addSeqType(clazz, makeable, typeGenerationContext)
@@ -74,7 +73,7 @@ internal class ModuleProcessor(
             }
         }.build()
 
-        writeModule(clazz, moduleClassName, moduleTypeSpec)
+        writeModule(clazz, clazz.moduleName, moduleTypeSpec)
     }
 
     private fun processModuleObject(clazz: KSClassDeclaration) {

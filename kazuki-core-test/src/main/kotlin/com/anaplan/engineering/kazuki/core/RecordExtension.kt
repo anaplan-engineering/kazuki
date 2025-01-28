@@ -8,6 +8,20 @@ interface Record {
     val functions: RecordFunctions
 }
 
+@Module
+interface PrettyRecord<T> : PrettyPrintable {
+    val a: T
+    val b: Int
+
+    override fun pretty() = "${if (a is PrettyPrintable) (a as PrettyPrintable).pretty() else a.toString()}/$b"
+}
+
+@Module
+interface RecordNullableField<T> {
+    val a: T
+    val b: PrettyRecord<Int>?
+}
+
 open class RecordFunctions(private val r: Record) {
     open val mutateA = function<Int>(command = { r.a * 2 })
 }

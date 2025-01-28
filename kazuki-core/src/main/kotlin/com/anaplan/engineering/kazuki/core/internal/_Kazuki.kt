@@ -1,3 +1,5 @@
 package com.anaplan.engineering.kazuki.core.internal
 
-interface _KazukiObject
+import com.anaplan.engineering.kazuki.core.PrettyPrintable
+
+interface _KazukiObject: PrettyPrintable

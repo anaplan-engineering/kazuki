@@ -4,10 +4,15 @@ package com.anaplan.engineering.kazuki.ksp.type
 
 import com.anaplan.engineering.kazuki.core.ComparableProperty
 import com.anaplan.engineering.kazuki.core.PreconditionFailure
+import com.anaplan.engineering.kazuki.core.PrettyPrintable
 import com.anaplan.engineering.kazuki.core.internal._Record
 import com.anaplan.engineering.kazuki.ksp.InbuiltNames.coreInternalPackage
 import com.anaplan.engineering.kazuki.ksp.InbuiltNames.corePackage
 import com.anaplan.engineering.kazuki.ksp.findUnusedGenericName
+import com.anaplan.engineering.kazuki.ksp.hasSuperType
+import com.anaplan.engineering.kazuki.ksp.isModule
+import com.anaplan.engineering.kazuki.ksp.moduleName
+import com.anaplan.engineering.kazuki.ksp.qualifiedModuleName
 import com.anaplan.engineering.kazuki.ksp.superModules
 import com.anaplan.engineering.kazuki.ksp.type.property.PropertyProcessor
 import com.anaplan.engineering.kazuki.ksp.type.property.addFunctionProviders
@@ -130,10 +135,12 @@ internal fun TypeSpec.Builder.addRecordType(
         addInvariantFrom(interfaceClassDcl, typeGenerationContext)
 
         addFunction(
-            FunSpec.builder("toString").addModifiers(KModifier.OVERRIDE)
-                .returns(String::class).addCode(CodeBlock.builder().apply {
+            FunSpec.builder("toString").apply {
+                addModifiers(KModifier.OVERRIDE)
+                returns(String::class)
+                addCode(CodeBlock.builder().apply {
                     beginControlFlow("val sb = %T().apply", StringBuilder::class)
-                    addStatement("append(\"%N\")", interfaceType.declaration.simpleName.asString())
+                    addStatement("append(%S)", interfaceType.declaration.simpleName.asString())
                     val useComparableForOutput =
                         comparableWith.property?.getAnnotationsByType(ComparableProperty::class)?.single()?.useForOutput
                     if (useComparableForOutput == true) {
@@ -150,8 +157,78 @@ internal fun TypeSpec.Builder.addRecordType(
                     }
                     endControlFlow()
                     addStatement("return sb.toString()")
-                }.build()).build()
+                }.build())
+            }.build()
         )
+
+        if (!interfaceClassDcl.hasSuperType(PrettyPrintable::class.qualifiedName!!)) {
+            addFunction(
+                FunSpec.builder("pretty").apply {
+                    addModifiers(KModifier.OVERRIDE)
+                    returns(String::class)
+                    addCode(CodeBlock.builder().apply {
+                        beginControlFlow("val sb = %T().apply", StringBuilder::class)
+                        val useComparableForOutput =
+                            comparableWith.property?.getAnnotationsByType(ComparableProperty::class)
+                                ?.single()?.useForOutput
+                        if (useComparableForOutput == true) {
+                            addStatement("append(%P)", "\$${comparableWith.property.simpleName.asString()}")
+                        } else {
+                            addStatement("append(%S)", "(")
+                            tupleComponents.dropLast(1).forEach {
+                                val propertyName = it.name
+                                val declaration = it.typeReference.resolve().declaration
+                                if (declaration is KSTypeParameter) {
+                                    beginControlFlow("if (%N is %T)", propertyName, PrettyPrintable::class)
+                                    addStatement("append(%P)", "$propertyName=\${$propertyName.pretty()}, ")
+                                    nextControlFlow("else")
+                                    addStatement("append(%P)", "$propertyName=\$$propertyName, ")
+                                    endControlFlow()
+                                } else if (declaration is KSClassDeclaration &&
+                                    (declaration.isModule || declaration.hasSuperType(PrettyPrintable::class.qualifiedName!!))
+                                ) {
+                                    if (declaration.isModule) {
+                                        addStatement(
+                                            "append(%P)",
+                                            "$propertyName=\${${declaration.qualifiedModuleName}.$StaticPrettyFunctionName($propertyName)}, "
+                                        )
+                                    } else {
+                                        addStatement("append(%P)", "$propertyName=\${$propertyName.pretty()}, ")
+                                    }
+                                } else {
+                                    addStatement("append(%P)", "$propertyName=\$$propertyName, ")
+                                }
+                            }
+                            val lastPropertyName = tupleComponents.last().name
+                            val declaration = tupleComponents.last().typeReference.resolve().declaration
+                            if (declaration is KSTypeParameter) {
+                                beginControlFlow("if (%N is %T)", lastPropertyName, PrettyPrintable::class)
+                                addStatement("append(%P)", "$lastPropertyName=\${$lastPropertyName.pretty()}")
+                                nextControlFlow("else")
+                                addStatement("append(%P)", "$lastPropertyName=\$$lastPropertyName")
+                                endControlFlow()
+                            } else if (declaration is KSClassDeclaration &&
+                                (declaration.isModule || declaration.hasSuperType(PrettyPrintable::class.qualifiedName!!))
+                            ) {
+                                if (declaration.isModule) {
+                                    addStatement(
+                                        "append(%P)",
+                                        "$lastPropertyName=\${${declaration.qualifiedModuleName}.$StaticPrettyFunctionName($lastPropertyName)}"
+                                    )
+                                } else {
+                                    addStatement("append(%P)", "$lastPropertyName=\${$lastPropertyName.pretty()}")
+                                }
+                            } else {
+                                addStatement("append(%P)", "$lastPropertyName=\$$lastPropertyName")
+                            }
+                            addStatement("append(%S)", ")")
+                        }
+                        endControlFlow()
+                        addStatement("return sb.toString()")
+                    }.build())
+                }.build()
+            )
+        }
 
         addFunction(
             FunSpec.builder("hashCode").addModifiers(KModifier.OVERRIDE)
@@ -299,6 +376,24 @@ internal fun TypeSpec.Builder.addRecordType(
 
                 addStatement("return %N.%N()", candidateValName, validityFunctionName)
             }.build())
+        }.build()
+    )
+
+    addStaticPrettyFunction(interfaceTypeName, interfaceTypeArguments)
+    addFunction(
+        FunSpec.builder("pretty").apply {
+            val erasedInterfaceTypeName = if (interfaceTypeArguments.isEmpty()) {
+                interfaceClassDcl.toClassName()
+            } else {
+                interfaceClassDcl.toClassName().parameterizedBy(interfaceTypeArguments.map { STAR })
+            }
+            receiver(erasedInterfaceTypeName)
+            returns(String::class)
+            beginControlFlow("if (this is %T)", PrettyPrintable::class)
+            addStatement("return this.pretty()")
+            nextControlFlow("else")
+            addStatement("return this.toString()")
+            endControlFlow()
         }.build()
     )
 

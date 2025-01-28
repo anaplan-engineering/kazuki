@@ -1,8 +1,6 @@
 package com.anaplan.engineering.kazuki.core.internal
 
-import com.anaplan.engineering.kazuki.core.InvariantFailure
-import com.anaplan.engineering.kazuki.core.PreconditionFailure
-import com.anaplan.engineering.kazuki.core.Set1
+import com.anaplan.engineering.kazuki.core.*
 import kotlin.reflect.KClass
 
 interface _KSet<T, S : Set<T>> : Set<T>, _KazukiObject {
@@ -11,6 +9,7 @@ interface _KSet<T, S : Set<T>> : Set<T>, _KazukiObject {
     val elements: Set<T>
 
     val comparableWith: KClass<*>
+
 }
 
 // TODO - generate impls
@@ -37,13 +36,14 @@ internal class __KSet<T>(override val elements: Set<T>) : Set<T> by elements, _K
     }
 
     override fun toString() = "set$elements"
+
+    override fun pretty() = "{${elements.joinToString(", ") { it.prettyOrDefault() }}}"
 }
 
 internal class __KSet1<T>(override val elements: Set<T>) :
     _KSet<T, Set<T>>,
     Set1<T>,
-    Set<T> by elements
-{
+    Set<T> by elements {
 
     init {
         assert(elements !is _KazukiObject) {

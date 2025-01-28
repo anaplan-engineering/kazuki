@@ -1,5 +1,6 @@
 package com.anaplan.engineering.kazuki.generation
 
+import com.squareup.kotlinpoet.ClassName
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -14,6 +15,7 @@ open class KazukiGenerationPluginExtension @javax.inject.Inject constructor(obje
 
 internal const val RootPackageName = "com.anaplan.engineering.kazuki.core"
 internal const val InternalPackageName = "$RootPackageName.internal"
+internal val PrettyPrintableInterfaceName = ClassName(RootPackageName, "PrettyPrintable")
 
 class KazukiGenerationPlugin : Plugin<Project> {
 
