@@ -12,6 +12,7 @@ interface _KSequence<T, S : Sequence<T>> : Sequence<T>, _KazukiObject {
 
     override val tuples: Sequence<Tuple2<nat1, T>>
         get() = as_Seq(elements.mapIndexed { index, t -> mk_(index + 1, t) })
+
 }
 
 internal fun <T, S : Sequence<T>> S.transformSequence(fn: (_KSequence<T, S>) -> List<T>): S {
@@ -28,6 +29,16 @@ internal class __KSequence<T>(override val elements: List<T>) : Sequence<T>, Lis
             "Internal state should not be a Kazuki-generated object"
         }
     }
+
+    override fun pretty() = "<${
+        elements.joinToString(", ") {
+            if (it is PrettyPrintable) {
+                it.pretty()
+            } else {
+                it.toString()
+            }
+        }
+    }>"
 
     override val comparableWith = Sequence::class
 

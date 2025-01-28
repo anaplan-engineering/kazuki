@@ -64,6 +64,7 @@ fun FileSpec.Builder.addNAryTuple(nary: Int) {
 
     addType(TypeSpec.interfaceBuilder(interfaceName).apply {
         addTypeVariables(typeNames)
+        addSuperinterface(PrettyPrintableInterfaceName)
         (1..nary).forEach {
             addProperty(PropertySpec.builder("_$it", TypeVariableName("T$it")).build())
             addFunction(

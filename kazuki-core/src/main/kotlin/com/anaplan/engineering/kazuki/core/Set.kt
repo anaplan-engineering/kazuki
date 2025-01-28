@@ -40,6 +40,7 @@ fun <T> as_Set1(elems: Array<T>): Set1<T> =
         __KSet1(elems.toSet())
     }
 
+fun Set<*>.pretty() = this.prettyOrDefault()
 
 infix fun <T> Set<T>.subset(other: Set<T>) = other.containsAll(this)
 
@@ -71,3 +72,4 @@ infix operator fun <T, S : Set<T>> S.minus(s: Set<T>) =
     transformSet { it.elements.toMutableSet().apply { removeAll(s) } }
 
 infix operator fun <T, S : Set<T>> S.minus(t: T) = transformSet { it.elements.toMutableSet().apply { remove(t) } }
+

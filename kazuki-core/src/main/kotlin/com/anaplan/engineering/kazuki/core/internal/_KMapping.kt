@@ -22,6 +22,7 @@ interface _KMapping<D, R, M : Mapping<D, R>> : Mapping<D, R>, _KRelation<D, R, M
 
 }
 
+
 interface _KInjectiveMapping<D, R, M : InjectiveMapping<D, R>> : InjectiveMapping<D, R>, _KMapping<D, R, M> {
 
     override fun construct(elements: Set<Tuple2<D, R>>): M =
@@ -48,6 +49,12 @@ internal class __KMapping<D, R>(override val baseMap: Map<D, R>) : _KMapping<D, 
             "Internal state should not be a Kazuki-generated object"
         }
     }
+
+    override fun pretty() = "{${
+        elements.joinToString(", ") {
+            "${it._1.prettyOrDefault()} ↦ ${it._2.prettyOrDefault()}"
+        }
+    }}"
 
     override fun construct(elements: Set<Tuple2<D, R>>) = super.construct(elements)
 
@@ -95,6 +102,12 @@ internal class __KInjectiveMapping<D, R>(override val baseMap: Map<D, R>) :
             "Internal state should not be a Kazuki-generated object"
         }
     }
+
+    override fun pretty() = "{${
+        elements.joinToString(", ") {
+            "${it._1.prettyOrDefault()} ↔ ${it._2.prettyOrDefault()}"
+        }
+    }}"
 
     override fun construct(elements: Set<Tuple2<D, R>>) = super.construct(elements)
 
@@ -152,6 +165,8 @@ internal class __KInjectiveMapping1<D, R>(override val baseMap: Map<D, R>) :
         }
     }
 
+    override fun pretty() = super<_KInjectiveMapping>.pretty()
+
     override fun construct(elements: Set<Tuple2<D, R>>) = super.construct(elements)
 
     override val elements: Set<Tuple2<D, R>> get() = super.elements
@@ -208,6 +223,8 @@ internal class __KMapping1<D, R>(override val baseMap: Map<D, R>) : Mapping1<D, 
             "Internal state should not be a Kazuki-generated object"
         }
     }
+
+    override fun pretty() = super<_KMapping>.pretty()
 
     override fun construct(elements: Set<Tuple2<D, R>>) = super.construct(elements)
 

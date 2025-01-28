@@ -1,16 +1,16 @@
 package com.anaplan.engineering.kazuki.core.internal
 
-import com.anaplan.engineering.kazuki.core.PreconditionFailure
 import com.anaplan.engineering.kazuki.core.Relation
 import com.anaplan.engineering.kazuki.core.Tuple2
 import kotlin.reflect.KClass
 
-interface _KRelation<D, R, T : Relation<D, R>> : Relation<D, R> {
+interface _KRelation<D, R, T : Relation<D, R>> : Relation<D, R>, _KazukiObject {
     fun construct(elements: Set<Tuple2<D, R>>): T
 
     val elements: Set<Tuple2<D, R>>
 
     val comparableWith: KClass<*>
+
 }
 
 //internal fun <D, R, T : Relation<D, R>> T.transformRelation(fn: (_KRelation<D, R, T>) -> Collection<Tuple2<D, R>>): T {
@@ -22,14 +22,15 @@ interface _KRelation<D, R, T : Relation<D, R>> : Relation<D, R> {
 internal class __KRelation<D, R>(override val elements: Set<Tuple2<D, R>>) :
     _KRelation<D, R, __KRelation<D, R>>,
     _KSet<Tuple2<D, R>, Relation<D, R>>,
-    Set<Tuple2<D, R>> by elements
-{
+    Set<Tuple2<D, R>> by elements {
 
     init {
         assert(elements !is _KazukiObject) {
             "Internal state should not be a Kazuki-generated object"
         }
     }
+
+    override fun pretty() = "{${elements.joinToString(", ") { it.pretty() }}}"
 
     override fun construct(elements: Set<Tuple2<D, R>>) = __KRelation(elements)
 

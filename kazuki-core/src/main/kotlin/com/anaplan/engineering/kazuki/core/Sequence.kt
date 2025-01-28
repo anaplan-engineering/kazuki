@@ -39,6 +39,7 @@ interface Sequence1<out T> : Sequence<T> {
 
 }
 
+fun Sequence<*>.pretty() = this.prettyOrDefault()
 
 fun <T> mk_Seq(vararg elems: T): Sequence<T> = __KSequence(elems.toList())
 
