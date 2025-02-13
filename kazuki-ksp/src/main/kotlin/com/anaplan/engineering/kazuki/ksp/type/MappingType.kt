@@ -63,6 +63,7 @@ private fun TypeSpec.Builder.addMappingType(
     requiresNonEmpty: Boolean,
     injective: Boolean,
 ) {
+    val logger = typeGenerationContext.logger
     val interfaceName = interfaceClassDcl.simpleName.asString()
     val interfaceTypeArguments = interfaceClassDcl.typeParameters.map { it.toTypeVariableName() }
     val interfaceTypeName = if (interfaceTypeArguments.isEmpty()) {
@@ -77,13 +78,14 @@ private fun TypeSpec.Builder.addMappingType(
         if (requiresNonEmpty) Mapping1::class else Mapping::class
     }
     val mappingType =
-        interfaceClassDcl.superTypes.single { it.resolve().declaration.qualifiedName?.asString() == superInterface.qualifiedName }
+        interfaceClassDcl.allSuperTypes.single { it.resolve().declaration.qualifiedName?.asString() == superInterface.qualifiedName }
             .resolve()
     val ancestorTypeParameters = interfaceClassDcl.resolveAncestorTypeParameters(superInterface.qualifiedName!!)
     val domainTypeDcl = ancestorTypeParameters.getTypeDeclaration(0)
     val rangeTypeDcl = ancestorTypeParameters.getTypeDeclaration(1)
     val domainTypeName = ancestorTypeParameters.getTypeName(0)
     val rangeTypeName = ancestorTypeParameters.getTypeName(1)
+    logger.debug("Creating mapping=$interfaceName ${superInterface.simpleName} $domainTypeName->$rangeTypeName")
     val baseMapPropertyName = "baseMap"
     val baseSetPropertyName = "elements"
     val superMappingTypeName = mappingType.toClassName().parameterizedBy(domainTypeName, rangeTypeName)

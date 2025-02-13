@@ -4,6 +4,7 @@ import com.anaplan.engineering.kazuki.core.*
 import com.anaplan.engineering.kazuki.core.InjectiveMapping1Extension_Module.mk_InjectiveMapping1Extension
 import com.anaplan.engineering.kazuki.core.InjectiveMappingExtension_Module.mk_InjectiveMappingExtension
 import com.anaplan.engineering.kazuki.core.Mapping1Extension_Module.mk_Mapping1Extension
+import com.anaplan.engineering.kazuki.core.MappingExtensionExtension_Module.mk_MappingExtensionExtension
 import com.anaplan.engineering.kazuki.core.MappingExtension_Module.mk_MappingExtension
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -32,6 +33,7 @@ class TestMapping(
                 arrayOf(true, true, { m: Collection<Tuple2<Int, Int>> -> mk_InjectiveMapping(*m.toTypedArray()) }),
                 arrayOf(false, true, { m: Collection<Tuple2<Int, Int>> -> mk_InjectiveMapping1(*m.toTypedArray()) }),
                 arrayOf(true, false, { m: Collection<Tuple2<Int, Int>> -> mk_MappingExtension(*m.toTypedArray()) }),
+                arrayOf(true, false, { m: Collection<Tuple2<Int, Int>> -> mk_MappingExtensionExtension(*m.toTypedArray()) }),
                 arrayOf(false, false, { m: Collection<Tuple2<Int, Int>> -> mk_Mapping1Extension(*m.toTypedArray()) }),
                 arrayOf(
                     true,

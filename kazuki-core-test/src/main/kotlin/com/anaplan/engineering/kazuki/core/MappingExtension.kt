@@ -5,6 +5,10 @@ interface MappingExtension<D, R>: Mapping<D, R> {
 }
 
 @Module
+interface MappingExtensionExtension: MappingExtension<Int, Int> {
+}
+
+@Module
 interface Mapping1Extension<D, R>: Mapping1<D, R> {
 }
 
