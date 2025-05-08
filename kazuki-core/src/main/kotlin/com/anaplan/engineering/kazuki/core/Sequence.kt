@@ -180,6 +180,13 @@ fun <T> Sequence<T>.last(): T {
     return this[len]
 }
 
+fun <T> Sequence<T>.lastOrNull(): T? {
+    if (isEmpty()) {
+        return null
+    }
+    return this[len]
+}
+
 fun <T> Sequence<T>.head() = first()
 
 fun <T> Sequence<T>.tail() = drop(1)
