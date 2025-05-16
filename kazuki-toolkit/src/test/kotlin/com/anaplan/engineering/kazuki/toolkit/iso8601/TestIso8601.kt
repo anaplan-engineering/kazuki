@@ -21,27 +21,27 @@ class TestIso8601 {
 
     @Test
     fun constructDuration() {
-        assertEquals(10L, mk_Duration(10).milliseconds)
+        assertEquals(10uL, mk_Duration(10uL).milliseconds)
     }
 
     @Test
     fun t1() {
         DtgUtilities.dtgDiff(
-            mk_Dtg(mk_Date(2018, 4, 1), mk_Time(0, 0, 0, 10)),
-            mk_Dtg(mk_Date(2018, 4, 1), mk_Time(0, 0, 0, 0)),
+            mk_Dtg(mk_Date(2018u, 4u, 1u), mk_Time(0u, 0u, 0u, 10u)),
+            mk_Dtg(mk_Date(2018u, 4u, 1u), mk_Time(0u, 0u, 0u, 0u)),
         )
         DtgUtilities.dtgDiff(
-            mk_Dtg(mk_Date(2018, 4, 1), mk_Time(10, 0, 0, 0)),
-            mk_Dtg(mk_Date(2018, 4, 1), mk_Time(0, 0, 0, 0)),
+            mk_Dtg(mk_Date(2018u, 4u, 1u), mk_Time(10u, 0u, 0u, 0u)),
+            mk_Dtg(mk_Date(2018u, 4u, 1u), mk_Time(0u, 0u, 0u, 0u)),
         )
     }
 
     @Test
     fun timeInvariantTest() {
-        assertFailsWith<InvariantFailure> { mk_Time(0, 0, 0, 1000) }
-        assertFailsWith<InvariantFailure> { mk_Time(0, 0, 60, 0) }
-        assertFailsWith<InvariantFailure> { mk_Time(0, 60, 0, 0) }
-        assertFailsWith<InvariantFailure> { mk_Time(24, 0, 0, 0) }
+        assertFailsWith<InvariantFailure> { mk_Time(0u, 0u, 0u, 1000u) }
+        assertFailsWith<InvariantFailure> { mk_Time(0u, 0u, 60u, 0u) }
+        assertFailsWith<InvariantFailure> { mk_Time(0u, 60u, 0u, 0u) }
+        assertFailsWith<InvariantFailure> { mk_Time(24u, 0u, 0u, 0u) }
     }
 
     @Test
@@ -52,12 +52,10 @@ class TestIso8601 {
 
     @Test
     fun dateInvariantTest() {
-        assertFailsWith<InvariantFailure> { mk_Date(-5, 1, 1) }
 //        assertFailsWith<InvariantFailure> { mk_Date(1,13,1) } // See TestPrimitiveInvariant.kt for more
 // As Date's invariant is tested before Month's invariant, it throws an exception, because 13 is not in the domain of the mapping used in Date's invariant
-        assertFailsWith<InvariantFailure> { mk_Date(1, 2, 29) }
-        assertFailsWith<InvariantFailure> { mk_Date(1, 2, 40) }
-        assertFailsWith<InvariantFailure> { mk_Date(1, 2, -40) }
+        assertFailsWith<InvariantFailure> { mk_Date(1u, 2u, 29u) }
+        assertFailsWith<InvariantFailure> { mk_Date(1u, 2u, 40u) }
     }
 
     @Test
@@ -67,7 +65,7 @@ class TestIso8601 {
                 FirstDate,
                 mk_TimeInZone(
                     FirstTime,
-                    mk_Offset(Duration.fromHours(1), PlusOrMinus.Plus)
+                    mk_Offset(Duration.fromHours(1u), PlusOrMinus.Plus)
                 )
             )
         }
@@ -76,7 +74,7 @@ class TestIso8601 {
                 LastDate,
                 mk_TimeInZone(
                     LastTime,
-                    mk_Offset(Duration.fromHours(1), PlusOrMinus.Minus)
+                    mk_Offset(Duration.fromHours(1u), PlusOrMinus.Minus)
                 )
             )
         }
@@ -89,58 +87,53 @@ class TestIso8601 {
     }
 
     @Test
-    fun durationInvariantTest() {
-        assertFailsWith<InvariantFailure> { mk_Duration(-1) }
-    }
-
-    @Test
     fun isLeapTest() {
-        assertEquals(true, DateUtilities.isLeap(1992))
-        assertEquals(false, DateUtilities.isLeap(1993))
+        assertEquals(true, DateUtilities.isLeap(1992u))
+        assertEquals(false, DateUtilities.isLeap(1993u))
     }
 
     @Test
     fun daysInMonthTest() {
-        assertEquals(29, DateUtilities.daysInMonth(1992, 2))
-        assertEquals(28, DateUtilities.daysInMonth(1991, 2))
-        assertEquals(30, DateUtilities.daysInMonth(1997, 9))
+        assertEquals(29uL, DateUtilities.daysInMonth(1992u, 2u))
+        assertEquals(28uL, DateUtilities.daysInMonth(1991u, 2u))
+        assertEquals(30uL, DateUtilities.daysInMonth(1997u, 9u))
     }
 
     @Test
     fun daysInYearTest() {
-        assertEquals(366, DateUtilities.daysInYear(1992))
-        assertEquals(365, DateUtilities.daysInYear(1))
-        assertEquals(365, DateUtilities.daysInYear(1991))
+        assertEquals(366uL, DateUtilities.daysInYear(1992u))
+        assertEquals(365uL, DateUtilities.daysInYear(1u))
+        assertEquals(365uL, DateUtilities.daysInYear(1991u))
     }
 
     @Test
     fun dtgInRangeDayTest() {
         assertEquals(
             true,
-            mk_Date(1990, 1, 3).properties.dtgAtStartOfDay.functions.inRange(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+            mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay.functions.inRange(
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
             )
         )
         assertEquals(
             false,
-            mk_Date(1990, 1, 7).properties.dtgAtStartOfDay.functions.inRange(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+            mk_Date(1990u, 1u, 7u).properties.dtgAtStartOfDay.functions.inRange(
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
             )
         )
         assertEquals(
             true,
-            mk_Date(1990, 1, 1).properties.dtgAtStartOfDay.functions.inRange(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+            mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay.functions.inRange(
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
             )
         )
         assertEquals(
             false,
-            mk_Date(1990, 1, 3).properties.dtgAtStartOfDay.functions.inRange(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 3).properties.dtgAtStartOfDay
+            mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay.functions.inRange(
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay
             )
         )
     }
@@ -149,30 +142,30 @@ class TestIso8601 {
     fun dtgInRangeTimeTest() {
         assertEquals(
             true,
-            mk_Dtg(FirstDate, mk_Time(2, 30, 0, 0)).functions.inRange(
-                mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)),
-                mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0))
+            mk_Dtg(FirstDate, mk_Time(2u, 30u, 0u, 0u)).functions.inRange(
+                mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)),
+                mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u))
             )
         )
         assertEquals(
             false,
-            mk_Dtg(FirstDate, mk_Time(3, 30, 0, 0)).functions.inRange(
-                mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)),
-                mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0))
+            mk_Dtg(FirstDate, mk_Time(3u, 30u, 0u, 0u)).functions.inRange(
+                mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)),
+                mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u))
             )
         )
         assertEquals(
             true,
-            mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)).functions.inRange(
-                mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)),
-                mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0))
+            mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)).functions.inRange(
+                mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)),
+                mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u))
             )
         )
         assertEquals(
             false,
-            mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0)).functions.inRange(
-                mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)),
-                mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0))
+            mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u)).functions.inRange(
+                mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)),
+                mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u))
             )
         )
     }
@@ -182,59 +175,59 @@ class TestIso8601 {
         assertEquals(
             true,
             mk_Interval(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
-            ).functions.contains(mk_Date(1990, 1, 3).properties.dtgAtStartOfDay)
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
+            ).functions.contains(mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay)
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
-            ).functions.contains(mk_Date(1990, 1, 7).properties.dtgAtStartOfDay)
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
+            ).functions.contains(mk_Date(1990u, 1u, 7u).properties.dtgAtStartOfDay)
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
-            ).functions.contains(mk_Date(1990, 1, 1).properties.dtgAtStartOfDay)
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
+            ).functions.contains(mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay)
 
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 3).properties.dtgAtStartOfDay
-            ).functions.contains(mk_Date(1990, 1, 3).properties.dtgAtStartOfDay)
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay
+            ).functions.contains(mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay)
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)),
-                mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0))
-            ).functions.contains(mk_Dtg(FirstDate, mk_Time(2, 30, 0, 0)))
+                mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)),
+                mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u))
+            ).functions.contains(mk_Dtg(FirstDate, mk_Time(2u, 30u, 0u, 0u)))
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)),
-                mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0))
-            ).functions.contains(mk_Dtg(FirstDate, mk_Time(3, 30, 0, 0)))
+                mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)),
+                mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u))
+            ).functions.contains(mk_Dtg(FirstDate, mk_Time(3u, 30u, 0u, 0u)))
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)),
-                mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0))
-            ).functions.contains(mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)))
+                mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)),
+                mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u))
+            ).functions.contains(mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)))
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)),
-                mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0))
-            ).functions.contains(mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0)))
+                mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)),
+                mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u))
+            ).functions.contains(mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u)))
         )
     }
 
@@ -242,32 +235,32 @@ class TestIso8601 {
     fun dtgWithinDurationOfDtgTest() {
         assertEquals(
             true,
-            mk_Date(1989, 1, 3).properties.dtgAtStartOfDay.functions.withinDurationOfDtg(
-                Duration.fromDays(3), mk_Date(1989, 1, 1).properties.dtgAtStartOfDay
+            mk_Date(1989u, 1u, 3u).properties.dtgAtStartOfDay.functions.withinDurationOfDtg(
+                Duration.fromDays(3u), mk_Date(1989u, 1u, 1u).properties.dtgAtStartOfDay
             )
         )
         assertEquals(
             true,
-            mk_Date(1989, 12, 30).properties.dtgAtStartOfDay.functions.withinDurationOfDtg(
-                Duration.fromDays(3), mk_Date(1990, 1, 1).properties.dtgAtStartOfDay
+            mk_Date(1989u, 12u, 30u).properties.dtgAtStartOfDay.functions.withinDurationOfDtg(
+                Duration.fromDays(3u), mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay
             )
         )
         assertEquals(
             true,
-            mk_Date(1990, 1, 1).properties.dtgAtStartOfDay.functions.withinDurationOfDtg(
-                Duration.fromDays(0), mk_Date(1990, 1, 1).properties.dtgAtStartOfDay
+            mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay.functions.withinDurationOfDtg(
+                Duration.fromDays(0u), mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay
             )
         )
         assertEquals(
             false,
-            mk_Date(1990, 1, 6).properties.dtgAtStartOfDay.functions.withinDurationOfDtg(
-                Duration.fromDays(3), mk_Date(1990, 1, 1).properties.dtgAtStartOfDay
+            mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay.functions.withinDurationOfDtg(
+                Duration.fromDays(3u), mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay
             )
         )
         assertEquals(
             false,
-            mk_Date(1989, 12, 27).properties.dtgAtStartOfDay.functions.withinDurationOfDtg(
-                Duration.fromDays(3), mk_Date(1990, 1, 1).properties.dtgAtStartOfDay
+            mk_Date(1989u, 12u, 27u).properties.dtgAtStartOfDay.functions.withinDurationOfDtg(
+                Duration.fromDays(3u), mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay
             )
         )
     }
@@ -276,76 +269,76 @@ class TestIso8601 {
     fun dtgInIntervalTest() {
         assertEquals(
             true,
-            mk_Date(1990, 1, 3).properties.dtgAtStartOfDay.functions.inInterval(
+            mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay.functions.inInterval(
                 mk_Interval(
-                    mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             false,
-            mk_Date(1990, 1, 7).properties.dtgAtStartOfDay.functions.inInterval(
+            mk_Date(1990u, 1u, 7u).properties.dtgAtStartOfDay.functions.inInterval(
                 mk_Interval(
-                    mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             true,
-            mk_Date(1990, 1, 1).properties.dtgAtStartOfDay.functions.inInterval(
+            mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay.functions.inInterval(
                 mk_Interval(
-                    mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
                 )
             )
 
         )
         assertEquals(
             false,
-            mk_Date(1990, 1, 3).properties.dtgAtStartOfDay.functions.inInterval(
+            mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay.functions.inInterval(
                 mk_Interval(
-                    mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 3).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             true,
-            mk_Dtg(FirstDate, mk_Time(2, 30, 0, 0)).functions.inInterval(
+            mk_Dtg(FirstDate, mk_Time(2u, 30u, 0u, 0u)).functions.inInterval(
                 mk_Interval(
-                    mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)),
-                    mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0))
+                    mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)),
+                    mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u))
                 )
             )
         )
         assertEquals(
             false,
-            mk_Dtg(FirstDate, mk_Time(3, 30, 0, 0)).functions.inInterval(
+            mk_Dtg(FirstDate, mk_Time(3u, 30u, 0u, 0u)).functions.inInterval(
                 mk_Interval(
-                    mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)),
-                    mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0))
+                    mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)),
+                    mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u))
                 )
             )
 
         )
         assertEquals(
             true,
-            mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)).functions.inInterval(
+            mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)).functions.inInterval(
                 mk_Interval(
-                    mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)),
-                    mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0))
+                    mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)),
+                    mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u))
                 )
             )
 
         )
         assertEquals(
             false,
-            mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0)).functions.inInterval(
+            mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u)).functions.inInterval(
                 mk_Interval(
-                    mk_Dtg(FirstDate, mk_Time(2, 0, 0, 0)),
-                    mk_Dtg(FirstDate, mk_Time(3, 0, 0, 0))
+                    mk_Dtg(FirstDate, mk_Time(2u, 0u, 0u, 0u)),
+                    mk_Dtg(FirstDate, mk_Time(3u, 0u, 0u, 0u))
                 )
             )
         )
@@ -356,72 +349,72 @@ class TestIso8601 {
         assertEquals(
             true,
             mk_Interval(
-                mk_Date(1990, 1, 2).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 4).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 2u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 4u).properties.dtgAtStartOfDay
             ).functions.overlap(
                 mk_Interval(
-                    mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 3).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 3).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay
             ).functions.overlap(
                 mk_Interval(
-                    mk_Date(1990, 1, 2).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 4).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 2u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 4u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
             ).functions.overlap(
                 mk_Interval(
-                    mk_Date(1990, 1, 2).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 4).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 2u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 4u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
             ).functions.overlap(
                 mk_Interval(
-                    mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
             ).functions.overlap(
                 mk_Interval(
-                    mk_Date(1990, 1, 6).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 8).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 8u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
             ).functions.overlap(
                 mk_Interval(
-                    mk_Date(1990, 1, 8).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 10).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 8u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 10u).properties.dtgAtStartOfDay
                 )
             )
         )
@@ -432,96 +425,96 @@ class TestIso8601 {
         assertEquals(
             true,
             mk_Interval(
-                mk_Date(1990, 1, 3).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
             ).functions.within(
                 mk_Interval(
-                    mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 10).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 10u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Date(1990, 1, 12).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 14).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 12u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 14u).properties.dtgAtStartOfDay
             ).functions.within(
                 mk_Interval(
-                    mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 10).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 10u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Date(1990, 1, 3).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
             ).functions.within(
                 mk_Interval(
-                    mk_Date(1990, 1, 5).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 10).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 5u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 10u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Date(1990, 1, 8).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 12).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 8u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 12u).properties.dtgAtStartOfDay
             ).functions.within(
                 mk_Interval(
-                    mk_Date(1990, 1, 5).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 10).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 5u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 10u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Date(1990, 1, 3).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
             ).functions.within(
                 mk_Interval(
-                    mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 3).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Date(1990, 1, 3).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
             ).functions.within(
                 mk_Interval(
-                    mk_Date(1990, 1, 3).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Date(1990, 1, 3).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 3u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
             ).functions.within(
                 mk_Interval(
-                    mk_Date(1990, 1, 2).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 2u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
                 )
             )
         )
         assertEquals(
             true,
             mk_Interval(
-                mk_Date(1990, 1, 2).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 5).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 2u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 5u).properties.dtgAtStartOfDay
             ).functions.within(
                 mk_Interval(
-                    mk_Date(1990, 1, 2).properties.dtgAtStartOfDay,
-                    mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                    mk_Date(1990u, 1u, 2u).properties.dtgAtStartOfDay,
+                    mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
                 )
             )
         )
@@ -530,27 +523,27 @@ class TestIso8601 {
     @Test
     fun dtgAddDurationTest() {
         assertEquals(
-            mk_Date(1990, 1, 5).properties.dtgAtStartOfDay,
-            mk_Date(1990, 1, 2).properties.dtgAtStartOfDay.functions.addDuration(Duration.fromDays(3))
+            mk_Date(1990u, 1u, 5u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 1u, 2u).properties.dtgAtStartOfDay.functions.addDuration(Duration.fromDays(3u))
         )
         assertEquals(
-            mk_Date(1990, 1, 2).properties.dtgAtStartOfDay,
-            mk_Date(1990, 1, 2).properties.dtgAtStartOfDay.functions.addDuration(Duration.fromDays(0))
+            mk_Date(1990u, 1u, 2u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 1u, 2u).properties.dtgAtStartOfDay.functions.addDuration(Duration.fromDays(0u))
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 2), mk_Time(5, 20, 0, 0)),
-            mk_Dtg(mk_Date(1990, 1, 2), mk_Time(2, 0, 0, 0)).functions.addDuration(
-                Duration.fromHours(3).functions.addDuration(Duration.fromMinutes(20))
+            mk_Dtg(mk_Date(1990u, 1u, 2u), mk_Time(5u, 20u, 0u, 0u)),
+            mk_Dtg(mk_Date(1990u, 1u, 2u), mk_Time(2u, 0u, 0u, 0u)).functions.addDuration(
+                Duration.fromHours(3u).functions.addDuration(Duration.fromMinutes(20u))
             )
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 5), mk_Time(5, 20, 10, 5)),
-            mk_Dtg(mk_Date(1990, 1, 1), mk_Time(2, 0, 0, 0)).functions.addDuration(
-                Duration.fromDays(4).functions.addDuration(
-                    Duration.fromHours(3).functions.addDuration(
-                        Duration.fromMinutes(20).functions.addDuration(
-                            Duration.fromSeconds(10).functions.addDuration(
-                                Duration.fromMillis(5)
+            mk_Dtg(mk_Date(1990u, 1u, 5u), mk_Time(5u, 20u, 10u, 5u)),
+            mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(2u, 0u, 0u, 0u)).functions.addDuration(
+                Duration.fromDays(4u).functions.addDuration(
+                    Duration.fromHours(3u).functions.addDuration(
+                        Duration.fromMinutes(20u).functions.addDuration(
+                            Duration.fromSeconds(10u).functions.addDuration(
+                                Duration.fromMillis(5u)
                             )
                         )
                     )
@@ -561,44 +554,44 @@ class TestIso8601 {
 
     @Test
     fun dtgSubtractDurationTest() {
-        assertFailsWith<PreconditionFailure> { Duration.fromSeconds(1).functions.subtractDuration(Duration.fromSeconds(5)) }
+        assertFailsWith<PreconditionFailure> { Duration.fromSeconds(1u).functions.subtractDuration(Duration.fromSeconds(5u)) }
         assertEquals(
-            mk_Date(1990, 1, 2).properties.dtgAtStartOfDay,
-            mk_Date(1990, 1, 5).properties.dtgAtStartOfDay.functions.subtractDuration(Duration.fromDays(3))
+            mk_Date(1990u, 1u, 2u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 1u, 5u).properties.dtgAtStartOfDay.functions.subtractDuration(Duration.fromDays(3u))
         )
         assertEquals(
-            mk_Date(1990, 1, 5).properties.dtgAtStartOfDay,
-            mk_Date(1990, 1, 5).properties.dtgAtStartOfDay.functions.subtractDuration(Duration.fromDays(0))
+            mk_Date(1990u, 1u, 5u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 1u, 5u).properties.dtgAtStartOfDay.functions.subtractDuration(Duration.fromDays(0u))
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 5), mk_Time(3, 20, 0, 0)),
+            mk_Dtg(mk_Date(1990u, 1u, 5u), mk_Time(3u, 20u, 0u, 0u)),
             mk_Dtg(
-                mk_Date(1990, 1, 5),
-                mk_Time(6, 40, 0, 0)
+                mk_Date(1990u, 1u, 5u),
+                mk_Time(6u, 40u, 0u, 0u)
             ).functions.subtractDuration(
-                Duration.fromHours(3).functions.addDuration(Duration.fromMinutes(20))
+                Duration.fromHours(3u).functions.addDuration(Duration.fromMinutes(20u))
             )
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 5), mk_Time(2, 40, 0, 0)),
+            mk_Dtg(mk_Date(1990u, 1u, 5u), mk_Time(2u, 40u, 0u, 0u)),
             mk_Dtg(
-                mk_Date(1990, 1, 5),
-                mk_Time(6, 20, 0, 0)
+                mk_Date(1990u, 1u, 5u),
+                mk_Time(6u, 20u, 0u, 0u)
             ).functions.subtractDuration(
-                Duration.fromHours(3).functions.addDuration(Duration.fromMinutes(40))
+                Duration.fromHours(3u).functions.addDuration(Duration.fromMinutes(40u))
             )
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 2), mk_Time(2, 20, 20, 5)),
+            mk_Dtg(mk_Date(1990u, 1u, 2u), mk_Time(2u, 20u, 20u, 5u)),
             mk_Dtg(
-                mk_Date(1990, 1, 6),
-                mk_Time(5, 40, 30, 10)
+                mk_Date(1990u, 1u, 6u),
+                mk_Time(5u, 40u, 30u, 10u)
             ).functions.subtractDuration(
-                Duration.fromDays(4).functions.addDuration(
-                    Duration.fromHours(3).functions.addDuration(
-                        Duration.fromMinutes(20).functions.addDuration(
-                            Duration.fromSeconds(10).functions.addDuration(
-                                Duration.fromMillis(5)
+                Duration.fromDays(4u).functions.addDuration(
+                    Duration.fromHours(3u).functions.addDuration(
+                        Duration.fromMinutes(20u).functions.addDuration(
+                            Duration.fromSeconds(10u).functions.addDuration(
+                                Duration.fromMillis(5u)
                             )
                         )
                     )
@@ -610,202 +603,202 @@ class TestIso8601 {
     @Test
     fun diffDtgTest() {
         assertEquals(
-            Duration.fromDays(5).functions.addDuration(
-                Duration.fromHours(5).functions.addDuration(
-                    Duration.fromMinutes(5).functions.addDuration(
-                        Duration.fromSeconds(5).functions.addDuration(
-                            Duration.fromMillis(5)
+            Duration.fromDays(5u).functions.addDuration(
+                Duration.fromHours(5u).functions.addDuration(
+                    Duration.fromMinutes(5u).functions.addDuration(
+                        Duration.fromSeconds(5u).functions.addDuration(
+                            Duration.fromMillis(5u)
                         )
                     )
                 )
             ),
             DtgUtilities.dtgDiff(
-                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 1, 1, 1)),
-                mk_Dtg(mk_Date(1990, 1, 6), mk_Time(6, 6, 6, 6))
+                mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 1u, 1u, 1u)),
+                mk_Dtg(mk_Date(1990u, 1u, 6u), mk_Time(6u, 6u, 6u, 6u))
             )
         )
         assertEquals(
-            Duration.fromDays(5).functions.addDuration(
-                Duration.fromHours(5).functions.addDuration(
-                    Duration.fromMinutes(5).functions.addDuration(
-                        Duration.fromSeconds(5).functions.addDuration(
-                            Duration.fromMillis(5)
+            Duration.fromDays(5u).functions.addDuration(
+                Duration.fromHours(5u).functions.addDuration(
+                    Duration.fromMinutes(5u).functions.addDuration(
+                        Duration.fromSeconds(5u).functions.addDuration(
+                            Duration.fromMillis(5u)
                         )
                     )
                 )
             ),
             DtgUtilities.dtgDiff(
-                mk_Dtg(mk_Date(1990, 1, 6), mk_Time(6, 6, 6, 6)),
-                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 1, 1, 1))
+                mk_Dtg(mk_Date(1990u, 1u, 6u), mk_Time(6u, 6u, 6u, 6u)),
+                mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 1u, 1u, 1u))
             )
         )
         assertEquals(
-            Duration.fromDays(0),
+            Duration.fromDays(0u),
             DtgUtilities.dtgDiff(
-                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 1, 1, 1)),
-                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 1, 1, 1))
+                mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 1u, 1u, 1u)),
+                mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 1u, 1u, 1u))
             )
         )
         assertEquals(
-            Duration.fromDays(5).functions.addDuration(
-                Duration.fromHours(5).functions.addDuration(
-                    Duration.fromMinutes(5).functions.addDuration(
-                        Duration.fromSeconds(5).functions.addDuration(
-                            Duration.fromMillis(5)
+            Duration.fromDays(5u).functions.addDuration(
+                Duration.fromHours(5u).functions.addDuration(
+                    Duration.fromMinutes(5u).functions.addDuration(
+                        Duration.fromSeconds(5u).functions.addDuration(
+                            Duration.fromMillis(5u)
                         )
                     )
                 )
             ),
             DtgUtilities.dtgDiff(
-                mk_Dtg(mk_Date(1990, 1, 31), mk_Time(1, 1, 1, 1)),
-                mk_Dtg(mk_Date(1990, 2, 5), mk_Time(6, 6, 6, 6))
+                mk_Dtg(mk_Date(1990u, 1u, 31u), mk_Time(1u, 1u, 1u, 1u)),
+                mk_Dtg(mk_Date(1990u, 2u, 5u), mk_Time(6u, 6u, 6u, 6u))
             )
         )
         assertEquals(
-            Duration.fromDays(5).functions.addDuration(
-                Duration.fromHours(5).functions.addDuration(
-                    Duration.fromMinutes(5).functions.addDuration(
-                        Duration.fromSeconds(5).functions.addDuration(
-                            Duration.fromMillis(5)
+            Duration.fromDays(5u).functions.addDuration(
+                Duration.fromHours(5u).functions.addDuration(
+                    Duration.fromMinutes(5u).functions.addDuration(
+                        Duration.fromSeconds(5u).functions.addDuration(
+                            Duration.fromMillis(5u)
                         )
                     )
                 )
             ),
             DtgUtilities.dtgDiff(
-                mk_Dtg(mk_Date(1990, 2, 5), mk_Time(6, 6, 6, 6)),
-                mk_Dtg(mk_Date(1990, 1, 31), mk_Time(1, 1, 1, 1))
+                mk_Dtg(mk_Date(1990u, 2u, 5u), mk_Time(6u, 6u, 6u, 6u)),
+                mk_Dtg(mk_Date(1990u, 1u, 31u), mk_Time(1u, 1u, 1u, 1u))
             )
         )
     }
 
     @Test
     fun durationAddTest() {
-        assertEquals(Duration.fromDays(5), Duration.fromDays(2).functions.addDuration(Duration.fromDays(3)))
-        assertEquals(Duration.fromDays(2), Duration.fromDays(2).functions.addDuration(Duration.fromDays(0)))
-        assertEquals(Duration.fromDays(2), Duration.fromDays(0).functions.addDuration(Duration.fromDays(2)))
-        assertEquals(Duration.fromDays(3), Duration.fromDays(2).functions.addDuration(Duration.fromHours(24)))
+        assertEquals(Duration.fromDays(5u), Duration.fromDays(2u).functions.addDuration(Duration.fromDays(3u)))
+        assertEquals(Duration.fromDays(2u), Duration.fromDays(2u).functions.addDuration(Duration.fromDays(0u)))
+        assertEquals(Duration.fromDays(2u), Duration.fromDays(0u).functions.addDuration(Duration.fromDays(2u)))
+        assertEquals(Duration.fromDays(3u), Duration.fromDays(2u).functions.addDuration(Duration.fromHours(24u)))
     }
 
     @Test
     fun durationSubtractTest() {
         assertEquals(
-            Duration.fromDays(5),
-            Duration.fromDays(8).functions.subtractDuration(Duration.fromDays(3))
+            Duration.fromDays(5u),
+            Duration.fromDays(8u).functions.subtractDuration(Duration.fromDays(3u))
         )
-        assertFailsWith<PreconditionFailure> { Duration.fromDays(2).functions.subtractDuration(Duration.fromDays(3)) }
+        assertFailsWith<PreconditionFailure> { Duration.fromDays(2u).functions.subtractDuration(Duration.fromDays(3u)) }
         assertEquals(
-            Duration.fromDays(8),
-            Duration.fromDays(8).functions.subtractDuration(Duration.fromDays(0))
+            Duration.fromDays(8u),
+            Duration.fromDays(8u).functions.subtractDuration(Duration.fromDays(0u))
         )
         assertEquals(
-            Duration.fromDays(0),
-            Duration.fromDays(8).functions.subtractDuration(Duration.fromDays(8))
+            Duration.fromDays(0u),
+            Duration.fromDays(8u).functions.subtractDuration(Duration.fromDays(8u))
         )
     }
 
     @Test
     fun durationMultiplyTest() {
-        assertEquals(Duration.fromDays(10), Duration.fromDays(2).functions.multiply(5))
-        assertEquals(Duration.fromDays(0), Duration.fromDays(2).functions.multiply(0))
-        assertEquals(Duration.fromHours(25), Duration.fromHours(5).functions.multiply(5))
-        assertEquals(Duration.fromDays(5000000), Duration.fromDays(1000000).functions.multiply(5))
+        assertEquals(Duration.fromDays(10u), Duration.fromDays(2u).functions.multiply(5u))
+        assertEquals(Duration.fromDays(0u), Duration.fromDays(2u).functions.multiply(0u))
+        assertEquals(Duration.fromHours(25u), Duration.fromHours(5u).functions.multiply(5u))
+        assertEquals(Duration.fromDays(5000000u), Duration.fromDays(1000000u).functions.multiply(5u))
     }
 
     @Test
     fun durationDivideTest() {
-        assertEquals(Duration.fromDays(2), Duration.fromDays(10).functions.divide(5))
-        assertEquals(Duration.fromHours(12), Duration.fromDays(10).functions.divide(20))
-        assertEquals(Duration.fromDays(1000000), Duration.fromDays(5000000).functions.divide(5))
-        assertFailsWith<PreconditionFailure> { Duration.fromDays(2).functions.divide(0) }
+        assertEquals(Duration.fromDays(2u), Duration.fromDays(10u).functions.divide(5u))
+        assertEquals(Duration.fromHours(12u), Duration.fromDays(10u).functions.divide(20u))
+        assertEquals(Duration.fromDays(1000000u), Duration.fromDays(5000000u).functions.divide(5u))
+        assertFailsWith<PreconditionFailure> { Duration.fromDays(2u).functions.divide(0u) }
     }
 
     @Test
     fun durationDiffTest() {
         assertEquals(
-            Duration.fromDays(5),
-            DurationUtiltites.durationDiff(Duration.fromDays(10), Duration.fromDays(5))
+            Duration.fromDays(5u),
+            DurationUtiltites.durationDiff(Duration.fromDays(10u), Duration.fromDays(5u))
         )
         assertEquals(
-            Duration.fromDays(5),
-            DurationUtiltites.durationDiff(Duration.fromDays(0), Duration.fromDays(5))
+            Duration.fromDays(5u),
+            DurationUtiltites.durationDiff(Duration.fromDays(0u), Duration.fromDays(5u))
         )
         assertEquals(
-            Duration.fromDays(5),
-            DurationUtiltites.durationDiff(Duration.fromDays(5), Duration.fromDays(10))
+            Duration.fromDays(5u),
+            DurationUtiltites.durationDiff(Duration.fromDays(5u), Duration.fromDays(10u))
         )
         assertEquals(
-            Duration.fromDays(0),
-            DurationUtiltites.durationDiff(Duration.fromDays(10), Duration.fromDays(10))
+            Duration.fromDays(0u),
+            DurationUtiltites.durationDiff(Duration.fromDays(10u), Duration.fromDays(10u))
         )
         assertEquals(
-            Duration.fromDays(1999999995),
-            DurationUtiltites.durationDiff(Duration.fromDays(2000000000), Duration.fromDays(5))
+            Duration.fromDays(1999999995u),
+            DurationUtiltites.durationDiff(Duration.fromDays(2000000000u), Duration.fromDays(5u))
         )
         assertEquals(
-            Duration.fromMillis(15),
-            DurationUtiltites.durationDiff(Duration.fromMillis(20), Duration.fromMillis(5))
+            Duration.fromMillis(15u),
+            DurationUtiltites.durationDiff(Duration.fromMillis(20u), Duration.fromMillis(5u))
         )
     }
 
     @Test
     fun durationToMillisTest() {
-        assertEquals(12, mk_Duration(12).milliseconds)
-        assertEquals(0, mk_Duration(0).milliseconds)
-        assertEquals(2000000000, mk_Duration(2000000000).milliseconds)
+        assertEquals(12u, mk_Duration(12u).milliseconds)
+        assertEquals(0u, mk_Duration(0u).milliseconds)
+        assertEquals(2000000000u, mk_Duration(2000000000u).milliseconds)
     }
 
     @Test
     fun durationFromMillisTest() {
-        assertEquals(mk_Duration(12), Duration.fromMillis(12))
-        assertEquals(mk_Duration(0), Duration.fromMillis(0))
-        assertEquals(mk_Duration(2000000000), Duration.fromMillis(2000000000))
+        assertEquals(mk_Duration(12u), Duration.fromMillis(12u))
+        assertEquals(mk_Duration(0u), Duration.fromMillis(0u))
+        assertEquals(mk_Duration(2000000000u), Duration.fromMillis(2000000000u))
     }
 
     @Test
     fun durationToSecondsTest() {
-        assertEquals(12, mk_Duration(12000).properties.seconds)
-        assertEquals(0, mk_Duration(0).properties.seconds)
-        assertEquals(2000000, mk_Duration(2000000000).properties.seconds)
+        assertEquals(12u, mk_Duration(12000u).properties.seconds)
+        assertEquals(0u, mk_Duration(0u).properties.seconds)
+        assertEquals(2000000u, mk_Duration(2000000000u).properties.seconds)
     }
 
     @Test
     fun durationFromSecondsTest() {
-        assertEquals(mk_Duration(60000), Duration.fromSeconds(60))
-        assertEquals(mk_Duration(0), Duration.fromSeconds(0))
-        assertEquals(mk_Duration(2000000000), Duration.fromSeconds(2000000))
+        assertEquals(mk_Duration(60000u), Duration.fromSeconds(60u))
+        assertEquals(mk_Duration(0u), Duration.fromSeconds(0u))
+        assertEquals(mk_Duration(2000000000u), Duration.fromSeconds(2000000u))
     }
 
     @Test
     fun durationToMinutesTest() {
-        assertEquals(10, mk_Duration(600000).properties.minutes)
-        assertEquals(0, mk_Duration(0).properties.minutes)
-        assertEquals(2000, mk_Duration(120000000).properties.minutes)
+        assertEquals(10u, mk_Duration(600000u).properties.minutes)
+        assertEquals(0u, mk_Duration(0u).properties.minutes)
+        assertEquals(2000u, mk_Duration(120000000u).properties.minutes)
     }
 
     @Test
     fun durationFromMinutesTest() {
-        assertEquals(mk_Duration(3600000), Duration.fromMinutes(60))
-        assertEquals(mk_Duration(0), Duration.fromMinutes(0))
-        assertEquals(mk_Duration(120000000000), Duration.fromMinutes(2000000))
+        assertEquals(mk_Duration(3600000u), Duration.fromMinutes(60u))
+        assertEquals(mk_Duration(0u), Duration.fromMinutes(0u))
+        assertEquals(mk_Duration(120000000000u), Duration.fromMinutes(2000000u))
     }
 
     @Test
     fun durationModSecondsTest() {
         assertEquals(
-            Duration.fromMillis(10),
-            Duration.fromSeconds(100).functions.addDuration(Duration.fromMillis(10)).functions.modSeconds()
+            Duration.fromMillis(10u),
+            Duration.fromSeconds(100u).functions.addDuration(Duration.fromMillis(10u)).functions.modSeconds()
         )
         assertEquals(
-            Duration.fromHours(0),
-            Duration.fromSeconds(100).functions.modSeconds()
+            Duration.fromHours(0u),
+            Duration.fromSeconds(100u).functions.modSeconds()
         )
         assertEquals(
-            Duration.fromMillis(100),
-            Duration.fromSeconds(0).functions.addDuration(Duration.fromMillis(100)).functions.modSeconds()
+            Duration.fromMillis(100u),
+            Duration.fromSeconds(0u).functions.addDuration(Duration.fromMillis(100u)).functions.modSeconds()
         )
         assertEquals(
-            Duration.fromMillis(10),
-            Duration.fromDays(10000).functions.addDuration(Duration.fromMillis(10)).functions.modSeconds()
+            Duration.fromMillis(10u),
+            Duration.fromDays(10000u).functions.addDuration(Duration.fromMillis(10u)).functions.modSeconds()
         )
 
     }
@@ -813,233 +806,233 @@ class TestIso8601 {
     @Test
     fun durationModMinutesTest() {
         assertEquals(
-            Duration.fromSeconds(10),
-            Duration.fromMinutes(5).functions.addDuration(Duration.fromSeconds(10)).functions.modMinutes()
+            Duration.fromSeconds(10u),
+            Duration.fromMinutes(5u).functions.addDuration(Duration.fromSeconds(10u)).functions.modMinutes()
         )
         assertEquals(
-            Duration.fromDays(0),
-            Duration.fromMinutes(5).functions.modMinutes()
+            Duration.fromDays(0u),
+            Duration.fromMinutes(5u).functions.modMinutes()
         )
         assertEquals(
-            Duration.fromSeconds(10),
-            Duration.fromMinutes(0).functions.addDuration(Duration.fromSeconds(10)).functions.modMinutes()
+            Duration.fromSeconds(10u),
+            Duration.fromMinutes(0u).functions.addDuration(Duration.fromSeconds(10u)).functions.modMinutes()
         )
         assertEquals(
-            Duration.fromSeconds(10),
-            Duration.fromMinutes(2000000).functions.addDuration(Duration.fromSeconds(10)).functions.modMinutes()
+            Duration.fromSeconds(10u),
+            Duration.fromMinutes(2000000u).functions.addDuration(Duration.fromSeconds(10u)).functions.modMinutes()
         )
     }
 
     @Test
     fun durationToHoursTest() {
-        assertEquals(10, mk_Duration(36000000).properties.hours)
-        assertEquals(0, mk_Duration(0).properties.hours)
-        assertEquals(200, mk_Duration(720000000).properties.hours)
-        assertEquals(876600, Duration.durationFromFirstYearUpToStartOfYear(100).properties.hours)
+        assertEquals(10u, mk_Duration(36000000u).properties.hours)
+        assertEquals(0u, mk_Duration(0u).properties.hours)
+        assertEquals(200u, mk_Duration(720000000u).properties.hours)
+        assertEquals(876600u, Duration.durationFromFirstYearUpToStartOfYear(100u).properties.hours)
     }
 
     @Test
     fun durationFromHoursTest() {
-        assertEquals(mk_Duration(216000000), Duration.fromHours(60))
-        assertEquals(mk_Duration(0), Duration.fromHours(0))
-        assertEquals(mk_Duration(7200000000), Duration.fromHours(2000))
+        assertEquals(mk_Duration(216000000u), Duration.fromHours(60u))
+        assertEquals(mk_Duration(0u), Duration.fromHours(0u))
+        assertEquals(mk_Duration(7200000000u), Duration.fromHours(2000u))
     }
 
     @Test
     fun durationModHoursTest() {
         assertEquals(
-            Duration.fromSeconds(10),
-            Duration.fromHours(5).functions.addDuration(Duration.fromSeconds(10)).functions.modHours()
+            Duration.fromSeconds(10u),
+            Duration.fromHours(5u).functions.addDuration(Duration.fromSeconds(10u)).functions.modHours()
         )
         assertEquals(
-            Duration.fromSeconds(10),
-            Duration.fromHours(0).functions.addDuration(Duration.fromSeconds(10)).functions.modHours()
+            Duration.fromSeconds(10u),
+            Duration.fromHours(0u).functions.addDuration(Duration.fromSeconds(10u)).functions.modHours()
         )
         assertEquals(
-            Duration.fromSeconds(0),
-            Duration.fromHours(110).functions.modHours()
+            Duration.fromSeconds(0u),
+            Duration.fromHours(110u).functions.modHours()
         )
         assertEquals(
-            Duration.fromSeconds(70),
-            Duration.fromHours(2000000).functions.addDuration(Duration.fromSeconds(70)).functions.modHours()
+            Duration.fromSeconds(70u),
+            Duration.fromHours(2000000u).functions.addDuration(Duration.fromSeconds(70u)).functions.modHours()
         )
     }
 
     @Test
     fun durationToDaysTest() {
-        assertEquals(10, mk_Duration(864000000).properties.days)
-        assertEquals(9, mk_Duration(863999999).properties.days)
-        assertEquals(0, mk_Duration(0).properties.days)
-        assertEquals(20, mk_Duration(1728000000).properties.days)
+        assertEquals(10u, mk_Duration(864000000u).properties.days)
+        assertEquals(9u, mk_Duration(863999999u).properties.days)
+        assertEquals(0u, mk_Duration(0u).properties.days)
+        assertEquals(20u, mk_Duration(1728000000u).properties.days)
     }
 
     @Test
     fun durationFromDaysTest() {
-        assertEquals(mk_Duration(864000000), Duration.fromDays(10))
-        assertEquals(mk_Duration(0), Duration.fromDays(0))
-        assertEquals(mk_Duration(172800000000), Duration.fromDays(2000))
+        assertEquals(mk_Duration(864000000u), Duration.fromDays(10u))
+        assertEquals(mk_Duration(0u), Duration.fromDays(0u))
+        assertEquals(mk_Duration(172800000000u), Duration.fromDays(2000u))
     }
 
     @Test
     fun dateToDayOfWeekTest() {
-        assertEquals(DayOfWeek.Thursday, mk_Date(2009, 8, 13).properties.dayOfWeek)
-        assertEquals(DayOfWeek.Saturday, mk_Date(2000, 4, 1).properties.dayOfWeek)
-        assertEquals(DayOfWeek.Monday, mk_Date(1, 1, 1).properties.dayOfWeek)
-        assertEquals(DayOfWeek.Wednesday, mk_Date(2019, 10, 9).properties.dayOfWeek)
-        assertEquals(DayOfWeek.Saturday, mk_Date(2017, 10, 28).properties.dayOfWeek)
-        assertEquals(DayOfWeek.Wednesday, mk_Date(2020, 1, 1).properties.dayOfWeek)
+        assertEquals(DayOfWeek.Thursday, mk_Date(2009u, 8u, 13u).properties.dayOfWeek)
+        assertEquals(DayOfWeek.Saturday, mk_Date(2000u, 4u, 1u).properties.dayOfWeek)
+        assertEquals(DayOfWeek.Monday, mk_Date(1u, 1u, 1u).properties.dayOfWeek)
+        assertEquals(DayOfWeek.Wednesday, mk_Date(2019u, 10u, 9u).properties.dayOfWeek)
+        assertEquals(DayOfWeek.Saturday, mk_Date(2017u, 10u, 28u).properties.dayOfWeek)
+        assertEquals(DayOfWeek.Wednesday, mk_Date(2020u, 1u, 1u).properties.dayOfWeek)
     }
 
     @Test
     fun dateToDtgTest() {
         assertEquals(
-            mk_Dtg(mk_Date(1, 1, 1), FirstTime),
-            mk_Date(1, 1, 1).properties.dtgAtStartOfDay
+            mk_Dtg(mk_Date(1u, 1u, 1u), FirstTime),
+            mk_Date(1u, 1u, 1u).properties.dtgAtStartOfDay
         )
         assertEquals(
-            mk_Dtg(mk_Date(1000, 12, 11), FirstTime),
-            mk_Date(1000, 12, 11).properties.dtgAtStartOfDay
+            mk_Dtg(mk_Date(1000u, 12u, 11u), FirstTime),
+            mk_Date(1000u, 12u, 11u).properties.dtgAtStartOfDay
         )
         assertEquals(
-            mk_Dtg(mk_Date(2000, 2, 29), FirstTime),
-            mk_Date(2000, 2, 29).properties.dtgAtStartOfDay
+            mk_Dtg(mk_Date(2000u, 2u, 29u), FirstTime),
+            mk_Date(2000u, 2u, 29u).properties.dtgAtStartOfDay
         )
         assertEquals(
-            mk_Dtg(mk_Date(9999, 12, 31), FirstTime),
-            mk_Date(9999, 12, 31).properties.dtgAtStartOfDay
+            mk_Dtg(mk_Date(9999u, 12u, 31u), FirstTime),
+            mk_Date(9999u, 12u, 31u).properties.dtgAtStartOfDay
         )
         assertEquals(
-            mk_Dtg(mk_Date(2001, 2, 28), FirstTime),
-            mk_Date(2001, 2, 28).properties.dtgAtStartOfDay
+            mk_Dtg(mk_Date(2001u, 2u, 28u), FirstTime),
+            mk_Date(2001u, 2u, 28u).properties.dtgAtStartOfDay
         )
     }
 
     @Test
     fun durationModDaysTest() {
         assertEquals(
-            Duration.fromSeconds(10),
-            Duration.fromDays(5).functions.addDuration(Duration.fromSeconds(10)).functions.modDays()
+            Duration.fromSeconds(10u),
+            Duration.fromDays(5u).functions.addDuration(Duration.fromSeconds(10u)).functions.modDays()
         )
         assertEquals(
-            Duration.fromMinutes(0),
-            Duration.fromDays(5).functions.modDays()
+            Duration.fromMinutes(0u),
+            Duration.fromDays(5u).functions.modDays()
         )
         assertEquals(
-            Duration.fromHours(10),
-            Duration.fromDays(0).functions.addDuration(Duration.fromHours(10)).functions.modDays()
+            Duration.fromHours(10u),
+            Duration.fromDays(0u).functions.addDuration(Duration.fromHours(10u)).functions.modDays()
         )
         assertEquals(
-            Duration.fromSeconds(10),
-            Duration.fromDays(200000).functions.addDuration(Duration.fromSeconds(10)).functions.modDays()
+            Duration.fromSeconds(10u),
+            Duration.fromDays(200000u).functions.addDuration(Duration.fromSeconds(10u)).functions.modDays()
         )
     }
 
     @Test
     fun durationToMonthsInGivenYearTest() {
-        assertEquals(0, Duration.fromDays(30).functions.toMonthsInGivenYear(1990))
-        assertEquals(1, Duration.fromDays(31).functions.toMonthsInGivenYear(1990))
-        assertEquals(0, Duration.fromDays(0).functions.toMonthsInGivenYear(1990))
-        assertEquals(11, Duration.fromDays(364).functions.toMonthsInGivenYear(1990))
-        assertFailsWith<PreconditionFailure> { Duration.fromDays(365).functions.toMonthsInGivenYear(1990) }
+        assertEquals(0u, Duration.fromDays(30u).functions.toMonthsInGivenYear(1990u))
+        assertEquals(1u, Duration.fromDays(31u).functions.toMonthsInGivenYear(1990u))
+        assertEquals(0u, Duration.fromDays(0u).functions.toMonthsInGivenYear(1990u))
+        assertEquals(11u, Duration.fromDays(364u).functions.toMonthsInGivenYear(1990u))
+        assertFailsWith<PreconditionFailure> { Duration.fromDays(365u).functions.toMonthsInGivenYear(1990u) }
     }
 
     @Test
     fun durationFromMonthTest() {
-        assertEquals(Duration.fromDays(31), Duration.fromMonth(1990, 1))
-        assertEquals(Duration.fromDays(28), Duration.fromMonth(1990, 2))
-        assertEquals(Duration.fromDays(30), Duration.fromMonth(1990, 9))
-        assertEquals(Duration.fromDays(29), Duration.fromMonth(1992, 2))
+        assertEquals(Duration.fromDays(31u), Duration.fromMonth(1990u, 1u))
+        assertEquals(Duration.fromDays(28u), Duration.fromMonth(1990u, 2u))
+        assertEquals(Duration.fromDays(30u), Duration.fromMonth(1990u, 9u))
+        assertEquals(Duration.fromDays(29u), Duration.fromMonth(1992u, 2u))
     }
 
     @Test
     fun durationUpToMonthTest() {
-        assertEquals(Duration.fromDays(90), Duration.durationInYearUpToStartOfMonth(1990, 4))
-        assertEquals(Duration.fromDays(59), Duration.durationInYearUpToStartOfMonth(1990, 3))
-        assertEquals(Duration.fromDays(60), Duration.durationInYearUpToStartOfMonth(1992, 3))
+        assertEquals(Duration.fromDays(90u), Duration.durationInYearUpToStartOfMonth(1990u, 4u))
+        assertEquals(Duration.fromDays(59u), Duration.durationInYearUpToStartOfMonth(1990u, 3u))
+        assertEquals(Duration.fromDays(60u), Duration.durationInYearUpToStartOfMonth(1992u, 3u))
     }
 
     @Test
     fun durationToYearsAfterGivenYearTest() {
-        assertEquals(0, Duration.fromDays(0).functions.toYearsAfterGivenYear(1990))
-        assertEquals(2, Duration.fromDays(800).functions.toYearsAfterGivenYear(1990))
-        assertEquals(0, Duration.fromDays(365).functions.toYearsAfterGivenYear(1992))
-        assertEquals(1, Duration.fromDays(365).functions.toYearsAfterGivenYear(1990))
+        assertEquals(0u, Duration.fromDays(0u).functions.toYearsAfterGivenYear(1990u))
+        assertEquals(2u, Duration.fromDays(800u).functions.toYearsAfterGivenYear(1990u))
+        assertEquals(0u, Duration.fromDays(365u).functions.toYearsAfterGivenYear(1992u))
+        assertEquals(1u, Duration.fromDays(365u).functions.toYearsAfterGivenYear(1990u))
     }
 
     @Test
     fun durationToYearsAfterFirstYearTest() {
-        assertEquals(0, Duration.fromDays(0).functions.toYearsAfterFirstYear())
-        assertEquals(2, Duration.fromDays(800).functions.toYearsAfterFirstYear())
-        assertEquals(0, Duration.fromDays(365).functions.toYearsAfterFirstYear())
-        assertEquals(1, Duration.fromDays(366).functions.toYearsAfterFirstYear())
+        assertEquals(0u, Duration.fromDays(0u).functions.toYearsAfterFirstYear())
+        assertEquals(2u, Duration.fromDays(800u).functions.toYearsAfterFirstYear())
+        assertEquals(0u, Duration.fromDays(365u).functions.toYearsAfterFirstYear())
+        assertEquals(1u, Duration.fromDays(366u).functions.toYearsAfterFirstYear())
     }
 
     @Test
     fun durationFromYearTest() {
-        assertEquals(Duration.fromDays(365), Duration.fromYear(1990))
-        assertEquals(Duration.fromDays(366), Duration.fromYear(2020))
+        assertEquals(Duration.fromDays(365u), Duration.fromYear(1990u))
+        assertEquals(Duration.fromDays(366u), Duration.fromYear(2020u))
     }
 
     @Test
     fun durationUpToYearTest() {
-        assertEquals(Duration.fromDays(1461), Duration.durationFromFirstYearUpToStartOfYear(4))
-        assertEquals(Duration.fromDays(366), Duration.durationFromFirstYearUpToStartOfYear(1))
-        assertEquals(NoDuration, Duration.durationFromFirstYearUpToStartOfYear(0))
+        assertEquals(Duration.fromDays(1461u), Duration.durationFromFirstYearUpToStartOfYear(4u))
+        assertEquals(Duration.fromDays(366u), Duration.durationFromFirstYearUpToStartOfYear(1u))
+        assertEquals(NoDuration, Duration.durationFromFirstYearUpToStartOfYear(0u))
     }
 
     @Test
     fun durationToDtgAfterFirstDtgTest() {
         assertEquals(
-            mk_Date(0, 1, 6).properties.dtgAtStartOfDay,
-            Duration.fromDays(5).functions.toDtgAfterFirstDtg()
+            mk_Date(0u, 1u, 6u).properties.dtgAtStartOfDay,
+            Duration.fromDays(5u).functions.toDtgAfterFirstDtg()
         )
         assertEquals(
-            mk_Date(0, 1, 1).properties.dtgAtStartOfDay,
-            Duration.fromDays(0).functions.toDtgAfterFirstDtg()
+            mk_Date(0u, 1u, 1u).properties.dtgAtStartOfDay,
+            Duration.fromDays(0u).functions.toDtgAfterFirstDtg()
         )
         assertEquals(
-            mk_Date(0, 2, 7).properties.dtgAtStartOfDay,
-            Duration.fromDays(37).functions.toDtgAfterFirstDtg()
+            mk_Date(0u, 2u, 7u).properties.dtgAtStartOfDay,
+            Duration.fromDays(37u).functions.toDtgAfterFirstDtg()
         )
         assertEquals(
-            mk_Dtg(FirstDate, mk_Time(0, 0, 24, 0)),
-            Duration.fromSeconds(24).functions.toDtgAfterFirstDtg()
+            mk_Dtg(FirstDate, mk_Time(0u, 0u, 24u, 0u)),
+            Duration.fromSeconds(24u).functions.toDtgAfterFirstDtg()
         )
     }
 
     @Test
     fun durationToDtgAfterGivenDtgTest() {
         assertEquals(
-            mk_Date(1000, 1, 6).properties.dtgAtStartOfDay,
-            Duration.fromDays(5).functions.toDtgAfterGivenDtg(
+            mk_Date(1000u, 1u, 6u).properties.dtgAtStartOfDay,
+            Duration.fromDays(5u).functions.toDtgAfterGivenDtg(
                 mk_Date(
-                    1000,
-                    1,
-                    1
+                    1000u,
+                    1u,
+                    1u
                 ).properties.dtgAtStartOfDay
             )
         )
         assertEquals(
-            mk_Date(100, 1, 1).properties.dtgAtStartOfDay,
-            Duration.fromDays(0).functions.toDtgAfterGivenDtg(mk_Date(100, 1, 1).properties.dtgAtStartOfDay)
+            mk_Date(100u, 1u, 1u).properties.dtgAtStartOfDay,
+            Duration.fromDays(0u).functions.toDtgAfterGivenDtg(mk_Date(100u, 1u, 1u).properties.dtgAtStartOfDay)
         )
         assertEquals(
-            mk_Date(2000, 3, 31).properties.dtgAtStartOfDay,
-            Duration.fromDays(90).functions.toDtgAfterGivenDtg(
+            mk_Date(2000u, 3u, 31u).properties.dtgAtStartOfDay,
+            Duration.fromDays(90u).functions.toDtgAfterGivenDtg(
                 mk_Date(
-                    2000,
-                    1,
-                    1
+                    2000u,
+                    1u,
+                    1u
                 ).properties.dtgAtStartOfDay
             )
         )
         assertEquals(
-            mk_Dtg(mk_Date(2024, 12, 31), mk_Time(13, 0, 0, 0)),
-            Duration.fromHours(13).functions.toDtgAfterGivenDtg(
+            mk_Dtg(mk_Date(2024u, 12u, 31u), mk_Time(13u, 0u, 0u, 0u)),
+            Duration.fromHours(13u).functions.toDtgAfterGivenDtg(
                 mk_Date(
-                    2024,
-                    12,
-                    31
+                    2024u,
+                    12u,
+                    31u
                 ).properties.dtgAtStartOfDay
             )
         )
@@ -1048,104 +1041,104 @@ class TestIso8601 {
     @Test
     fun dtgToDurationSinceFirstDtgTest() {
         assertEquals(
-            Duration.fromDays(6),
-            mk_Date(0, 1, 7).properties.dtgAtStartOfDay.properties.durationSinceFirstDtg
+            Duration.fromDays(6u),
+            mk_Date(0u, 1u, 7u).properties.dtgAtStartOfDay.properties.durationSinceFirstDtg
         )
         assertEquals(
-            Duration.fromDays(0),
-            mk_Date(0, 1, 1).properties.dtgAtStartOfDay.properties.durationSinceFirstDtg
+            Duration.fromDays(0u),
+            mk_Date(0u, 1u, 1u).properties.dtgAtStartOfDay.properties.durationSinceFirstDtg
         )
 
         assertEquals(
-            Duration.fromDays(37),
-            mk_Date(0, 2, 7).properties.dtgAtStartOfDay.properties.durationSinceFirstDtg
+            Duration.fromDays(37u),
+            mk_Date(0u, 2u, 7u).properties.dtgAtStartOfDay.properties.durationSinceFirstDtg
         )
     }
 
     @Test
     fun durationToDateAfterFirstDateTest() {
-        assertEquals(mk_Date(0, 1, 4), Duration.fromDays(3).functions.toDateAfterFirstDate())
-        assertEquals(mk_Date(0, 1, 1), Duration.fromDays(0).functions.toDateAfterFirstDate())
+        assertEquals(mk_Date(0u, 1u, 4u), Duration.fromDays(3u).functions.toDateAfterFirstDate())
+        assertEquals(mk_Date(0u, 1u, 1u), Duration.fromDays(0u).functions.toDateAfterFirstDate())
     }
 
     @Test
     fun durationToDateAfterGivenDateTest() {
         assertEquals(
-            mk_Date(1110, 10, 4),
-            Duration.fromDays(3).functions.toDateAfterGivenDate(mk_Date(1110, 10, 1))
+            mk_Date(1110u, 10u, 4u),
+            Duration.fromDays(3u).functions.toDateAfterGivenDate(mk_Date(1110u, 10u, 1u))
         )
         assertEquals(
-            mk_Date(1997, 9, 16),
-            Duration.fromDays(0).functions.toDateAfterGivenDate(mk_Date(1997, 9, 16))
+            mk_Date(1997u, 9u, 16u),
+            Duration.fromDays(0u).functions.toDateAfterGivenDate(mk_Date(1997u, 9u, 16u))
         )
     }
 
     @Test
     fun dateToDurationSinceFirstDateTest() {
-        assertEquals(Duration.fromDays(3), mk_Date(0, 1, 4).properties.durationSinceFirstDate)
-        assertEquals(Duration.fromDays(0), mk_Date(0, 1, 1).properties.durationSinceFirstDate)
+        assertEquals(Duration.fromDays(3u), mk_Date(0u, 1u, 4u).properties.durationSinceFirstDate)
+        assertEquals(Duration.fromDays(0u), mk_Date(0u, 1u, 1u).properties.durationSinceFirstDate)
     }
 
     @Test
     fun durationToTimeAfterFirstTimeTest() {
-        assertEquals(mk_Time(3, 0, 0, 0), Duration.fromHours(3).functions.toTimeAfterFirstTime())
-        assertEquals(FirstTime, Duration.fromHours(0).functions.toTimeAfterFirstTime())
-        assertFailsWith<PreconditionFailure> { Duration.fromHours(25).functions.toTimeAfterFirstTime() }
+        assertEquals(mk_Time(3u, 0u, 0u, 0u), Duration.fromHours(3u).functions.toTimeAfterFirstTime())
+        assertEquals(FirstTime, Duration.fromHours(0u).functions.toTimeAfterFirstTime())
+        assertFailsWith<PreconditionFailure> { Duration.fromHours(25u).functions.toTimeAfterFirstTime() }
     }
 
     @Test
     fun durationToTimeAfterGivenTimeTest() {
         assertEquals(
-            mk_Time(3, 0, 0, 5),
-            Duration.fromHours(1).functions.toTimeAfterGivenTime(mk_Time(2, 0, 0, 5))
+            mk_Time(3u, 0u, 0u, 5u),
+            Duration.fromHours(1u).functions.toTimeAfterGivenTime(mk_Time(2u, 0u, 0u, 5u))
         )
         assertEquals(
-            mk_Time(10, 10, 10, 10),
-            Duration.fromHours(0).functions.toTimeAfterGivenTime(mk_Time(10, 10, 10, 10))
+            mk_Time(10u, 10u, 10u, 10u),
+            Duration.fromHours(0u).functions.toTimeAfterGivenTime(mk_Time(10u, 10u, 10u, 10u))
         )
     }
 
     @Test
     fun timeToDurationSinceFirstTimeTest() {
-        assertEquals(Duration.fromHours(4), mk_Time(4, 0, 0, 0).properties.durationSinceFirstTime)
-        assertEquals(Duration.fromHours(0), mk_Time(0, 0, 0, 0).properties.durationSinceFirstTime)
+        assertEquals(Duration.fromHours(4u), mk_Time(4u, 0u, 0u, 0u).properties.durationSinceFirstTime)
+        assertEquals(Duration.fromHours(0u), mk_Time(0u, 0u, 0u, 0u).properties.durationSinceFirstTime)
     }
 
     @Test
     fun timeInZoneToDurationSinceFirstTimeTest() {
         assertEquals(
-            Duration.fromHours(4),
+            Duration.fromHours(4u),
             mk_TimeInZone(
-                mk_Time(3, 0, 0, 0),
-                mk_Offset(Duration.fromHours(1), PlusOrMinus.Minus)
+                mk_Time(3u, 0u, 0u, 0u),
+                mk_Offset(Duration.fromHours(1u), PlusOrMinus.Minus)
             ).properties.normalisedDurationSinceFirstTime
         )
         assertEquals(
-            Duration.fromHours(2),
+            Duration.fromHours(2u),
             mk_TimeInZone(
-                mk_Time(3, 0, 0, 0),
-                mk_Offset(Duration.fromHours(1), PlusOrMinus.Plus)
+                mk_Time(3u, 0u, 0u, 0u),
+                mk_Offset(Duration.fromHours(1u), PlusOrMinus.Plus)
             ).properties.normalisedDurationSinceFirstTime
         )
         assertEquals(
-            Duration.fromHours(1),
+            Duration.fromHours(1u),
             mk_TimeInZone(
-                mk_Time(23, 0, 0, 0),
-                mk_Offset(Duration.fromHours(2), PlusOrMinus.Minus)
+                mk_Time(23u, 0u, 0u, 0u),
+                mk_Offset(Duration.fromHours(2u), PlusOrMinus.Minus)
             ).properties.normalisedDurationSinceFirstTime
         )
         assertEquals(
-            Duration.fromHours(23),
+            Duration.fromHours(23u),
             mk_TimeInZone(
-                mk_Time(1, 0, 0, 0),
-                mk_Offset(Duration.fromHours(2), PlusOrMinus.Plus)
+                mk_Time(1u, 0u, 0u, 0u),
+                mk_Offset(Duration.fromHours(2u), PlusOrMinus.Plus)
             ).properties.normalisedDurationSinceFirstTime
         )
         assertEquals(
-            Duration.fromHours(0),
+            Duration.fromHours(0u),
             mk_TimeInZone(
                 FirstTime,
-                mk_Offset(Duration.fromHours(0), PlusOrMinus.None)
+                mk_Offset(Duration.fromHours(0u), PlusOrMinus.None)
             ).properties.normalisedDurationSinceFirstTime
         )
     }
@@ -1153,21 +1146,21 @@ class TestIso8601 {
     @Test
     fun intervalDurationTest() {
         assertEquals(
-            Duration.fromDays(5),
+            Duration.fromDays(5u),
             mk_Interval(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
             ).properties.duration
         )
         assertEquals(
-            Duration.fromMillis(1),
+            Duration.fromMillis(1u),
             FirstDtg.properties.instant.properties.duration
         )
         assertEquals(
-            Duration.fromHours(2),
+            Duration.fromHours(2u),
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 0, 0, 0)),
-                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(3, 0, 0, 0))
+                mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
+                mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(3u, 0u, 0u, 0u))
             ).properties.duration
         )
     }
@@ -1175,36 +1168,36 @@ class TestIso8601 {
     @Test
     fun dtgFinestGranularityTest() {
         assertFailsWith<PreconditionFailure> {
-            FirstDtg.functions.finestGranularity(Duration.fromDays(0))
+            FirstDtg.functions.finestGranularity(Duration.fromDays(0u))
         }
         assertEquals(
             true,
-            mk_Dtg(mk_Date(0, 1, 1), mk_Time(10, 0, 0, 0)).functions.finestGranularity(Duration.fromHours(1))
+            mk_Dtg(mk_Date(0u, 1u, 1u), mk_Time(10u, 0u, 0u, 0u)).functions.finestGranularity(Duration.fromHours(1u))
         )
         assertEquals(
             false,
-            mk_Dtg(mk_Date(0, 1, 1), mk_Time(10, 0, 0, 0)).functions.finestGranularity(Duration.fromHours(3))
+            mk_Dtg(mk_Date(0u, 1u, 1u), mk_Time(10u, 0u, 0u, 0u)).functions.finestGranularity(Duration.fromHours(3u))
         )
     }
 
     @Test
     fun intervalFinestGranularityTest() {
         assertFailsWith<PreconditionFailure> {
-            FirstDtg.properties.instant.functions.finestGranularity(Duration.fromDays(0))
+            FirstDtg.properties.instant.functions.finestGranularity(Duration.fromDays(0u))
         }
         assertEquals(
             true,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 0, 0, 0)),
-                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(3, 0, 0, 0))
-            ).functions.finestGranularity(Duration.fromHours(1))
+                mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
+                mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(3u, 0u, 0u, 0u))
+            ).functions.finestGranularity(Duration.fromHours(1u))
         )
         assertEquals(
             false,
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 0, 0, 0)),
-                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(10, 0, 0, 0))
-            ).functions.finestGranularity(Duration.fromHours(2))
+                mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
+                mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(10u, 0u, 0u, 0u))
+            ).functions.finestGranularity(Duration.fromHours(2u))
         )
 
     }
@@ -1212,35 +1205,35 @@ class TestIso8601 {
     @Test
     fun minDtgTest() {
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 0, 0, 0)),
+            mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
             DtgUtilities.minDtg(
                 mk_Set1(
-                    mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 0, 0, 0)),
-                    mk_Dtg(mk_Date(1990, 1, 6), mk_Time(1, 0, 0, 0)),
-                    mk_Dtg(mk_Date(1990, 2, 1), mk_Time(1, 0, 0, 0)),
-                    mk_Dtg(mk_Date(1990, 1, 14), mk_Time(1, 0, 0, 0))
+                    mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
+                    mk_Dtg(mk_Date(1990u, 1u, 6u), mk_Time(1u, 0u, 0u, 0u)),
+                    mk_Dtg(mk_Date(1990u, 2u, 1u), mk_Time(1u, 0u, 0u, 0u)),
+                    mk_Dtg(mk_Date(1990u, 1u, 14u), mk_Time(1u, 0u, 0u, 0u))
                 )
             )
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 1), mk_Time(0, 10, 0, 0)),
+            mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(0u, 10u, 0u, 0u)),
             DtgUtilities.minDtg(
                 mk_Set1(
-                    mk_Dtg(mk_Date(1990, 1, 1), mk_Time(0, 10, 0, 0)),
-                    mk_Dtg(mk_Date(1990, 1, 1), mk_Time(14, 0, 0, 0)),
-                    mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 0, 50, 0)),
-                    mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 30, 0, 0))
+                    mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(0u, 10u, 0u, 0u)),
+                    mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(14u, 0u, 0u, 0u)),
+                    mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 0u, 50u, 0u)),
+                    mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 30u, 0u, 0u))
                 )
             )
         )
         assertEquals(
-            mk_Dtg(mk_Date(0, 1, 1), mk_Time(1, 0, 0, 0)),
+            mk_Dtg(mk_Date(0u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
             DtgUtilities.minDtg(
                 mk_Set1(
-                    mk_Dtg(mk_Date(0, 1, 1), mk_Time(1, 0, 0, 0)),
-                    mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 0, 0, 0)),
-                    mk_Dtg(mk_Date(300, 1, 1), mk_Time(1, 0, 0, 0)),
-                    mk_Dtg(mk_Date(3000, 1, 1), mk_Time(1, 0, 0, 0))
+                    mk_Dtg(mk_Date(0u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
+                    mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
+                    mk_Dtg(mk_Date(300u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
+                    mk_Dtg(mk_Date(3000u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u))
                 )
             )
         )
@@ -1249,35 +1242,35 @@ class TestIso8601 {
     @Test
     fun maxDtgTest() {
         assertEquals(
-            mk_Dtg(mk_Date(1990, 2, 1), mk_Time(1, 0, 0, 0)),
+            mk_Dtg(mk_Date(1990u, 2u, 1u), mk_Time(1u, 0u, 0u, 0u)),
             DtgUtilities.maxDtg(
                 mk_Set1(
-                    mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 0, 0, 0)),
-                    mk_Dtg(mk_Date(1990, 1, 6), mk_Time(1, 0, 0, 0)),
-                    mk_Dtg(mk_Date(1990, 2, 1), mk_Time(1, 0, 0, 0)),
-                    mk_Dtg(mk_Date(1990, 1, 14), mk_Time(1, 0, 0, 0))
+                    mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
+                    mk_Dtg(mk_Date(1990u, 1u, 6u), mk_Time(1u, 0u, 0u, 0u)),
+                    mk_Dtg(mk_Date(1990u, 2u, 1u), mk_Time(1u, 0u, 0u, 0u)),
+                    mk_Dtg(mk_Date(1990u, 1u, 14u), mk_Time(1u, 0u, 0u, 0u))
                 )
             )
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 1), mk_Time(14, 0, 0, 0)),
+            mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(14u, 0u, 0u, 0u)),
             DtgUtilities.maxDtg(
                 mk_Set1(
-                    mk_Dtg(mk_Date(1990, 1, 1), mk_Time(0, 10, 0, 0)),
-                    mk_Dtg(mk_Date(1990, 1, 1), mk_Time(14, 0, 0, 0)),
-                    mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 0, 50, 0)),
-                    mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 30, 0, 0))
+                    mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(0u, 10u, 0u, 0u)),
+                    mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(14u, 0u, 0u, 0u)),
+                    mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 0u, 50u, 0u)),
+                    mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 30u, 0u, 0u))
                 )
             )
         )
         assertEquals(
-            mk_Dtg(mk_Date(9999, 1, 1), mk_Time(1, 0, 0, 0)),
+            mk_Dtg(mk_Date(9999u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
             DtgUtilities.maxDtg(
                 mk_Set1(
-                    mk_Dtg(mk_Date(0, 1, 1), mk_Time(1, 0, 0, 0)),
-                    mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 0, 0, 0)),
-                    mk_Dtg(mk_Date(300, 1, 1), mk_Time(1, 0, 0, 0)),
-                    mk_Dtg(mk_Date(9999, 1, 1), mk_Time(1, 0, 0, 0))
+                    mk_Dtg(mk_Date(0u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
+                    mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
+                    mk_Dtg(mk_Date(300u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
+                    mk_Dtg(mk_Date(9999u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u))
                 )
             )
 
@@ -1287,24 +1280,24 @@ class TestIso8601 {
     @Test
     fun minDateTest() {
         assertEquals(
-            mk_Date(1990, 1, 4),
+            mk_Date(1990u, 1u, 4u),
             DateUtilities.minDate(
                 mk_Set1(
-                    mk_Date(1990, 4, 1),
-                    mk_Date(1990, 1, 4),
-                    mk_Date(1990, 1, 31),
-                    mk_Date(1990, 12, 1)
+                    mk_Date(1990u, 4u, 1u),
+                    mk_Date(1990u, 1u, 4u),
+                    mk_Date(1990u, 1u, 31u),
+                    mk_Date(1990u, 12u, 1u)
                 )
             )
         )
         assertEquals(
-            mk_Date(0, 1, 1),
+            mk_Date(0u, 1u, 1u),
             DateUtilities.minDate(
                 mk_Set1(
-                    mk_Date(0, 1, 1),
-                    mk_Date(1990, 1, 1),
-                    mk_Date(300, 1, 1),
-                    mk_Date(9999, 1, 1)
+                    mk_Date(0u, 1u, 1u),
+                    mk_Date(1990u, 1u, 1u),
+                    mk_Date(300u, 1u, 1u),
+                    mk_Date(9999u, 1u, 1u)
                 )
             )
         )
@@ -1313,24 +1306,24 @@ class TestIso8601 {
     @Test
     fun maxDateTest() {
         assertEquals(
-            mk_Date(1990, 12, 1),
+            mk_Date(1990u, 12u, 1u),
             DateUtilities.maxDate(
                 mk_Set1(
-                    mk_Date(1990, 4, 1),
-                    mk_Date(1990, 1, 4),
-                    mk_Date(1990, 1, 31),
-                    mk_Date(1990, 12, 1)
+                    mk_Date(1990u, 4u, 1u),
+                    mk_Date(1990u, 1u, 4u),
+                    mk_Date(1990u, 1u, 31u),
+                    mk_Date(1990u, 12u, 1u)
                 )
             )
         )
         assertEquals(
-            mk_Date(3000, 1, 1),
+            mk_Date(3000u, 1u, 1u),
             DateUtilities.maxDate(
                 mk_Set1(
-                    mk_Date(0, 1, 1),
-                    mk_Date(1990, 1, 1),
-                    mk_Date(300, 1, 1),
-                    mk_Date(3000, 1, 1)
+                    mk_Date(0u, 1u, 1u),
+                    mk_Date(1990u, 1u, 1u),
+                    mk_Date(300u, 1u, 1u),
+                    mk_Date(3000u, 1u, 1u)
                 )
             )
         )
@@ -1339,24 +1332,24 @@ class TestIso8601 {
     @Test
     fun minTimeTest() {
         assertEquals(
-            mk_Time(0, 0, 12, 1),
+            mk_Time(0u, 0u, 12u, 1u),
             TimeUtilities.minTime(
                 mk_Set1(
-                    mk_Time(1, 0, 4, 1),
-                    mk_Time(0, 20, 1, 4),
-                    mk_Time(3, 0, 1, 31),
-                    mk_Time(0, 0, 12, 1)
+                    mk_Time(1u, 0u, 4u, 1u),
+                    mk_Time(0u, 20u, 1u, 4u),
+                    mk_Time(3u, 0u, 1u, 31u),
+                    mk_Time(0u, 0u, 12u, 1u)
                 )
             )
         )
         assertEquals(
-            mk_Time(0, 0, 0, 0),
+            mk_Time(0u, 0u, 0u, 0u),
             TimeUtilities.minTime(
                 mk_Set1(
-                    mk_Time(0, 0, 0, 0),
-                    mk_Time(23, 0, 1, 1),
-                    mk_Time(0, 59, 1, 1),
-                    mk_Time(0, 0, 59, 1)
+                    mk_Time(0u, 0u, 0u, 0u),
+                    mk_Time(23u, 0u, 1u, 1u),
+                    mk_Time(0u, 59u, 1u, 1u),
+                    mk_Time(0u, 0u, 59u, 1u)
                 )
             )
         )
@@ -1365,24 +1358,24 @@ class TestIso8601 {
     @Test
     fun maxTimeTest() {
         assertEquals(
-            mk_Time(3, 0, 1, 31),
+            mk_Time(3u, 0u, 1u, 31u),
             TimeUtilities.maxTime(
                 mk_Set1(
-                    mk_Time(1, 0, 4, 1),
-                    mk_Time(0, 20, 1, 4),
-                    mk_Time(3, 0, 1, 31),
-                    mk_Time(0, 0, 12, 1)
+                    mk_Time(1u, 0u, 4u, 1u),
+                    mk_Time(0u, 20u, 1u, 4u),
+                    mk_Time(3u, 0u, 1u, 31u),
+                    mk_Time(0u, 0u, 12u, 1u)
                 )
             )
         )
         assertEquals(
-            mk_Time(23, 0, 1, 1),
+            mk_Time(23u, 0u, 1u, 1u),
             TimeUtilities.maxTime(
                 mk_Set1(
-                    mk_Time(0, 0, 1, 1),
-                    mk_Time(23, 0, 1, 1),
-                    mk_Time(0, 59, 1, 1),
-                    mk_Time(0, 0, 59, 1)
+                    mk_Time(0u, 0u, 1u, 1u),
+                    mk_Time(23u, 0u, 1u, 1u),
+                    mk_Time(0u, 59u, 1u, 1u),
+                    mk_Time(0u, 0u, 59u, 1u)
                 )
             )
 
@@ -1392,14 +1385,14 @@ class TestIso8601 {
     @Test
     fun minDurationTest() {
         assertEquals(
-            Duration.fromMinutes(40), DurationUtiltites.minDuration(
-                mk_Set1(Duration.fromHours(3), Duration.fromMinutes(40), Duration.fromDays(2), Duration.fromHours(5))
+            Duration.fromMinutes(40u), DurationUtiltites.minDuration(
+                mk_Set1(Duration.fromHours(3u), Duration.fromMinutes(40u), Duration.fromDays(2u), Duration.fromHours(5u))
             )
         )
         assertEquals(
-            Duration.fromHours(0),
+            Duration.fromHours(0u),
             DurationUtiltites.minDuration(
-                mk_Set1(Duration.fromHours(0), Duration.fromMinutes(14), Duration.fromDays(2), Duration.fromHours(23))
+                mk_Set1(Duration.fromHours(0u), Duration.fromMinutes(14u), Duration.fromDays(2u), Duration.fromHours(23u))
             )
         )
     }
@@ -1407,19 +1400,19 @@ class TestIso8601 {
     @Test
     fun maxDurationTest() {
         assertEquals(
-            Duration.fromDays(2),
+            Duration.fromDays(2u),
             DurationUtiltites.maxDuration(
-                mk_Set1(Duration.fromHours(3), Duration.fromMinutes(40), Duration.fromDays(2), Duration.fromHours(5))
+                mk_Set1(Duration.fromHours(3u), Duration.fromMinutes(40u), Duration.fromDays(2u), Duration.fromHours(5u))
             )
         )
         assertEquals(
-            Duration.fromDays(2000000000),
+            Duration.fromDays(2000000000u),
             DurationUtiltites.maxDuration(
                 mk_Set1(
-                    Duration.fromHours(0),
-                    Duration.fromMinutes(14),
-                    Duration.fromDays(2000000000),
-                    Duration.fromHours(23)
+                    Duration.fromHours(0u),
+                    Duration.fromMinutes(14u),
+                    Duration.fromDays(2000000000u),
+                    Duration.fromHours(23u)
                 )
             )
         )
@@ -1428,14 +1421,14 @@ class TestIso8601 {
     @Test
     fun sumDurationTest() {
         assertEquals(
-            mk_Duration(204000000),
+            mk_Duration(204000000u),
             DurationUtiltites.sumDuration(
-                mk_Seq(Duration.fromHours(3), Duration.fromMinutes(40), Duration.fromDays(2), Duration.fromHours(5))
+                mk_Seq(Duration.fromHours(3u), Duration.fromMinutes(40u), Duration.fromDays(2u), Duration.fromHours(5u))
             )
         )
         assertEquals(
-            mk_Duration(0),
-            DurationUtiltites.sumDuration(mk_Seq(Duration.fromHours(0), Duration.fromMinutes(0), Duration.fromDays(0)))
+            mk_Duration(0u),
+            DurationUtiltites.sumDuration(mk_Seq(Duration.fromHours(0u), Duration.fromMinutes(0u), Duration.fromDays(0u)))
         )
     }
 
@@ -1443,98 +1436,98 @@ class TestIso8601 {
     fun instantTest() {
         assertEquals(
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 0, 0, 0)),
-                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 0, 0, 1))
+                mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)),
+                mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 0u, 0u, 1u))
             ),
-            mk_Dtg(mk_Date(1990, 1, 1), mk_Time(1, 0, 0, 0)).properties.instant
+            mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(1u, 0u, 0u, 0u)).properties.instant
         )
         assertEquals(
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 1, 1), mk_Time(23, 59, 59, 999)),
-                mk_Date(1990, 1, 2).properties.dtgAtStartOfDay
+                mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(23u, 59u, 59u, 999u)),
+                mk_Date(1990u, 1u, 2u).properties.dtgAtStartOfDay
             ),
-            mk_Dtg(mk_Date(1990, 1, 1), mk_Time(23, 59, 59, 999)).properties.instant
+            mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(23u, 59u, 59u, 999u)).properties.instant
         )
     }
 
     @Test
     fun nextDateWithSameDayAsGivenDateTest() {
         assertEquals(
-            mk_Date(1990, 2, 1),
-            DateUtilities.nextDateWithSameDayAsGivenDate(mk_Date(1990, 1, 1))
+            mk_Date(1990u, 2u, 1u),
+            DateUtilities.nextDateWithSameDayAsGivenDate(mk_Date(1990u, 1u, 1u))
         )
         assertEquals(
-            mk_Date(1990, 3, 31),
-            DateUtilities.nextDateWithSameDayAsGivenDate(mk_Date(1990, 1, 31))
+            mk_Date(1990u, 3u, 31u),
+            DateUtilities.nextDateWithSameDayAsGivenDate(mk_Date(1990u, 1u, 31u))
         )
     }
 
     @Test
     fun nextDateWithSameDayAsGivenDayTest() {
         assertEquals(
-            mk_Date(0, 1, 4),
-            DateUtilities.nextDateWithSameDayAsGivenDay(mk_Date(0, 1, 1), 4)
+            mk_Date(0u, 1u, 4u),
+            DateUtilities.nextDateWithSameDayAsGivenDay(mk_Date(0u, 1u, 1u), 4u)
         )
         assertEquals(
-            mk_Date(1990, 3, 31),
-            DateUtilities.nextDateWithSameDayAsGivenDay(mk_Date(1990, 1, 31), 31)
+            mk_Date(1990u, 3u, 31u),
+            DateUtilities.nextDateWithSameDayAsGivenDay(mk_Date(1990u, 1u, 31u), 31u)
         )
         assertEquals(
-            mk_Date(1, 1, 14),
-            DateUtilities.nextDateWithSameDayAsGivenDay(mk_Date(0, 12, 15), 14)
+            mk_Date(1u, 1u, 14u),
+            DateUtilities.nextDateWithSameDayAsGivenDay(mk_Date(0u, 12u, 15u), 14u)
         )
     }
 
     @Test
     fun previousDateWithSameDayAsGivenDateTest() {
         assertEquals(
-            mk_Date(1990, 1, 3),
-            DateUtilities.previousDateWithSameDayAsGivenDate(mk_Date(1990, 2, 3))
+            mk_Date(1990u, 1u, 3u),
+            DateUtilities.previousDateWithSameDayAsGivenDate(mk_Date(1990u, 2u, 3u))
         )
         assertEquals(
-            mk_Date(1989, 12, 3),
-            DateUtilities.previousDateWithSameDayAsGivenDate(mk_Date(1990, 1, 3))
+            mk_Date(1989u, 12u, 3u),
+            DateUtilities.previousDateWithSameDayAsGivenDate(mk_Date(1990u, 1u, 3u))
         )
     }
 
     @Test
     fun previousDateWithSameDayAsGivenDayTest() {
         assertEquals(
-            mk_Date(1990, 1, 12),
-            DateUtilities.previousDateWithSameDayAsGivenDay(mk_Date(1990, 1, 31), 12)
+            mk_Date(1990u, 1u, 12u),
+            DateUtilities.previousDateWithSameDayAsGivenDay(mk_Date(1990u, 1u, 31u), 12u)
         )
         assertEquals(
-            mk_Date(1989, 12, 12),
-            DateUtilities.previousDateWithSameDayAsGivenDay(mk_Date(1990, 1, 4), 12)
+            mk_Date(1989u, 12u, 12u),
+            DateUtilities.previousDateWithSameDayAsGivenDay(mk_Date(1990u, 1u, 4u), 12u)
         )
     }
 
     @Test
     fun normaliseDtgInZoneTest() {
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 1), mk_Time(3, 0, 0, 0)),
+            mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(3u, 0u, 0u, 0u)),
             mk_DtgInZone(
-                mk_Date(1990, 1, 1),
+                mk_Date(1990u, 1u, 1u),
                 mk_TimeInZone(
-                    mk_Time(5, 0, 0, 0), mk_Offset(Duration.fromHours(2), PlusOrMinus.Plus)
+                    mk_Time(5u, 0u, 0u, 0u), mk_Offset(Duration.fromHours(2u), PlusOrMinus.Plus)
                 )
             ).properties.normalised
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 1), mk_Time(7, 0, 0, 0)),
+            mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(7u, 0u, 0u, 0u)),
             mk_DtgInZone(
-                mk_Date(1990, 1, 1),
+                mk_Date(1990u, 1u, 1u),
                 mk_TimeInZone(
-                    mk_Time(5, 0, 0, 0), mk_Offset(Duration.fromHours(2), PlusOrMinus.Minus)
+                    mk_Time(5u, 0u, 0u, 0u), mk_Offset(Duration.fromHours(2u), PlusOrMinus.Minus)
                 )
             ).properties.normalised
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 1), mk_Time(5, 0, 0, 0)),
+            mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(5u, 0u, 0u, 0u)),
             mk_DtgInZone(
-                mk_Date(1990, 1, 1),
+                mk_Date(1990u, 1u, 1u),
                 mk_TimeInZone(
-                    mk_Time(5, 0, 0, 0), mk_Offset(Duration.fromHours(0), PlusOrMinus.None)
+                    mk_Time(5u, 0u, 0u, 0u), mk_Offset(Duration.fromHours(0u), PlusOrMinus.None)
                 )
             ).properties.normalised
         )
@@ -1543,33 +1536,33 @@ class TestIso8601 {
     @Test
     fun normaliseTimeInZoneTest() {
         assertEquals(
-            mk_NormalisedTime(mk_Time(7, 23, 12, 0), PlusOrMinus.None),
+            mk_NormalisedTime(mk_Time(7u, 23u, 12u, 0u), PlusOrMinus.None),
             mk_TimeInZone(
-                mk_Time(5, 23, 12, 0), mk_Offset(Duration.fromHours(2), PlusOrMinus.Minus)
+                mk_Time(5u, 23u, 12u, 0u), mk_Offset(Duration.fromHours(2u), PlusOrMinus.Minus)
             ).properties.normalisedTime
         )
         assertEquals(
-            mk_NormalisedTime(mk_Time(1, 23, 12, 0), PlusOrMinus.Minus),
+            mk_NormalisedTime(mk_Time(1u, 23u, 12u, 0u), PlusOrMinus.Minus),
             mk_TimeInZone(
-                mk_Time(23, 23, 12, 0), mk_Offset(Duration.fromHours(2), PlusOrMinus.Minus)
+                mk_Time(23u, 23u, 12u, 0u), mk_Offset(Duration.fromHours(2u), PlusOrMinus.Minus)
             ).properties.normalisedTime
         )
         assertEquals(
-            mk_NormalisedTime(mk_Time(23, 23, 12, 0), PlusOrMinus.None),
+            mk_NormalisedTime(mk_Time(23u, 23u, 12u, 0u), PlusOrMinus.None),
             mk_TimeInZone(
-                mk_Time(23, 23, 12, 0), mk_Offset(Duration.fromHours(0), PlusOrMinus.None)
+                mk_Time(23u, 23u, 12u, 0u), mk_Offset(Duration.fromHours(0u), PlusOrMinus.None)
             ).properties.normalisedTime
         )
         assertEquals(
-            mk_NormalisedTime(mk_Time(3, 23, 12, 0), PlusOrMinus.None),
+            mk_NormalisedTime(mk_Time(3u, 23u, 12u, 0u), PlusOrMinus.None),
             mk_TimeInZone(
-                mk_Time(5, 23, 12, 0), mk_Offset(Duration.fromHours(2), PlusOrMinus.Plus)
+                mk_Time(5u, 23u, 12u, 0u), mk_Offset(Duration.fromHours(2u), PlusOrMinus.Plus)
             ).properties.normalisedTime
         )
         assertEquals(
-            mk_NormalisedTime(mk_Time(23, 23, 12, 0), PlusOrMinus.Plus),
+            mk_NormalisedTime(mk_Time(23u, 23u, 12u, 0u), PlusOrMinus.Plus),
             mk_TimeInZone(
-                mk_Time(1, 23, 12, 0), mk_Offset(Duration.fromHours(2), PlusOrMinus.Plus)
+                mk_Time(1u, 23u, 12u, 0u), mk_Offset(Duration.fromHours(2u), PlusOrMinus.Plus)
             ).properties.normalisedTime
         )
 
@@ -1579,19 +1572,19 @@ class TestIso8601 {
     fun formatDtgTest() {
         assertEquals(
             "1990-01-01T03:00:00",
-            mk_Dtg(mk_Date(1990, 1, 1), mk_Time(3, 0, 0, 0)).properties.formatted
+            mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(3u, 0u, 0u, 0u)).properties.formatted
         )
         assertEquals(
             "1990-10-11T03:00:01",
-            mk_Dtg(mk_Date(1990, 10, 11), mk_Time(3, 0, 1, 0)).properties.formatted
+            mk_Dtg(mk_Date(1990u, 10u, 11u), mk_Time(3u, 0u, 1u, 0u)).properties.formatted
         )
         assertEquals(
             "0000-01-01T03:00:00",
-            mk_Dtg(mk_Date(0, 1, 1), mk_Time(3, 0, 0, 0)).properties.formatted
+            mk_Dtg(mk_Date(0u, 1u, 1u), mk_Time(3u, 0u, 0u, 0u)).properties.formatted
         )
         assertEquals(
             "9999-01-01T03:00:00.010",
-            mk_Dtg(mk_Date(9999, 1, 1), mk_Time(3, 0, 0, 10)).properties.formatted
+            mk_Dtg(mk_Date(9999u, 1u, 1u), mk_Time(3u, 0u, 0u, 10u)).properties.formatted
         )
     }
 
@@ -1600,27 +1593,27 @@ class TestIso8601 {
         assertEquals(
             "1990-01-01T03:00:00+02:00",
             mk_DtgInZone(
-                mk_Date(1990, 1, 1),
+                mk_Date(1990u, 1u, 1u),
                 mk_TimeInZone(
-                    mk_Time(3, 0, 0, 0), mk_Offset(Duration.fromHours(2), PlusOrMinus.Plus)
+                    mk_Time(3u, 0u, 0u, 0u), mk_Offset(Duration.fromHours(2u), PlusOrMinus.Plus)
                 )
             ).properties.formatted
         )
         assertEquals(
             "1990-01-01T03:00:00-02:00",
             mk_DtgInZone(
-                mk_Date(1990, 1, 1),
+                mk_Date(1990u, 1u, 1u),
                 mk_TimeInZone(
-                    mk_Time(3, 0, 0, 0), mk_Offset(Duration.fromHours(2), PlusOrMinus.Minus)
+                    mk_Time(3u, 0u, 0u, 0u), mk_Offset(Duration.fromHours(2u), PlusOrMinus.Minus)
                 )
             ).properties.formatted
         )
         assertEquals(
             "1990-01-01T03:00:00Z",
             mk_DtgInZone(
-                mk_Date(1990, 1, 1),
+                mk_Date(1990u, 1u, 1u),
                 mk_TimeInZone(
-                    mk_Time(3, 0, 0, 0), mk_Offset(Duration.fromHours(0), PlusOrMinus.None)
+                    mk_Time(3u, 0u, 0u, 0u), mk_Offset(Duration.fromHours(0u), PlusOrMinus.None)
                 )
             ).properties.formatted
         )
@@ -1628,15 +1621,15 @@ class TestIso8601 {
 
     @Test
     fun formatDateTest() {
-        assertEquals("1990-01-01", mk_Date(1990, 1, 1).properties.formatted)
-        assertEquals("0000-01-01", mk_Date(0, 1, 1).properties.formatted)
+        assertEquals("1990-01-01", mk_Date(1990u, 1u, 1u).properties.formatted)
+        assertEquals("0000-01-01", mk_Date(0u, 1u, 1u).properties.formatted)
     }
 
     @Test
     fun formatTimeTest() {
-        assertEquals("10:07:14", mk_Time(10, 7, 14, 0).properties.formatted)
-        assertEquals("00:00:00", mk_Time(0, 0, 0, 0).properties.formatted)
-        assertEquals("00:00:00.050", mk_Time(0, 0, 0, 50).properties.formatted)
+        assertEquals("10:07:14", mk_Time(10u, 7u, 14u, 0u).properties.formatted)
+        assertEquals("00:00:00", mk_Time(0u, 0u, 0u, 0u).properties.formatted)
+        assertEquals("00:00:00.050", mk_Time(0u, 0u, 0u, 50u).properties.formatted)
     }
 
     @Test
@@ -1644,19 +1637,19 @@ class TestIso8601 {
         assertEquals(
             "03:00:00+02:00",
             mk_TimeInZone(
-                mk_Time(3, 0, 0, 0), mk_Offset(Duration.fromHours(2), PlusOrMinus.Plus)
+                mk_Time(3u, 0u, 0u, 0u), mk_Offset(Duration.fromHours(2u), PlusOrMinus.Plus)
             ).properties.formatted
         )
         assertEquals(
             "03:00:00-02:00",
             mk_TimeInZone(
-                mk_Time(3, 0, 0, 0), mk_Offset(Duration.fromHours(2), PlusOrMinus.Minus)
+                mk_Time(3u, 0u, 0u, 0u), mk_Offset(Duration.fromHours(2u), PlusOrMinus.Minus)
             ).properties.formatted
         )
         assertEquals(
             "03:00:00Z",
             mk_TimeInZone(
-                mk_Time(3, 0, 0, 0), mk_Offset(Duration.fromHours(0), PlusOrMinus.None)
+                mk_Time(3u, 0u, 0u, 0u), mk_Offset(Duration.fromHours(0u), PlusOrMinus.None)
             ).properties.formatted
         )
     }
@@ -1665,11 +1658,11 @@ class TestIso8601 {
     fun formatOffsetTest() {
         assertEquals(
             "+02:00",
-            mk_Offset(Duration.fromHours(2), PlusOrMinus.Plus).properties.formatted
+            mk_Offset(Duration.fromHours(2u), PlusOrMinus.Plus).properties.formatted
         )
         assertEquals(
             "-03:00",
-            mk_Offset(Duration.fromHours(3), PlusOrMinus.Minus).properties.formatted
+            mk_Offset(Duration.fromHours(3u), PlusOrMinus.Minus).properties.formatted
         )
         assertEquals("00:00", mk_Offset(NoDuration, PlusOrMinus.None).properties.formatted)
     }
@@ -1679,15 +1672,15 @@ class TestIso8601 {
         assertEquals(
             "1990-01-01T00:00:00/1990-01-06T00:00:00",
             mk_Interval(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 6).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 6u).properties.dtgAtStartOfDay
             ).properties.formatted
         )
         assertEquals(
             "1990-10-10T00:00:00/1991-01-06T05:00:00",
             mk_Interval(
-                mk_Dtg(mk_Date(1990, 10, 10), mk_Time(0, 0, 0, 0)),
-                mk_Dtg(mk_Date(1991, 1, 6), mk_Time(5, 0, 0, 0))
+                mk_Dtg(mk_Date(1990u, 10u, 10u), mk_Time(0u, 0u, 0u, 0u)),
+                mk_Dtg(mk_Date(1991u, 1u, 6u), mk_Time(5u, 0u, 0u, 0u))
             ).properties.formatted
         )
     }
@@ -1696,31 +1689,31 @@ class TestIso8601 {
     fun formatDurationTest() {
         assertEquals(
             "P2DT6H",
-            Duration.fromHours(6).functions.addDuration(Duration.fromDays(2)).properties.formatted
+            Duration.fromHours(6u).functions.addDuration(Duration.fromDays(2u)).properties.formatted
         )
-        assertEquals("PT0S", Duration.fromHours(0).properties.formatted)
+        assertEquals("PT0S", Duration.fromHours(0u).properties.formatted)
         assertEquals(
             "PT1.001S",
-            Duration.fromSeconds(1).functions.addDuration(Duration.fromMillis(1)).properties.formatted
+            Duration.fromSeconds(1u).functions.addDuration(Duration.fromMillis(1u)).properties.formatted
         )
     }
 
     @Test
     fun dtgAddMonthsTest() {
         assertEquals(
-            mk_Date(1990, 3, 31).properties.dtgAtStartOfDay,
-            mk_Date(1990, 1, 31).properties.dtgAtStartOfDay.functions.addMonths(2)
+            mk_Date(1990u, 3u, 31u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 1u, 31u).properties.dtgAtStartOfDay.functions.addMonths(2)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 3, 28), mk_Time(3, 0, 0, 0)),
+            mk_Dtg(mk_Date(1990u, 3u, 28u), mk_Time(3u, 0u, 0u, 0u)),
             mk_Dtg(
-                mk_Date(1990, 1, 31),
-                mk_Time(3, 0, 0, 0)
+                mk_Date(1990u, 1u, 31u),
+                mk_Time(3u, 0u, 0u, 0u)
             ).functions.addMonths(1).functions.addMonths(1)
         )
         assertEquals(
-            mk_Date(1991, 1, 30).properties.dtgAtStartOfDay,
-            mk_Date(1990, 11, 30).properties.dtgAtStartOfDay.functions.addMonths(2)
+            mk_Date(1991u, 1u, 30u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 11u, 30u).properties.dtgAtStartOfDay.functions.addMonths(2)
         )
     }
 
@@ -1728,36 +1721,36 @@ class TestIso8601 {
     fun dtgSubtractMonthsTest() {
         assertFailsWith<PreconditionFailure> { FirstDtg.functions.subtractMonths(1) }
         assertEquals(
-            mk_Date(1990, 2, 2).properties.dtgAtStartOfDay,
-            mk_Date(1990, 4, 2).properties.dtgAtStartOfDay.functions.subtractMonths(2)
+            mk_Date(1990u, 2u, 2u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 4u, 2u).properties.dtgAtStartOfDay.functions.subtractMonths(2)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 28), mk_Time(3, 0, 0, 0)),
+            mk_Dtg(mk_Date(1990u, 1u, 28u), mk_Time(3u, 0u, 0u, 0u)),
             (mk_Dtg(
-                mk_Date(1990, 3, 31),
-                mk_Time(3, 0, 0, 0)
+                mk_Date(1990u, 3u, 31u),
+                mk_Time(3u, 0u, 0u, 0u)
             )).functions.subtractMonths(1).functions.subtractMonths(1)
         )
         assertEquals(
-            mk_Date(1990, 11, 2).properties.dtgAtStartOfDay,
-            mk_Date(1991, 1, 2).properties.dtgAtStartOfDay.functions.subtractMonths(2)
+            mk_Date(1990u, 11u, 2u).properties.dtgAtStartOfDay,
+            mk_Date(1991u, 1u, 2u).properties.dtgAtStartOfDay.functions.subtractMonths(2)
         )
     }
 
     @Test
     fun dateAddMonthsTest() {
         assertEquals(
-            mk_Date(1990, 1, 31), mk_Date(1990, 1, 31).functions.addMonths(0)
+            mk_Date(1990u, 1u, 31u), mk_Date(1990u, 1u, 31u).functions.addMonths(0)
         )
         assertEquals(
-            mk_Date(1990, 3, 31), mk_Date(1990, 1, 31).functions.addMonths(2)
+            mk_Date(1990u, 3u, 31u), mk_Date(1990u, 1u, 31u).functions.addMonths(2)
         )
         assertEquals(
-            mk_Date(1990, 3, 28),
-            mk_Date(1990, 1, 31).functions.addMonths(1).functions.addMonths(1)
+            mk_Date(1990u, 3u, 28u),
+            mk_Date(1990u, 1u, 31u).functions.addMonths(1).functions.addMonths(1)
         )
         assertEquals(
-            mk_Date(1991, 1, 30), mk_Date(1990, 11, 30).functions.addMonths(2)
+            mk_Date(1991u, 1u, 30u), mk_Date(1990u, 11u, 30u).functions.addMonths(2)
         )
     }
 
@@ -1765,138 +1758,135 @@ class TestIso8601 {
     fun dateSubtractMonthsTest() {
         assertFailsWith<PreconditionFailure> { FirstDate.functions.subtractMonths(1) }
         assertEquals(
-            mk_Date(1990, 4, 2), mk_Date(1990, 4, 2).functions.subtractMonths(0)
+            mk_Date(1990u, 4u, 2u), mk_Date(1990u, 4u, 2u).functions.subtractMonths(0)
         )
         assertEquals(
-            mk_Date(1990, 2, 2), mk_Date(1990, 4, 2).functions.subtractMonths(2)
+            mk_Date(1990u, 2u, 2u), mk_Date(1990u, 4u, 2u).functions.subtractMonths(2)
         )
         assertEquals(
-            mk_Date(1990, 1, 28),
-            mk_Date(1990, 3, 31).functions.subtractMonths(1).functions.subtractMonths(1)
+            mk_Date(1990u, 1u, 28u),
+            mk_Date(1990u, 3u, 31u).functions.subtractMonths(1).functions.subtractMonths(1)
         )
         assertEquals(
-            mk_Date(1990, 11, 2), mk_Date(1991, 1, 2).functions.subtractMonths(2)
+            mk_Date(1990u, 11u, 2u), mk_Date(1991u, 1u, 2u).functions.subtractMonths(2)
         )
     }
 
     @Test
     fun dtgAddDays() {
         assertEquals(
-            mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-            mk_Date(1990, 1, 1).properties.dtgAtStartOfDay.functions.addDays(0)
+            mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay.functions.addDays(0u)
         )
         assertEquals(
-            mk_Date(1990, 1, 10).properties.dtgAtStartOfDay,
-            mk_Date(1990, 1, 1).properties.dtgAtStartOfDay.functions.addDays(9)
+            mk_Date(1990u, 1u, 10u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay.functions.addDays(9u)
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 2, 1), LastTime),
-            mk_Dtg(mk_Date(1990, 1, 1), LastTime).functions.addDays(31)
+            mk_Dtg(mk_Date(1990u, 2u, 1u), LastTime),
+            mk_Dtg(mk_Date(1990u, 1u, 1u), LastTime).functions.addDays(31u)
         )
         assertEquals(
-            mk_Date(1990, 2, 2).properties.dtgAtStartOfDay,
-            mk_Date(1990, 1, 1).properties.dtgAtStartOfDay.functions.addDays(32)
+            mk_Date(1990u, 2u, 2u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay.functions.addDays(32u)
         )
         assertEquals(
-            mk_Date(1992, 3, 1).properties.dtgAtStartOfDay,
-            mk_Date(1992, 2, 1).properties.dtgAtStartOfDay.functions.addDays(29)
+            mk_Date(1992u, 3u, 1u).properties.dtgAtStartOfDay,
+            mk_Date(1992u, 2u, 1u).properties.dtgAtStartOfDay.functions.addDays(29u)
         )
         assertEquals(
-            mk_Date(1991, 1, 2).properties.dtgAtStartOfDay,
-            mk_Date(1990, 1, 1).properties.dtgAtStartOfDay.functions.addDays(366)
+            mk_Date(1991u, 1u, 2u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay.functions.addDays(366u)
         )
     }
 
     @Test
     fun dtgSubtractDays() {
-        assertFailsWith<PreconditionFailure> { FirstDtg.functions.subtractDays(5) }
+        assertFailsWith<PreconditionFailure> { FirstDtg.functions.subtractDays(5u) }
         assertEquals(
-            mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-            mk_Date(1990, 1, 1).properties.dtgAtStartOfDay.functions.subtractDays(0)
+            mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay.functions.subtractDays(0u)
         )
         assertEquals(
-            mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-            mk_Date(1990, 1, 10).properties.dtgAtStartOfDay.functions.subtractDays(9)
+            mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 1u, 10u).properties.dtgAtStartOfDay.functions.subtractDays(9u)
         )
         assertEquals(
-            mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-            mk_Date(1990, 2, 1).properties.dtgAtStartOfDay.functions.subtractDays(31)
+            mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 2u, 1u).properties.dtgAtStartOfDay.functions.subtractDays(31u)
         )
         assertEquals(
-            mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-            mk_Date(1990, 2, 2).properties.dtgAtStartOfDay.functions.subtractDays(32)
+            mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+            mk_Date(1990u, 2u, 2u).properties.dtgAtStartOfDay.functions.subtractDays(32u)
         )
         assertEquals(
-            mk_Date(1992, 2, 1).properties.dtgAtStartOfDay,
-            mk_Date(1992, 3, 1).properties.dtgAtStartOfDay.functions.subtractDays(29)
+            mk_Date(1992u, 2u, 1u).properties.dtgAtStartOfDay,
+            mk_Date(1992u, 3u, 1u).properties.dtgAtStartOfDay.functions.subtractDays(29u)
         )
         assertEquals(
-            mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-            mk_Date(1991, 1, 2).properties.dtgAtStartOfDay.functions.subtractDays(366)
+            mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+            mk_Date(1991u, 1u, 2u).properties.dtgAtStartOfDay.functions.subtractDays(366u)
         )
     }
 
     @Test
     fun dateAddDays() {
-        assertEquals(mk_Date(1990, 1, 1), mk_Date(1990, 1, 1).functions.addDays(0))
-        assertEquals(mk_Date(1990, 1, 10), mk_Date(1990, 1, 1).functions.addDays(9))
-        assertEquals(mk_Date(1990, 2, 1), mk_Date(1990, 1, 1).functions.addDays(31))
-        assertEquals(mk_Date(1990, 2, 2), mk_Date(1990, 1, 1).functions.addDays(32))
-        assertEquals(mk_Date(1992, 3, 1), mk_Date(1992, 2, 1).functions.addDays(29))
-        assertEquals(mk_Date(1991, 1, 2), mk_Date(1990, 1, 1).functions.addDays(366))
+        assertEquals(mk_Date(1990u, 1u, 1u), mk_Date(1990u, 1u, 1u).functions.addDays(0u))
+        assertEquals(mk_Date(1990u, 1u, 10u), mk_Date(1990u, 1u, 1u).functions.addDays(9u))
+        assertEquals(mk_Date(1990u, 2u, 1u), mk_Date(1990u, 1u, 1u).functions.addDays(31u))
+        assertEquals(mk_Date(1990u, 2u, 2u), mk_Date(1990u, 1u, 1u).functions.addDays(32u))
+        assertEquals(mk_Date(1992u, 3u, 1u), mk_Date(1992u, 2u, 1u).functions.addDays(29u))
+        assertEquals(mk_Date(1991u, 1u, 2u), mk_Date(1990u, 1u, 1u).functions.addDays(366u))
     }
 
     @Test
     fun dateSubtractDays() {
-        assertFailsWith<PreconditionFailure> { FirstDate.functions.subtractDays(5) }
+        assertFailsWith<PreconditionFailure> { FirstDate.functions.subtractDays(5u) }
         assertEquals(
-            mk_Date(1990, 1, 1),
-            mk_Date(1990, 1, 1).functions.subtractDays(0)
+            mk_Date(1990u, 1u, 1u),
+            mk_Date(1990u, 1u, 1u).functions.subtractDays(0u)
         )
         assertEquals(
-            mk_Date(1990, 1, 1),
-            mk_Date(1990, 1, 10).functions.subtractDays(9)
+            mk_Date(1990u, 1u, 1u),
+            mk_Date(1990u, 1u, 10u).functions.subtractDays(9u)
         )
         assertEquals(
-            mk_Date(1990, 1, 1),
-            mk_Date(1990, 2, 1).functions.subtractDays(31)
+            mk_Date(1990u, 1u, 1u),
+            mk_Date(1990u, 2u, 1u).functions.subtractDays(31u)
         )
         assertEquals(
-            mk_Date(1990, 1, 1),
-            mk_Date(1990, 2, 2).functions.subtractDays(32)
+            mk_Date(1990u, 1u, 1u),
+            mk_Date(1990u, 2u, 2u).functions.subtractDays(32u)
         )
         assertEquals(
-            mk_Date(1992, 2, 1),
-            mk_Date(1992, 3, 1).functions.subtractDays(29)
+            mk_Date(1992u, 2u, 1u),
+            mk_Date(1992u, 3u, 1u).functions.subtractDays(29u)
         )
         assertEquals(
-            mk_Date(1990, 1, 1),
-            mk_Date(1991, 1, 2).functions.subtractDays(366)
+            mk_Date(1990u, 1u, 1u),
+            mk_Date(1991u, 1u, 2u).functions.subtractDays(366u)
         )
     }
 
     @Test
     fun monthsBetweenDtgsTest() {
         assertFailsWith<PreconditionFailure> { DtgUtilities.monthsBetweenDtgs(LastDtg, FirstDtg) }
-        assertEquals(
-            0,
+        assertEquals(0u,
             DtgUtilities.monthsBetweenDtgs(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay
             )
         )
-        assertEquals(
-            0,
+        assertEquals(0u,
             DtgUtilities.monthsBetweenDtgs(
-                mk_Date(1990, 1, 12).properties.dtgAtStartOfDay,
-                mk_Date(1990, 2, 1).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 12u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 2u, 1u).properties.dtgAtStartOfDay
             )
         )
-        assertEquals(
-            6,
+        assertEquals(6u,
             DtgUtilities.monthsBetweenDtgs(
-                mk_Date(1990, 12, 12).properties.dtgAtStartOfDay,
-                mk_Date(1991, 6, 13).properties.dtgAtStartOfDay
+                mk_Date(1990u, 12u, 12u).properties.dtgAtStartOfDay,
+                mk_Date(1991u, 6u, 13u).properties.dtgAtStartOfDay
             )
         )
     }
@@ -1904,25 +1894,22 @@ class TestIso8601 {
     @Test
     fun yearsBetweenDtgsTest() {
         assertFailsWith<PreconditionFailure> { DtgUtilities.yearsBetweenDtgs(LastDtg, FirstDtg) }
-        assertEquals(
-            0,
+        assertEquals(0u,
             DtgUtilities.yearsBetweenDtgs(
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay,
-                mk_Date(1990, 1, 1).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay
             )
         )
-        assertEquals(
-            0,
+        assertEquals(0u,
             DtgUtilities.yearsBetweenDtgs(
-                mk_Date(1990, 1, 12).properties.dtgAtStartOfDay,
-                mk_Date(1990, 12, 1).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 12u).properties.dtgAtStartOfDay,
+                mk_Date(1990u, 12u, 1u).properties.dtgAtStartOfDay
             )
         )
-        assertEquals(
-            2,
+        assertEquals(2u,
             DtgUtilities.yearsBetweenDtgs(
-                mk_Date(1990, 1, 12).properties.dtgAtStartOfDay,
-                mk_Date(1992, 3, 13).properties.dtgAtStartOfDay
+                mk_Date(1990u, 1u, 12u).properties.dtgAtStartOfDay,
+                mk_Date(1992u, 3u, 13u).properties.dtgAtStartOfDay
             )
         )
     }
@@ -1943,7 +1930,7 @@ class TestIso8601 {
 
     @Test
     fun stringToDateTest() {
-        assertEquals(mk_Date(2018, 4, 1), DateFormattingUtilities.stringToDate("2018-04-01"))
+        assertEquals(mk_Date(2018u, 4u, 1u), DateFormattingUtilities.stringToDate("2018-04-01"))
         assertFailsWith<PreconditionFailure> { DateFormattingUtilities.stringToDate("2018-04-41") }
     }
 
@@ -1971,11 +1958,11 @@ class TestIso8601 {
     @Test
     fun stringToDtgTest() {
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 1), mk_Time(12, 23, 0, 0)),
+            mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(12u, 23u, 0u, 0u)),
             DateFormattingUtilities.stringToDtg("1990-01-01T12:23:00")
         )
         assertEquals(
-            mk_Dtg(mk_Date(1990, 1, 1), mk_Time(12, 23, 0, 1)),
+            mk_Dtg(mk_Date(1990u, 1u, 1u), mk_Time(12u, 23u, 0u, 1u)),
             DateFormattingUtilities.stringToDtg("1990-01-01T12:23:00.001")
         )
         assertFailsWith<PreconditionFailure> { DateFormattingUtilities.stringToDtg("1990-01-01T25:24:00.001") }

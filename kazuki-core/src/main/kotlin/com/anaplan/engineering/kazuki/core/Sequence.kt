@@ -3,10 +3,10 @@ package com.anaplan.engineering.kazuki.core
 import com.anaplan.engineering.kazuki.core.internal.__KSequence
 import com.anaplan.engineering.kazuki.core.internal.__KSequence1
 import com.anaplan.engineering.kazuki.core.internal.transformSequence
-import kotlin.collections.ArrayList
+import kotlin.collections.count as kotlinCount
 
 // TODO should sequence inherit from relation rather than list?
-interface Sequence<out T> : List<T> {
+interface Sequence<out T> : Collection<T> {
 
     val len: nat
 
@@ -16,9 +16,11 @@ interface Sequence<out T> : List<T> {
 
     val tuples: Sequence<Tuple2<nat1, @UnsafeVariance T>>
 
-    override fun indexOf(element: @UnsafeVariance T): nat1
+    operator fun get(index: nat): T
 
-    override fun lastIndexOf(element: @UnsafeVariance T): nat1
+    fun indexOf(element: @UnsafeVariance T): nat1
+
+    fun lastIndexOf(element: @UnsafeVariance T): nat1
 
 }
 
@@ -35,7 +37,7 @@ interface Sequence1<out T> : Sequence<T> {
     override operator fun get(index: nat1): T
 
     @Invariant
-    fun atLeastOneElement() = len > 0
+    fun atLeastOneElement() = len > 0u
 
 }
 
@@ -46,7 +48,7 @@ fun <T> mk_Seq(vararg elems: T): Sequence<T> = __KSequence(elems.toList())
 fun <T> as_Seq(elems: Iterable<T>): Sequence<T> = __KSequence(toElementList(elems))
 
 private fun <T> toElementList(elems: Iterable<T>) =
-    ArrayList<T>(elems.count()).apply { addAll(elems) }
+    ArrayList<T>(elems.kotlinCount()).apply { addAll(elems) }
 
 fun <T> as_Seq(elems: Array<T>): Sequence<T> = __KSequence(elems.toList())
 
@@ -74,34 +76,34 @@ fun <T> as_Seq1(elems: Array<T>): Sequence1<T> =
     }
 
 // TODO -- should we use different names?
-fun <T, S : Sequence<T>> S.drop(n: Int) =
+fun <T, S : Sequence<T>> S.drop(n: nat) =
     if (this is Sequence1<*> && n >= len) {
         throw PreconditionFailure("Cannot drop all elements from seq1")
     } else {
-        transformSequence { it.elements.drop(n) }
+        transformSequence { it.elements.drop(n.safeToInt()) }
     }
 
-fun <T, S : Sequence<T>> S.take(n: Int) =
-    if (this is Sequence1<*> && n < 1) {
+fun <T, S : Sequence<T>> S.take(n: nat) =
+    if (this is Sequence1<*> && n < 1u) {
         throw PreconditionFailure("Cannot take 0 or fewer elements from seq1")
     } else {
-        transformSequence { it.elements.take(n) }
+        transformSequence { it.elements.take(n.safeToInt()) }
     }
 
 fun <T, S : Sequence<T>> S.reverse() = transformSequence { it.elements.reversed() }
 
 fun <T, S : Sequence<T>> S.insert(t: T, i: nat1) =
-    if (i < 1 || i > len + 1) {
+    if (i < 1u || i > len + 1u) {
         throw PreconditionFailure("Index $i is out of bounds")
     } else {
-        transformSequence { it.elements.toMutableList().apply { add(i - 1, t) } }
+        transformSequence { it.elements.toMutableList().apply { add((i - 1u).safeToInt(), t) } }
     }
 
 fun <T, S : Sequence<T>> S.insert(s: S, i: nat1) =
-    if (i < 1 || i > len + 1) {
+    if (i < 1u || i > len + 1u) {
         throw PreconditionFailure("Index $i is out of bounds")
     } else {
-        transformSequence { it.elements.toMutableList().apply { addAll(i - 1, s) } }
+        transformSequence { it.elements.toMutableList().apply { addAll((i - 1u).safeToInt(), s) } }
     }
 
 fun <T, S : Sequence<T>> S.filter(fn: (T) -> Boolean) = transformSequence {
@@ -116,14 +118,14 @@ fun <T> Sequence<T>.indexOf(s: Sequence<T>) =
     if (!(s subseq this)) {
         throw PreconditionFailure("Sequence $s is not contained in $this")
     } else {
-        (1..len).find { i -> s == drop(i - 1).take(s.len) }!!
+        (1uL..len).find { i -> s == drop(i - 1u).take(s.len) }!!
     }
 
 infix fun <T> Sequence<T>.subseq(other: Sequence<T>) =
-    this == other || (1..other.len).any { i -> this == other.drop(i - 1).take(len) }
+    this == other || (1uL..other.len).any { i -> this == other.drop(i - 1u).take(len) }
 
 infix fun <T, S : Sequence<T>> S.domRestrictTo(s: Set<nat1>) = transformSequence {
-    it.elements.filterIndexed { i, _ -> (i + 1) in s }
+    it.elements.filterIndexed { i, _ -> (i + 1).toNat1() in s }
 }
 
 infix fun <T, S : Sequence<T>> S.drt(s: Set<nat1>) = domRestrictTo(s)
@@ -137,7 +139,7 @@ infix fun <T, S : Sequence<T>> S.rrt(s: Set<T>) = rngRestrictTo(s)
 infix fun <T, S : Sequence<T>> S.cat(s: Sequence<T>) = transformSequence { it.elements + s }
 
 infix fun <T, S : Sequence<T>> S.domSubtract(s: Set<nat1>) = transformSequence {
-    it.elements.filterIndexed { i, _ -> (i + 1) !in s }
+    it.elements.filterIndexed { i, _ -> (i + 1).toNat1() !in s }
 }
 
 infix fun <T, S : Sequence<T>> S.dsub(s: Set<nat1>) = domSubtract(s)
@@ -161,16 +163,16 @@ fun <T> Sequence<T>.first(): T {
     if (isEmpty()) {
         throw PreconditionFailure("Sequence is empty")
     }
-    return this[1]
+    return this[1u]
 }
 
-fun <T> Sequence<T>.firstOr(onEmpty: T) = if (isEmpty()) onEmpty else this[1]
+fun <T> Sequence<T>.firstOr(onEmpty: T) = if (isEmpty()) onEmpty else this[1u]
 
 fun <T> Sequence<T>.single(): T {
-    if (len != 1) {
+    if (len != 1uL) {
         throw PreconditionFailure("Cannot get single item for sequence with length $len")
     }
-    return this[1]
+    return this[1u]
 }
 
 fun <T> Sequence<T>.last(): T {
@@ -189,19 +191,20 @@ fun <T> Sequence<T>.lastOrNull(): T? {
 
 fun <T> Sequence<T>.head() = first()
 
-fun <T> Sequence<T>.tail() = drop(1)
+fun <T> Sequence<T>.count(predicate: (T) -> Boolean): nat = kotlinCount(predicate).toNat()
 
-fun <T> Sequence1<T>.tail(): Sequence<T> = if (size > 1) drop(1) else mk_Seq()
+fun <T> Sequence<T>.count(): nat = kotlinCount().toNat()
+
+fun <T> Sequence<T>.tail() = drop(1uL)
+
+fun <T> Sequence1<T>.tail(): Sequence<T> = if (len > 1uL) drop(1uL) else mk_Seq()
 
 fun <T, S : Sequence<T>> dcat(seqs: Sequence1<S>) =
     if (seqs.size == 1) {
         seqs.first()
     } else {
         seqs.first().transformSequence { init ->
-            seqs.drop(1).fold(init.elements) { acc, seq -> acc + seq }
+            seqs.drop(1uL).fold(init.elements) { acc, seq -> acc + seq }
         }
     }
-
-
-
 

@@ -51,14 +51,14 @@ class TestMapping(
     @Test
     fun card() {
         if (allowsEmpty) {
-            assertEquals(0, create().card)
+            assertEquals(0u, create().card)
         }
         if (!injective) {
-            assertEquals(2, create(mk_(1, 1), mk_(2, 1)).card)
+            assertEquals(2u, create(mk_(1, 1), mk_(2, 1)).card)
         }
-        assertEquals(1, create(mk_(1, 1)).card)
+        assertEquals(1u, create(mk_(1, 1)).card)
         // TODO - should be disallowed?
-        assertEquals(1, create(mk_(1, 1), mk_(1, 2)).card)
+        assertEquals(1u, create(mk_(1, 1), mk_(1, 2)).card)
     }
 
     @Test

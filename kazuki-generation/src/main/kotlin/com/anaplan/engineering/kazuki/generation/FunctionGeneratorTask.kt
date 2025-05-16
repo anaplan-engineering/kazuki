@@ -47,7 +47,7 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
     val inputTypeNames = (1..argCount).map { TypeVariableName("I$it") }
     val outputTypeName = TypeVariableName("O")
     val booleanName = Boolean::class.asClassName()
-    val intName = Int::class.asClassName()
+    val natName = ULong::class.asClassName()
     val superInterfaceName = ClassName(KotlinFunctionPackage, "Function$argCount")
         .parameterizedBy(inputTypeNames + outputTypeName)
     val preTypeName = ClassName(KotlinFunctionPackage, "Function$argCount")
@@ -55,7 +55,7 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
     val postTypeName = ClassName(KotlinFunctionPackage, "Function${argCount + 1}")
         .parameterizedBy(inputTypeNames + outputTypeName + booleanName)
     val measureTypeName = ClassName(KotlinFunctionPackage, "Function$argCount")
-        .parameterizedBy(inputTypeNames + intName).copy(nullable = true)
+        .parameterizedBy(inputTypeNames + natName).copy(nullable = true)
     val constructor = FunSpec.constructorBuilder().apply {
         addParameter(CommandPropertyName, superInterfaceName)
         addParameter(PrePropertyName, preTypeName)
@@ -85,7 +85,7 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
         addType(TypeSpec.companionObjectBuilder().apply {
             val invocationsTypeName = ConcurrentHashMap::class.asClassName().parameterizedBy(
                 ClassName(RootPackageName, className).parameterizedBy((0..argCount).map { STAR }),
-                intName
+                natName
             )
             addProperty(
                 PropertySpec.builder(InvocationsPropertyName, invocationsTypeName)

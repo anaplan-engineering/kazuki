@@ -57,11 +57,47 @@ annotation class FunctionProvider(
 
 
 // TODO - create stdlib
-typealias nat1 = Int
+typealias nat1 = ULong
 
-typealias nat = Int
+private val MAX_LONG = Long.MAX_VALUE.toULong()
 
-typealias int = Int
+fun ULong.toInteger() : integer {
+    pre { this <= MAX_LONG }
+    return toLong()
+}
+
+fun integer.toNat(): nat {
+    pre { this >= 0 }
+    return toULong()
+}
+
+fun integer.toNat1() : nat1 {
+    pre { this >= 1 }
+    return toULong()
+}
+
+fun Int.toNat(): nat {
+    pre { this >= 0 }
+    return toULong()
+}
+
+fun Int.toNat1() : nat1 {
+    pre { this >= 1 }
+    return toULong()
+}
+
+private val MAX_INT = Int.MAX_VALUE.toUInt()
+
+fun ULong.safeToInt(): Int {
+    if (this > MAX_INT) {
+        throw IllegalStateException("nat/nat1/int greater than $MAX_INT not currently supported in sequence addressing")
+    }
+    return this.toInt()
+}
+
+typealias nat = ULong
+
+typealias integer = Long
 
 typealias bool = Boolean
 
@@ -72,8 +108,8 @@ object InbuiltPrimitiveInvariant {
         nat::class to ::isNatValid,
     )
 
-    fun isNat1Valid(value: nat1) = value > 0
+    fun isNat1Valid(value: nat1) = value > 0uL
 
-    fun isNatValid(value: nat1) = value >= 0
+    fun isNatValid(value: nat1) = value >= 0uL
 
 }

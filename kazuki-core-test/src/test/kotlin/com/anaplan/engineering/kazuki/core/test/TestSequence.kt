@@ -34,10 +34,10 @@ class TestSequence(
     @Test
     fun len() {
         if (allowsEmpty) {
-            assertEquals(0, create().len)
+            assertEquals(0uL, create().len)
         }
-        assertEquals(1, create(1).len)
-        assertEquals(3, create(1, 2, 1).len)
+        assertEquals(1uL, create(1).len)
+        assertEquals(3uL, create(1, 2, 1).len)
     }
 
     @Test
@@ -61,33 +61,33 @@ class TestSequence(
     @Test
     fun insert_element() {
         if (allowsEmpty) {
-            assertEquals(create(6), create().insert(6, 1))
+            assertEquals(create(6), create().insert(6, 1uL))
         }
-        assertEquals(create(6, 7, 8), create(7, 8).insert(6, 1))
-        assertEquals(create(6, 7, 8), create(7, 8).insert(6, 1))
-        assertEquals(create(6, 7, 8), create(7, 8).insert(6, 1))
-        assertEquals(create(6, 7, 8), create(7, 8).insert(6, 1))
-        assertEquals(create(7, 6, 8), create(7, 8).insert(6, 2))
-        assertEquals(create(7, 8, 6), create(7, 8).insert(6, 3))
-        causesPreconditionFailure { create(7, 8).insert(6, 0) }
-        causesPreconditionFailure { create(7, 8).insert(6, 4) }
-        assertEquals(create(7, 7, 8), create(7, 8).insert(7, 1))
+        assertEquals(create(6, 7, 8), create(7, 8).insert(6, 1uL))
+        assertEquals(create(6, 7, 8), create(7, 8).insert(6, 1uL))
+        assertEquals(create(6, 7, 8), create(7, 8).insert(6, 1uL))
+        assertEquals(create(6, 7, 8), create(7, 8).insert(6, 1uL))
+        assertEquals(create(7, 6, 8), create(7, 8).insert(6, 2uL))
+        assertEquals(create(7, 8, 6), create(7, 8).insert(6, 3uL))
+        causesPreconditionFailure { create(7, 8).insert(6, 0uL) }
+        causesPreconditionFailure { create(7, 8).insert(6, 4uL) }
+        assertEquals(create(7, 7, 8), create(7, 8).insert(7, 1uL))
     }
 
     @Test
     fun insert_seq() {
         if (allowsEmpty) {
-            assertEquals(create(6, 4), create().insert(create(6, 4), 1))
+            assertEquals(create(6, 4), create().insert(create(6, 4), 1uL))
         }
-        assertEquals(create(6, 4, 7, 8), create(7, 8).insert(create(6, 4), 1))
-        assertEquals(create(6, 4, 7, 8), create(7, 8).insert(create(6, 4), 1))
-        assertEquals(create(6, 4, 7, 8), create(7, 8).insert(create(6, 4), 1))
-        assertEquals(create(6, 4, 7, 8), create(7, 8).insert(create(6, 4), 1))
-        assertEquals(create(7, 6, 4, 8), create(7, 8).insert(create(6, 4), 2))
-        assertEquals(create(7, 8, 6, 4), create(7, 8).insert(create(6, 4), 3))
-        causesPreconditionFailure { create(7, 8).insert(create(6, 4), 0) }
-        causesPreconditionFailure { create(7, 8).insert(create(6, 4), 4) }
-        assertEquals(create(7, 7, 7, 8), create(7, 8).insert(create(7, 7), 1))
+        assertEquals(create(6, 4, 7, 8), create(7, 8).insert(create(6, 4), 1uL))
+        assertEquals(create(6, 4, 7, 8), create(7, 8).insert(create(6, 4), 1uL))
+        assertEquals(create(6, 4, 7, 8), create(7, 8).insert(create(6, 4), 1uL))
+        assertEquals(create(6, 4, 7, 8), create(7, 8).insert(create(6, 4), 1uL))
+        assertEquals(create(7, 6, 4, 8), create(7, 8).insert(create(6, 4), 2uL))
+        assertEquals(create(7, 8, 6, 4), create(7, 8).insert(create(6, 4), 3uL))
+        causesPreconditionFailure { create(7, 8).insert(create(6, 4), 0uL) }
+        causesPreconditionFailure { create(7, 8).insert(create(6, 4), 4uL) }
+        assertEquals(create(7, 7, 7, 8), create(7, 8).insert(create(7, 7), 1uL))
     }
 
     @Test
@@ -97,39 +97,39 @@ class TestSequence(
                 create().indexOf(create(6, 4))
             }
         }
-        assertEquals(1, create(6, 4, 7, 8).indexOf(create(6, 4)))
-        assertEquals(2, create(7, 6, 4, 8).indexOf(create(6, 4)))
-        assertEquals(3, create(7, 8, 6, 4).indexOf(create(6, 4)))
+        assertEquals(1uL, create(6, 4, 7, 8).indexOf(create(6, 4)))
+        assertEquals(2uL, create(7, 6, 4, 8).indexOf(create(6, 4)))
+        assertEquals(3uL, create(7, 8, 6, 4).indexOf(create(6, 4)))
         causesPreconditionFailure { create(7, 8, 6, 1, 4).indexOf(create(6, 4)) }
-        assertEquals(1, create(6, 4, 6, 4).indexOf(create(6, 4)))
+        assertEquals(1uL, create(6, 4, 6, 4).indexOf(create(6, 4)))
     }
 
     @Test
     fun drop() {
         if (allowsEmpty) {
-            assertEquals(create(), create().drop(1))
-            assertEquals(create(), create(1).drop(1))
-            assertEquals(create(), create(1).drop(2))
+            assertEquals(create(), create().drop(1u))
+            assertEquals(create(), create(1).drop(1u))
+            assertEquals(create(), create(1).drop(2u))
         } else {
-            causesPreconditionFailure { create(1).drop(1) }
+            causesPreconditionFailure { create(1).drop(1u) }
         }
-        assertEquals(create(6, 7, 8), create(5, 6, 7, 8).drop(1))
-        assertEquals(create(7, 8), create(5, 6, 7, 8).drop(2))
+        assertEquals(create(6, 7, 8), create(5, 6, 7, 8).drop(1u))
+        assertEquals(create(7, 8), create(5, 6, 7, 8).drop(2u))
     }
 
     @Test
     fun take() {
         if (allowsEmpty) {
-            assertEquals(create(), create().take(1))
-            assertEquals(create(), create(1).take(0))
-            assertEquals(create(1), create(1).take(1))
-            assertEquals(create(1), create(1).take(2))
+            assertEquals(create(), create().take(1u))
+            assertEquals(create(), create(1).take(0u))
+            assertEquals(create(1), create(1).take(1u))
+            assertEquals(create(1), create(1).take(2u))
         } else {
-            causesPreconditionFailure { create(1).take(0) }
+            causesPreconditionFailure { create(1).take(0u) }
         }
-        assertEquals(create(5), create(5, 6, 7, 8).take(1))
-        assertEquals(create(5, 6), create(5, 6, 7, 8).take(2))
-        assertEquals(create(5, 6, 7, 8), create(5, 6, 7, 8).take(5))
+        assertEquals(create(5), create(5, 6, 7, 8).take(1u))
+        assertEquals(create(5, 6), create(5, 6, 7, 8).take(2u))
+        assertEquals(create(5, 6, 7, 8), create(5, 6, 7, 8).take(5u))
     }
 
     @Test
@@ -146,27 +146,27 @@ class TestSequence(
     @Test
     fun domRestrictTo() {
         if (allowsEmpty) {
-            assertEquals(create(), create() drt mk_Set(1))
+            assertEquals(create(), create() drt mk_Set(1uL))
             assertEquals(create(), create(5) drt mk_Set())
-            assertEquals(create(), create(5) drt mk_Set(2))
+            assertEquals(create(), create(5) drt mk_Set(2uL))
         }
-        assertEquals(create(5), create(5) drt mk_Set(1))
-        assertEquals(create(6, 5), create(5, 6, 6, 5) drt mk_Set(2, 4))
-        assertEquals(create(5, 5), create(5, 6, 8, 5) drt mk_Set(1, 4))
-        assertEquals(create(8), create(5, 6, 7, 8) domRestrictTo mk_Set(4))
+        assertEquals(create(5), create(5) drt mk_Set(1uL))
+        assertEquals(create(6, 5), create(5, 6, 6, 5) drt mk_Set(2uL, 4uL))
+        assertEquals(create(5, 5), create(5, 6, 8, 5) drt mk_Set(1uL, 4uL))
+        assertEquals(create(8), create(5, 6, 7, 8) domRestrictTo mk_Set(4uL))
     }
 
     @Test
     fun domSubtract() {
         if (allowsEmpty) {
-            assertEquals(create(), create() dsub mk_Set(1))
-            assertEquals(create(), create(5) dsub mk_Set(1))
+            assertEquals(create(), create() dsub mk_Set(1uL))
+            assertEquals(create(), create(5) dsub mk_Set(1uL))
         }
         assertEquals(create(5), create(5) dsub mk_Set())
-        assertEquals(create(5), create(5) dsub mk_Set(2))
-        assertEquals(create(5, 6), create(5, 6, 6, 5) dsub mk_Set(2, 4))
-        assertEquals(create(6, 8), create(5, 6, 8, 5) dsub mk_Set(1, 4))
-        assertEquals(create(5, 6, 7), create(5, 6, 7, 8) domSubtract mk_Set(4))
+        assertEquals(create(5), create(5) dsub mk_Set(2uL))
+        assertEquals(create(5, 6), create(5, 6, 6, 5) dsub mk_Set(2uL, 4uL))
+        assertEquals(create(6, 8), create(5, 6, 8, 5) dsub mk_Set(1uL, 4uL))
+        assertEquals(create(5, 6, 7), create(5, 6, 7, 8) domSubtract mk_Set(4uL))
     }
 
     @Test
@@ -308,8 +308,8 @@ class TestSequence(
         if (allowsEmpty) {
             assertEquals(mk_Seq(), create().tuples)
         }
-        assertEquals(mk_Seq(mk_(1, 3), mk_(2, 2), mk_(3, 1)), create(3, 2, 1).tuples)
-        assertEquals(mk_Seq(mk_(1, 1), mk_(2, 1), mk_(3, 1)), create(1, 1, 1).tuples)
+        assertEquals(mk_Seq(mk_(1uL, 3), mk_(2uL, 2), mk_(3uL, 1)), create(3, 2, 1).tuples)
+        assertEquals(mk_Seq(mk_(1uL, 1), mk_(2uL, 1), mk_(3uL, 1)), create(1, 1, 1).tuples)
     }
 
     @Test

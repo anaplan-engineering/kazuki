@@ -93,10 +93,10 @@ class TestSet(
     @Test
     fun card() {
         if (allowsEmpty) {
-            assertEquals(0, create().card)
+            assertEquals(0uL, create().card)
         }
-        assertEquals(3, create(1, 2, 3).card)
-        assertEquals(3, create(create(1, 2), 2, 3).card)
+        assertEquals(3uL, create(1, 2, 3).card)
+        assertEquals(3uL, create(create(1, 2), 2, 3).card)
     }
 
     @Test

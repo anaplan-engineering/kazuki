@@ -49,7 +49,7 @@ class DtgFunctions(private val dtg: Dtg) {
 
     val withinDurationOfDtg: (Duration, Dtg) -> bool = function(
         command = { duration, targetDtg ->
-            if (duration.milliseconds == 0L) {
+            if (duration.milliseconds == 0uL) {
                 dtg == targetDtg
             } else {
                 dtg.functions.inInterval(
@@ -80,15 +80,15 @@ class DtgFunctions(private val dtg: Dtg) {
     )
 
     val finestGranularity: (Duration) -> bool = function(
-        command = { granularity -> dtg.properties.durationSinceFirstDtg.milliseconds % granularity.milliseconds == 0L },
+        command = { granularity -> dtg.properties.durationSinceFirstDtg.milliseconds % granularity.milliseconds == 0uL },
         pre = { granularity -> granularity != NoDuration }
     )
 
-    val addMonths: (int) -> Dtg = function(
+    val addMonths: (integer) -> Dtg = function(
         command = { n -> mk_Dtg(dtg.date.functions.addMonths(n), dtg.time) },
     )
 
-    val subtractMonths: (int) -> Dtg = function(
+    val subtractMonths: (integer) -> Dtg = function(
         command = { n -> dtg.functions.addMonths(-n) },
     )
 
@@ -165,11 +165,11 @@ object DtgUtilities {
     val monthsBetweenDtgs: (Dtg, Dtg) -> nat = function(
         command = { earlierDtg, laterDtg ->
             MonthsPerYear * yearsBetweenDtgs(earlierDtg, laterDtg) +
-                    (if (laterDtg.date.month < earlierDtg.date.month) 12 else 0) +
+                    (if (laterDtg.date.month < earlierDtg.date.month) 12uL else 0uL) +
                     if (laterDtg.date.day >= earlierDtg.date.day) {
                         laterDtg.date.month - earlierDtg.date.month
                     } else {
-                        laterDtg.date.month - earlierDtg.date.month - 1
+                        laterDtg.date.month - earlierDtg.date.month - 1uL
                     }
         },
         pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg }
@@ -194,7 +194,7 @@ object DtgUtilities {
             if (durationInYearUpToEarlierDtg <= durationInYearUpToLaterDtg) {
                 laterDtg.date.year - earlierDtg.date.year
             } else {
-                laterDtg.date.year - earlierDtg.date.year - 1
+                laterDtg.date.year - earlierDtg.date.year - 1uL
             }
         },
         pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg }

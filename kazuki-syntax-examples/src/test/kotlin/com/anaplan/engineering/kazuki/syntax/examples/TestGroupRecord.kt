@@ -10,19 +10,19 @@ class TestGroupRecord {
 
     @Test
     fun make() {
-        val record = mk_GroupRecord("leader", mk_Set("leader", "other"), 3)
+        val record = mk_GroupRecord("leader", mk_Set("leader", "other"), 3u)
         assertEquals(mk_Set("leader", "other"), record.members)
-        assertEquals(3, record.maxCount)
+        assertEquals(3u, record.maxCount)
     }
 
     @Test(expected = InvariantFailure::class)
     fun membersContainsLeader_invalid() {
-        mk_GroupRecord("leader", mk_Set("other"), 3)
+        mk_GroupRecord("leader", mk_Set("other"), 3u)
     }
 
     @Test(expected = InvariantFailure::class)
     fun membersUnderMaxCount_invalid() {
-        mk_GroupRecord("leader", mk_Set("leader", "other"), 1)
+        mk_GroupRecord("leader", mk_Set("leader", "other"), 1u)
     }
 
 }

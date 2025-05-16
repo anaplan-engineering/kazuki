@@ -11,12 +11,12 @@ object SequenceOrd {
 
     class Natural<T : Comparable<T>> {
         val ascending = function(
-            command = { s: Sequence<T> -> forall(1..<s.len) { i -> s[i] <= s[i + 1] } },
+            command = { s: Sequence<T> -> forall(1uL..<s.len) { i -> s[i] <= s[i + 1uL] } },
             post = { s, result -> result iff descending(s.reverse()) }
         )
 
         val descending = function(
-            command = { s: Sequence<T> -> forall(1..<s.len) { i -> s[i] >= s[i + 1] } }
+            command = { s: Sequence<T> -> forall(1uL..<s.len) { i -> s[i] >= s[i + 1uL] } }
             // can't use ascending in post without loop
         )
 
@@ -62,12 +62,12 @@ object SequenceOrd {
         private val ordFn: (T, T) -> Ord
     ) {
         val ascending = function(
-            command = { s: Sequence<T> -> forall(1..<s.len) { i -> ordFn(s[i], s[i + 1]) in LTE } },
+            command = { s: Sequence<T> -> forall(1uL..<s.len) { i -> ordFn(s[i], s[i + 1uL]) in LTE } },
             post = { s, result -> result iff descending(s.reverse()) }
         )
 
         val descending = function(
-            command = { s: Sequence<T> -> forall(1..<s.len) { i -> ordFn(s[i + 1], s[i]) in LTE } }
+            command = { s: Sequence<T> -> forall(1uL..<s.len) { i -> ordFn(s[i + 1uL], s[i]) in LTE } }
             // can't use ascending in post without loop
         )
 

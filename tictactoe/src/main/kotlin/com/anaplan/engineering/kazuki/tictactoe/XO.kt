@@ -15,9 +15,9 @@ import com.anaplan.engineering.kazuki.tictactoe.XO_Module.mk_Position
 @Module
 object XO {
 
-    const val Size = 3
+    const val Size = 3uL
 
-    const val MaxMoves = Size * Size
+    val MaxMoves = Size * Size
 
     enum class Player {
         Nought,
@@ -29,8 +29,8 @@ object XO {
         val col: Coord
     }
 
-    @PrimitiveInvariant(name = "Coord", base = Int::class)
-    fun coordInvariant(c: Int) = c in 1..Size
+    @PrimitiveInvariant(name = "Coord", base = nat1::class)
+    fun coordInvariant(c: nat) = c in 1uL..Size
 
     // A legal game play sequence
     interface Moves : Sequence1<Position> {
@@ -38,7 +38,7 @@ object XO {
         fun noDuplicatePositions() = len == elems.card
 
         @Invariant
-        fun hasMinMovesToWin() = len > Players.card * (Size - 1)
+        fun hasMinMovesToWin() = len > Players.card * (Size - 1uL)
 
         @Invariant
         fun doesntHaveTooManyMoves() = len <= MaxMoves
@@ -55,7 +55,7 @@ object XO {
         fun correctNumberOfPlayers() = elems == Players
     }
 
-    val S: Set<nat1> = as_Set(1..Size)
+    val S: Set<nat1> = as_Set(1uL..Size)
 
     val winningLines: Set<Set<Position>> = dunion(
         mk_Set(
@@ -63,7 +63,7 @@ object XO {
             set(S) { c: nat1 -> set(S) { r: nat1 -> mk_Position(r, c) } },
             mk_Set(
                 as_Set(set(S) { x: nat1 -> mk_Position(x, x) }),
-                as_Set(set(S) { x: nat1 -> mk_Position(x, Size - x + 1) })
+                as_Set(set(S) { x: nat1 -> mk_Position(x, Size - x + 1u) })
             )
         ),
     )
@@ -73,14 +73,14 @@ object XO {
         val order: PlayOrder
 
         @Invariant
-        fun cantHaveMoreThanMaxMoves() = moveCountLeft(this) >= 0
+        fun cantHaveMoreThanMaxMoves() = moveCountLeft(this) >= 0uL
 
         @Invariant
         fun noPlayerMoreThanOneMoveAhead() =
             forall(order.inds - order.len) { i ->
                 val current = order[i]
-                val next = order[i + 1]
-                movesForPlayer(this, current).card - movesForPlayer(this, next).card in mk_Set(0, 1)
+                val next = order[i + 1uL]
+                movesForPlayer(this, current).card - movesForPlayer(this, next).card in mk_Set(0uL, 1uL)
             }
     }
 
@@ -107,7 +107,7 @@ object XO {
     )
 
     val isDraw = function(
-        command = { g: Game -> (!(isWon(g)) and (moveCountLeft(g) == 0)) },
+        command = { g: Game -> (!(isWon(g)) and (moveCountLeft(g) == 0uL)) },
     )
 
     val isUnfinished = function(
@@ -137,10 +137,10 @@ object XO {
         pre = { g, p, pos ->
             hasTurn(g, p) &&
                     pos !in movesSoFar(g) &&
-                    moveCountLeft(g) > 0
+                    moveCountLeft(g) > 0uL
         },
-        post = { g, p, pos, result ->
-            moveCountSoFar(result) == moveCountSoFar(g) + 1
+        post = { g, p, _, result ->
+            moveCountSoFar(result) == moveCountSoFar(g) + 1uL
         }
     )
 
@@ -149,7 +149,7 @@ object XO {
             val order = g.order
             val numPlayers = order.len
             val numMoves = movesSoFar(g).card
-            order[(numMoves % numPlayers) + 1] == p
+            order[(numMoves % numPlayers) + 1uL] == p
         }
     )
 

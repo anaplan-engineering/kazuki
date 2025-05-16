@@ -26,7 +26,7 @@ class TestGenericSequence {
 
     @Test
     fun get() {
-        assertEquals(2, mk_GenericSequence(3, 2, 1)[2])
+        assertEquals(2, mk_GenericSequence(3, 2, 1)[2u])
     }
 
     @Test

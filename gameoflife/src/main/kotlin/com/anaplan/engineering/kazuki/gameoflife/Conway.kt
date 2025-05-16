@@ -7,33 +7,33 @@ import com.anaplan.engineering.kazuki.gameoflife.Conway_Module.mk_Point
 @Module
 object Conway {
 
-    private const val Generate = 3 // Number of neighbours to cause generation
-    private val Survive = mk_Set(2, 3) // Numbers of neighbours to ensure survival, else death
-    private const val maxNeighbours = 8
+    private const val Generate = 3uL // Number of neighbours to cause generation
+    private val Survive = mk_Set(2uL, 3uL) // Numbers of neighbours to ensure survival, else death
+    private const val MaxNeighbours = 8uL
 
     interface Point {
-        val x: int
-        val y: int
+        val x: integer
+        val y: integer
     }
 
     interface Population : Set<Point>
 
     val around: (Point) -> Population = function(
         command = { p: Point ->
-            val A: Set<int> = mk_Set(-1, 0, 1) // Adjacencies
+            val A: Set<integer> = mk_Set(-1, 0, 1) // Adjacencies
             as_Population(
                 dunion(
-                set(A) { x: int -> set(A) { y: int -> mk_Point(p.x + x, p.y + y) } }
+                set(A) { x: integer -> set(A) { y: integer -> mk_Point(p.x + x, p.y + y) } }
             ).minus(p))
         },
-        post = { _, result -> result.card <= maxNeighbours }
+        post = { _, result -> result.card <= MaxNeighbours }
     )
 
-    val neighbourCount: (Population, Point) -> int = function(
+    val neighbourCount: (Population, Point) -> nat = function(
         command = { pop: Population, p: Point ->
             (around(p) inter pop).card
         },
-        post = { _, _, result -> result <= maxNeighbours },
+        post = { _, _, result -> result <= MaxNeighbours },
     )
 
     val newCells: (Population) -> Population = function(
@@ -69,10 +69,10 @@ object Conway {
         function(
             command = { n: nat1, pop: Population ->
                 val newP = generation(pop)
-                if (n == 1) {
+                if (n == 1uL) {
                     newP
                 } else {
-                    generations(n - 1, newP)
+                    generations(n - 1u, newP)
                 }
             },
             measure = { n, _ -> n },

@@ -148,7 +148,7 @@ private fun TypeSpec.Builder.addMappingType(
         if (requiresNonEmpty) {
             addProperty(
                 PropertySpec.builder("card", nat1::class.asTypeName()).addModifiers(KModifier.OVERRIDE)
-                    .delegate("$baseMapPropertyName::size").build()
+                    .lazy("%N.size.%M()", baseMapPropertyName, InbuiltNames.toNat1).build()
             )
         }
         // TODO -- inverse should be Mapping1 for IM1
@@ -181,7 +181,7 @@ private fun TypeSpec.Builder.addMappingType(
 
         // N.B. it is important to have properties before init block
         val additionalInvariantParts = if (requiresNonEmpty) {
-            listOf(FreeformInvariant("nonEmpty", "{ card > 0 }"))
+            listOf(FreeformInvariant("nonEmpty", "{ card > 0uL }"))
         } else {
             emptyList()
         }
