@@ -185,7 +185,7 @@ internal class __KInjectiveMapping1<D, R>(override val baseMap: Map<D, R>) :
 
     override val inverse by lazy { as_Mapping(elements.map { (d, r) -> mk_(r, d) }) }
 
-    override val card: nat1 by lazy { baseMap.size }
+    override val card: nat1 by lazy { baseMap.size.toNat1() }
 
     override val dom by lazy { as_Set1(baseMap.keys) }
 
@@ -238,7 +238,7 @@ internal class __KMapping1<D, R>(override val baseMap: Map<D, R>) : Mapping1<D, 
 
     override fun construct(baseMap: Map<D, R>) = __KMapping1(baseMap)
 
-    override val card: nat1 by lazy { baseMap.size }
+    override val card: nat1 by lazy { baseMap.size.toNat1() }
 
     override val dom by lazy { as_Set1(baseMap.keys) }
 

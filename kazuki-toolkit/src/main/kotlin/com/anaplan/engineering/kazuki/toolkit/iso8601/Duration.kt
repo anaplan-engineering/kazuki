@@ -17,16 +17,16 @@ import kotlin.math.abs
 @Module
 interface Duration : Comparable<Duration> {
 
-    val milliseconds: Long
+    val milliseconds: nat1
 
     @Invariant
-    fun millisNonNegative() = milliseconds >= 0
+    fun millisNonNegative() = milliseconds >= 0uL
 
     override fun compareTo(other: Duration) = milliseconds.compareTo(other.milliseconds)
 
     companion object {
 
-        val fromMillis: (Long) -> Duration = function(
+        val fromMillis: (nat1) -> Duration = function(
             command = { milliseconds -> mk_Duration(milliseconds) },
 //        post = { millisecond, result -> result.functions.toMillis() == millisecond }
 //        This post condition uses a function whose post condition uses this function as a post condition.
@@ -35,7 +35,7 @@ interface Duration : Comparable<Duration> {
 
         )
 
-        val fromSeconds: (Long) -> Duration = function(
+        val fromSeconds: (nat1) -> Duration = function(
             command = { seconds -> fromMillis(seconds * MillisPerSecond) },
 //        post = { second, result -> result.functions.toSeconds() == second }
 //        This post condition uses a function whose post condition uses this function as a post condition.
@@ -44,7 +44,7 @@ interface Duration : Comparable<Duration> {
 
         )
 
-        val fromMinutes: (Long) -> Duration = function(
+        val fromMinutes: (nat1) -> Duration = function(
             command = { minutes -> fromSeconds(minutes * SecondsPerMinute) },
 //        post = { minutes, result -> result.functions.toMinutes() == minutes }
 //        This post condition uses a function whose post condition uses this function as a post condition.
@@ -52,7 +52,7 @@ interface Duration : Comparable<Duration> {
 //        However, it is still a valid post condition so is left here for completeness.
         )
 
-        val fromHours: (Long) -> Duration = function(
+        val fromHours: (nat1) -> Duration = function(
             command = { hours -> fromMinutes(hours * MinutesPerHour) },
 //        post = { hour, result -> result.functions.toHours() == hour }
 //        This post condition uses a function whose post condition uses this function as a post condition.
@@ -60,7 +60,7 @@ interface Duration : Comparable<Duration> {
 //        However, it is still a valid post condition so is left here for completeness.
         )
 
-        val fromDays: (Long) -> Duration = function(
+        val fromDays: (nat1) -> Duration = function(
             command = { days -> fromHours(days * HoursPerDay) },
 //        post = { day, result -> result.functions.toDays() == day }
 //        This post condition uses a function whose post condition uses this function as a post condition.
@@ -69,15 +69,15 @@ interface Duration : Comparable<Duration> {
         )
 
         val fromMonth: (Year, Month) -> Duration = function(
-            command = { year, month -> fromDays(daysInMonth(year, month).toLong()) }
+            command = { year, month -> fromDays(daysInMonth(year, month)) }
         )
 
         val durationInYearUpToStartOfMonth: (Year, Month) -> Duration = function(
-            command = { year, month -> sumDuration(seq(1 until month) { fromMonth(year, it) }) }
+            command = { year, month -> sumDuration(seq(1uL until month) { fromMonth(year, it) }) }
         )
 
         val fromYear: (Year) -> Duration = function(
-            command = { year -> fromDays(daysInYear(year).toLong()) }
+            command = { year -> fromDays(daysInYear(year)) }
         )
 
         val durationFromFirstYearUpToStartOfYear: (Year) -> Duration = function(
@@ -102,11 +102,11 @@ class DurationProperties(private val duration: Duration) {
     val days by lazy { hours / HoursPerDay }
 
     val formatted by lazy {
-        val numDays = days.toInt()
+        val numDays = days
         val timeOfDay = duration.functions.modDays().functions.toTimeAfterFirstTime()
         val date = formatItem(numDays, 'D')
         val time = formatItem(timeOfDay.hour, 'H') + formatItem(timeOfDay.minute, 'M') +
-                if (timeOfDay.millisecond == 0) {
+                if (timeOfDay.millisecond == 0uL) {
                     formatItem(timeOfDay.second, 'S')
                 } else {
                     formatItemSec(timeOfDay.second, timeOfDay.millisecond)
@@ -115,11 +115,11 @@ class DurationProperties(private val duration: Duration) {
     }
 
     private val formatItem: (nat, Char) -> String = function(
-        command = { n, c -> if (n == 0) "" else String.format("%d%s", n, c) }
+        command = { n, c -> if (n == 0uL) "" else String.format("%d%s", n.safeToInt(), c) }
     )
 
     private val formatItemSec: (nat, nat) -> String = function(
-        command = { seconds, milliseconds -> String.format("%d.%03dS", seconds, milliseconds) }
+        command = { seconds, milliseconds -> String.format("%d.%03dS", seconds.safeToInt(), milliseconds.safeToInt()) }
     )
 }
 
@@ -129,8 +129,8 @@ class DurationFunctions(private val duration: Duration) {
     val toMonthsInGivenYear: (Year) -> nat1 = function(
         command = { year ->
             (set(
-                1..MonthsPerYear,
-                filter = { durationInYearUpToStartOfMonth(year, it) <= duration }) { it }).max() - 1
+                1uL..MonthsPerYear,
+                filter = { durationInYearUpToStartOfMonth(year, it) <= duration }) { it }).max() - 1uL
         },
         pre = { year -> duration < fromYear(year) }
     )
@@ -147,13 +147,13 @@ class DurationFunctions(private val duration: Duration) {
                         acc
                     } else {
                         safeRecursion(
-                            acc + 1,
+                            acc + 1uL,
                             duration.functions.subtractDuration(fromYear(givenYear)),
-                            givenYear + 1
+                            givenYear + 1uL
                         )
                     }
 
-                safeRecursion(0, duration, givenYear)
+                safeRecursion(0uL, duration, givenYear)
             },
         )
 
@@ -195,10 +195,10 @@ class DurationFunctions(private val duration: Duration) {
             val year = totalDuration.functions.toYearsAfterGivenYear(FirstYear)
             val totalDurationModYear =
                 totalDuration.functions.subtractDuration(durationFromFirstYearUpToStartOfYear(year))
-            val month = totalDurationModYear.functions.toMonthsInGivenYear(year) + 1
+            val month = totalDurationModYear.functions.toMonthsInGivenYear(year) + 1uL
             val day = (totalDurationModYear.functions.subtractDuration(
                 durationInYearUpToStartOfMonth(year, month)
-            ).properties.days + 1).toInt()
+            ).properties.days + 1uL)
             mk_Date(year, month, day)
         },
         pre = { givenDate ->
@@ -217,10 +217,10 @@ class DurationFunctions(private val duration: Duration) {
     val toTimeAfterGivenTime: (Time) -> Time = function(
         command = { givenTime ->
             val totalDuration = givenTime.properties.durationSinceFirstTime.functions.addDuration(duration)
-            val hour = totalDuration.properties.hours.toInt()
-            val minute = totalDuration.functions.modHours().properties.minutes.toInt()
-            val second = totalDuration.functions.modMinutes().properties.seconds.toInt()
-            val millisecond = totalDuration.functions.modSeconds().milliseconds.toInt()
+            val hour = totalDuration.properties.hours
+            val minute = totalDuration.functions.modHours().properties.minutes
+            val second = totalDuration.functions.modMinutes().properties.seconds
+            val millisecond = totalDuration.functions.modSeconds().milliseconds
             mk_Time(hour, minute, second, millisecond)
         },
         pre = { givenTime ->
@@ -249,12 +249,12 @@ class DurationFunctions(private val duration: Duration) {
 
     val multiply: (nat) -> Duration = function(
         command = { n -> mk_Duration(duration.milliseconds * n) },
-        post = { n, result -> (n != 0) implies { result.functions.divide(n) == duration } }
+        post = { n, result -> (n != 0uL) implies { result.functions.divide(n) == duration } }
     )
 
     val divide: (nat) -> Duration = function(
         command = { n -> mk_Duration(duration.milliseconds / n) },
-        pre = { n -> n != 0 }
+        pre = { n -> n != 0uL }
 //        post = { n, result -> result.functions.multiply(n) <= duration && duration < result.functions.multiply(n+1)}
 //        This post condition uses a function whose post condition uses this function as a post condition.
 //        If not commented, the two functions will recur until a stack overflow error occurs.
@@ -296,7 +296,14 @@ object DurationUtiltites {
         post = { durationSequence, result -> forall(durationSequence) { result >= it } }
     )
     val durationDiff: (Duration, Duration) -> Duration = function(
-        command = { duration1, duration2 -> mk_Duration(abs(duration1.milliseconds - duration2.milliseconds)) },
+        command = { duration1, duration2 ->
+            val diff = if (duration1 > duration2) {
+                duration1.milliseconds - duration2.milliseconds
+            } else {
+                duration2.milliseconds - duration1.milliseconds
+            }
+            mk_Duration(diff)
+        },
         post = { duration1, duration2, difference ->
             val smallerDuration = minDuration(mk_Set1(duration1, duration2))
             val largerDuration = maxDuration(mk_Set1(duration1, duration2))

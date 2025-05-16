@@ -11,7 +11,7 @@ interface _KSequence<T, S : Sequence<T>> : Sequence<T>, _KazukiObject {
     val comparableWith: KClass<*>
 
     override val tuples: Sequence<Tuple2<nat1, T>>
-        get() = as_Seq(elements.mapIndexed { index, t -> mk_(index + 1, t) })
+        get() = as_Seq(elements.mapIndexed { index, t -> mk_((index + 1).toNat1(), t) })
 
 }
 
@@ -21,9 +21,7 @@ internal fun <T, S : Sequence<T>> S.transformSequence(fn: (_KSequence<T, S>) -> 
 }
 
 // TODO generate impls to ensure consistenct
-internal class __KSequence<T>(override val elements: List<T>) : Sequence<T>, List<T> by elements,
-    _KSequence<T, Sequence<T>> {
-
+internal class __KSequence<T>(override val elements: List<T>) : Sequence<T>, _KSequence<T, Sequence<T>>, Collection<T> by elements {
     init {
         assert(elements !is _KazukiObject) {
             "Internal state should not be a Kazuki-generated object"
@@ -42,27 +40,27 @@ internal class __KSequence<T>(override val elements: List<T>) : Sequence<T>, Lis
 
     override val comparableWith = Sequence::class
 
-    override val len: nat by elements::size
+    override val len: nat by lazy { elements.size.toNat() }
 
     override operator fun get(index: nat1): T {
-        if (index < 1 || index > len) {
+        if (index < 1u || index > len) {
             throw PreconditionFailure("Index $index out of range")
         }
-        return elements.get(index - 1)
+        return elements.get((index - 1u).safeToInt())
     }
 
     override fun indexOf(element: T): nat1 {
         if (element !in elements) {
             throw PreconditionFailure("Element $element not in $this")
         }
-        return elements.indexOf(element) + 1
+        return elements.indexOf(element).toNat() + 1u
     }
 
     override fun lastIndexOf(element: T): nat1 {
         if (element !in elements) {
             throw PreconditionFailure("Element $element not in $this")
         }
-        return elements.lastIndexOf(element) + 1
+        return elements.lastIndexOf(element).toNat() + 1u
     }
 
     override val elems by lazy {
@@ -70,15 +68,15 @@ internal class __KSequence<T>(override val elements: List<T>) : Sequence<T>, Lis
     }
 
     override val inds by lazy {
-        as_Set(1..len)
+        as_Set(1uL..len)
     }
 
     override fun construct(elements: List<T>) = __KSequence(elements)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Sequence<*>) return false
-        return elements == other
+        if (other !is _KSequence<*, *>) return false
+        return elements == other.elements
     }
 
     override fun hashCode(): Int {
@@ -88,18 +86,17 @@ internal class __KSequence<T>(override val elements: List<T>) : Sequence<T>, Lis
     override fun toString() = "seq$elements"
 }
 
-internal class __KSequence1<T>(override val elements: List<T>) : Sequence1<T>, _KSequence<T, Sequence1<T>>,
-    List<T> by elements {
+internal class __KSequence1<T>(override val elements: List<T>) : Sequence1<T>, _KSequence<T, Sequence1<T>>, Collection<T> by elements {
 
     override fun construct(elements: List<T>) = __KSequence1(elements)
 
-    override val len: nat1 by elements::size
+    override val len: nat1 by lazy { elements.size.toNat1() }
 
     override operator fun get(index: nat1): T {
-        if (index < 1 || index > len) {
+        if (index < 1u || index > len) {
             throw PreconditionFailure("Index $index is not valid for sequence of length $len")
         }
-        return elements.get(index - 1)
+        return elements.get((index - 1u).safeToInt())
     }
 
     override val comparableWith = Sequence::class
@@ -118,14 +115,14 @@ internal class __KSequence1<T>(override val elements: List<T>) : Sequence1<T>, _
         if (element !in elements) {
             throw PreconditionFailure()
         }
-        return elements.indexOf(element) + 1
+        return elements.indexOf(element).toNat() + 1u
     }
 
     override fun lastIndexOf(element: T): nat1 {
         if (element !in elements) {
             throw PreconditionFailure()
         }
-        return elements.lastIndexOf(element) + 1
+        return elements.lastIndexOf(element).toNat() + 1u
     }
 
     protected fun isValid(): Boolean = atLeastOneElement()
@@ -135,13 +132,13 @@ internal class __KSequence1<T>(override val elements: List<T>) : Sequence1<T>, _
     }
 
     override val inds by lazy {
-        as_Set1(1..len)
+        as_Set1(1uL..len)
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Sequence<*>) return false
-        return elements == other
+        if (other !is _KSequence<*, *>) return false
+        return elements == other.elements
     }
 
     override fun hashCode(): Int {

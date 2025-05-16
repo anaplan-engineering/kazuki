@@ -31,12 +31,17 @@ interface Date : Comparable<Date> {
 }
 
 class DateProperties(private val date: Date) {
-    val formatted by lazy { String.format("%04d-%02d-%02d", date.year, date.month, date.day) }
+    val formatted by lazy {
+        String.format(
+            "%04d-%02d-%02d",
+            date.year.safeToInt(),
+            date.month.safeToInt(),
+            date.day.safeToInt()
+        )
+    }
 
     val dayOfWeek by lazy {
-        iota(DayOfWeek.entries) { day ->
-            day.ordinal == ((durationSinceFirstDate.properties.days.toInt() - 365) % 7)
-        }
+        DayOfWeek.entries[((durationSinceFirstDate.properties.days - 365u) % 7u).safeToInt()]
     }
 
     val dtgAtStartOfDay by lazy { mk_Dtg(date, FirstTime) }
@@ -44,7 +49,7 @@ class DateProperties(private val date: Date) {
     val durationSinceFirstDate by lazy {
         Duration.durationFromFirstYearUpToStartOfYear(date.year).functions.addDuration(
             Duration.durationInYearUpToStartOfMonth(date.year, date.month).functions.addDuration(
-                Duration.fromDays(date.day - 1L)
+                Duration.fromDays(date.day - 1uL)
             )
         )
     }
@@ -52,28 +57,28 @@ class DateProperties(private val date: Date) {
 
 class DateFunctions(private val date: Date) {
 
-    val addMonths: (int) -> Date = function(
+    val addMonths: (integer) -> Date = function(
         command = { n ->
-            val nextMonth = (date.month + n - 1).mod(MonthsPerYear) + 1
-            val yearShift = (date.month + n - 1).floorDiv(MonthsPerYear)
-            val nextYear = date.year + yearShift
+            val nextMonth = (date.month.safeToInt() + n - 1).mod(MonthsPerYear.safeToInt()).toNat() + 1u
+            val yearShift = (date.month.safeToInt() + n - 1).floorDiv(MonthsPerYear.safeToInt())
+            val nextYear = (date.year.safeToInt() + yearShift).toNat()
             val nextDay = min(date.day, daysInMonth(nextYear, nextMonth))
             mk_Date(nextYear, nextMonth, nextDay)
         },
-        pre = { n -> date.year * 12 + date.month + n > 0 }
+        pre = { n -> (date.year * 12u + date.month).safeToInt() + n > 0 }
     )
 
-    val subtractMonths: (int) -> Date = function(
+    val subtractMonths: (integer) -> Date = function(
         command = { n -> date.functions.addMonths(-n) },
     )
 
     val addDays: (nat) -> Date = function(
-        command = { n -> date.properties.durationSinceFirstDate.functions.addDuration(Duration.fromDays(n.toLong())).functions.toDateAfterFirstDate() },
+        command = { n -> date.properties.durationSinceFirstDate.functions.addDuration(Duration.fromDays(n)).functions.toDateAfterFirstDate() },
         post = { n, result -> result.functions.subtractDays(n) == date }
     )
 
     val subtractDays: (nat) -> Date = function(
-        command = { n -> date.properties.durationSinceFirstDate.functions.subtractDuration(Duration.fromDays(n.toLong())).functions.toDateAfterFirstDate() },
+        command = { n -> date.properties.durationSinceFirstDate.functions.subtractDuration(Duration.fromDays(n)).functions.toDateAfterFirstDate() },
         pre = { n -> date.properties.durationSinceFirstDate.properties.days >= n },
 //            post = {n, result -> result.functions.addDays(n) == date}
 //        This post condition uses a function whose post condition uses this function as a post condition.
@@ -87,23 +92,23 @@ class DateFunctions(private val date: Date) {
 fun yearInRange(year: nat) = year in FirstYear..LastYear
 
 @PrimitiveInvariant(name = "Month", base = nat1::class)
-fun monthInRange(month: nat1) = month in 1..MonthsPerYear
+fun monthInRange(month: nat1) = month in 1uL..MonthsPerYear
 
 @PrimitiveInvariant(name = "Day", base = nat1::class)
-fun dayInRange(day: nat1) = day in 1..DaysPerMonth.rng.max()
+fun dayInRange(day: nat1) = day in 1uL..DaysPerMonth.rng.max()
 
 object DateUtilities {
     val isLeap: (Year) -> bool = function(
         command = { year ->
-            val multipleOfFour = year % 4 == 0
-            val multipleOfOneHundred = year % 100 == 0
-            val multipleOfFourHundred = year % 400 == 0
+            val multipleOfFour = year % 4u == 0uL
+            val multipleOfOneHundred = year % 100u == 0uL
+            val multipleOfFourHundred = year % 400u == 0uL
             multipleOfFour && (multipleOfOneHundred implies multipleOfFourHundred)
         }
     )
 
     val daysInYear: (Year) -> nat1 = function(
-        command = { year -> seq(1..MonthsPerYear) { daysInMonth(year, it) }.sum() }
+        command = { year -> seq(1uL..MonthsPerYear) { daysInMonth(year, it) }.sum() }
     )
 
     val daysInMonth: (Year, Month) -> Day = function(
@@ -129,19 +134,18 @@ object DateUtilities {
     val nextDateFromGivenYearMonthDayForGivenDay: (Year, Month, Day, Day) -> Date by lazy {
         function(
             command = { dateYear, dateMonth, dateDay, targetDay ->
-                val nextMonth = if (dateMonth == MonthsPerYear) 1 else dateMonth + 1
-                val nextYear = if (dateMonth == MonthsPerYear) dateYear + 1 else dateYear
-
+                val nextMonth = if (dateMonth == MonthsPerYear) 1uL else dateMonth + 1uL
+                val nextYear = if (dateMonth == MonthsPerYear) dateYear + 1uL else dateYear
                 if (dateDay < targetDay && targetDay <= daysInMonth(dateYear, dateMonth)) {
                     mk_Date(dateYear, dateMonth, targetDay)
-                } else if (targetDay == 1) {
+                } else if (targetDay == 1uL) {
                     mk_Date(nextYear, nextMonth, targetDay)
                 } else {
-                    nextDateFromGivenYearMonthDayForGivenDay(nextYear, nextMonth, 1, targetDay)
+                    nextDateFromGivenYearMonthDayForGivenDay(nextYear, nextMonth, 1uL, targetDay)
                 }
             },
             pre = { dateYear, dateMonth, dateDay, _ -> dateDay <= daysInMonth(dateYear, dateMonth) },
-            measure = { dateYear, dateMonth, _, _ -> ((LastYear + 1 - dateYear) * MonthsPerYear) - dateMonth }
+            measure = { dateYear, dateMonth, _, _ -> ((LastYear + 1uL - dateYear) * MonthsPerYear) - dateMonth }
         )
     }
 
@@ -155,15 +159,15 @@ object DateUtilities {
     val previousDateFromGivenYearMonthDayForGivenDay: (Year, Month, Day, Day) -> Date by lazy {
         function(
             command = { dateYear, dateMonth, dateDay, targetDay ->
-                val prevMonth = if (dateMonth > 1) dateMonth - 1 else MonthsPerYear
-                val prevYear = if (dateMonth > 1) dateYear else dateYear - 1
+                val prevMonth = if (dateMonth > 1uL) dateMonth - 1uL else MonthsPerYear
+                val prevYear = if (dateMonth > 1uL) dateYear else dateYear - 1uL
 
                 if (targetDay < dateDay) {
                     mk_Date(dateYear, dateMonth, targetDay)
                 } else if (targetDay <= daysInMonth(prevYear, prevMonth)) {
                     mk_Date(prevYear, prevMonth, targetDay)
                 } else {
-                    previousDateFromGivenYearMonthDayForGivenDay(prevYear, prevMonth, 1, targetDay)
+                    previousDateFromGivenYearMonthDayForGivenDay(prevYear, prevMonth, 1uL, targetDay)
                 }
             },
             pre = { dateYear, dateMonth, dateDay, _ -> dateDay <= daysInMonth(dateYear, dateMonth) },

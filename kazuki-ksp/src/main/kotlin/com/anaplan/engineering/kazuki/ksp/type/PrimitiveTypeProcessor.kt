@@ -23,13 +23,15 @@ class PrimitiveTypeProcessor(
             typeGenerationContext.errors.add("Primitive invariant ${invariant.qualifiedName?.asString()} must return Boolean")
         }
         val baseQualifiedName = try {
-            type.base
-            throw IllegalStateException("Expected to get a KSTypeNotPresentException")
+            type.base.qualifiedName!!
         } catch (e: KSTypeNotPresentException) {
             e.ksType.declaration.qualifiedName!!.asString()
         }
         val base = when (baseQualifiedName) {
             Int::class.qualifiedName -> Int::class
+            UInt::class.qualifiedName -> UInt::class
+            Long::class.qualifiedName -> Long::class
+            ULong::class.qualifiedName -> ULong::class
             else -> throw IllegalArgumentException("Non-primitive type in primitive invariant ${type.base.qualifiedName}")
         }
         val typeAliasSpec = TypeAliasSpec.builder(type.name, base).build()

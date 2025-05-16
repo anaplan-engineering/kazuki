@@ -8,11 +8,11 @@ class TestSequenceFunctions {
 
     @Test
     fun countOf() {
-        assertEquals(0, SequenceFunctions<Int>().countOf(1, mk_Seq()))
-        assertEquals(1, SequenceFunctions<Int>().countOf(1, mk_Seq(1)))
-        assertEquals(2, SequenceFunctions<Int>().countOf(1, mk_Seq(1, 2, 1)))
-        assertEquals(2, SequenceFunctions<Int>().countOf(1, mk_Seq(1, 1)))
-        assertEquals(0, SequenceFunctions<Int>().countOf(1, mk_Seq(2, 2)))
+        assertEquals(0uL, SequenceFunctions<Int>().countOf(1, mk_Seq()))
+        assertEquals(1uL, SequenceFunctions<Int>().countOf(1, mk_Seq(1)))
+        assertEquals(2uL, SequenceFunctions<Int>().countOf(1, mk_Seq(1, 2, 1)))
+        assertEquals(2uL, SequenceFunctions<Int>().countOf(1, mk_Seq(1, 1)))
+        assertEquals(0uL, SequenceFunctions<Int>().countOf(1, mk_Seq(2, 2)))
     }
 
     @Test

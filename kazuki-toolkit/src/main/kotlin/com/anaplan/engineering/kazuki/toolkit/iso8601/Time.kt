@@ -25,18 +25,24 @@ interface Time : Comparable<Time> {
 
 class TimeProperties(private val time: Time) {
     val durationSinceFirstTime by lazy {
-        Duration.fromHours(time.hour.toLong()).functions.addDuration(
-            Duration.fromMinutes(time.minute.toLong()).functions.addDuration(
-                Duration.fromSeconds(time.second.toLong()).functions.addDuration(
-                    Duration.fromMillis(time.millisecond.toLong())
+        Duration.fromHours(time.hour).functions.addDuration(
+            Duration.fromMinutes(time.minute).functions.addDuration(
+                Duration.fromSeconds(time.second).functions.addDuration(
+                    Duration.fromMillis(time.millisecond)
                 )
             )
         )
     }
 
     val formatted by lazy {
-        val milliseconds = if (time.millisecond == 0) "" else String.format(".%03d", time.millisecond)
-        String.format("%02d:%02d:%02d%s", time.hour, time.minute, time.second, milliseconds)
+        val milliseconds = if (time.millisecond == 0uL) "" else String.format(".%03d", time.millisecond.safeToInt())
+        String.format(
+            "%02d:%02d:%02d%s",
+            time.hour.safeToInt(),
+            time.minute.safeToInt(),
+            time.second.safeToInt(),
+            milliseconds
+        )
     }
 }
 
@@ -137,7 +143,7 @@ class OffsetProperties(private val offset: Offset) {
         val sign = when (offset.offsetDirection) {
             OffsetDirection.Plus -> "+"; OffsetDirection.Minus -> "-"; OffsetDirection.None -> ""
         }
-        String.format("%s%02d:%02d", sign, hourMinute.hour, hourMinute.minute)
+        String.format("%s%02d:%02d", sign, hourMinute.hour.safeToInt(), hourMinute.minute.safeToInt())
     }
 }
 

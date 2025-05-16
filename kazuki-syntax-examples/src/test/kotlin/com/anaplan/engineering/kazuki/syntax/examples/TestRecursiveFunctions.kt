@@ -9,7 +9,7 @@ class TestRecursiveFunctions {
 
     @Test
     fun noMeasure() {
-        assertEquals(4, RecursiveFunctions.noRecursion(mk_Set(1, 2, 3, 4)))
+        assertEquals(4u, RecursiveFunctions.noRecursion(mk_Set(1, 2, 3, 4)))
     }
 
     // TODO -- test measure cleared with pre/post failures

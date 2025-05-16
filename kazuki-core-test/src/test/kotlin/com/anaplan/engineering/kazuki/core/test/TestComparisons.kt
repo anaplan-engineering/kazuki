@@ -45,8 +45,8 @@ class TestComparisons {
 
     @Test
     fun caselessString_hash() {
-        assertEquals(1, mk_Set(toCaselessString("hello"), toCaselessString("hello")).card)
-        assertEquals(1, mk_Set(toCaselessString("hEllO"), toCaselessString("Hello")).card)
+        assertEquals(1uL, mk_Set(toCaselessString("hello"), toCaselessString("hello")).card)
+        assertEquals(1uL, mk_Set(toCaselessString("hEllO"), toCaselessString("Hello")).card)
 
         assertEquals(4, mk_Mapping(mk_(toCaselessString("hello"), 4))[toCaselessString("hello")])
         assertEquals(4, mk_Mapping(mk_(toCaselessString("HellO"), 4))[toCaselessString("hELLo")])
@@ -122,8 +122,8 @@ class TestComparisons {
 
     @Test
     fun caselessString_descendant_noOverride_hash() {
-        assertEquals(1, mk_Set(toCaselessString("hello"), toNonEmptyCaselessString("hello")).card)
-        assertEquals(1, mk_Set(toId1("hEllO"), toCaselessString("Hello")).card)
+        assertEquals(1uL, mk_Set(toCaselessString("hello"), toNonEmptyCaselessString("hello")).card)
+        assertEquals(1uL, mk_Set(toId1("hEllO"), toCaselessString("Hello")).card)
 
         assertEquals(4, mk_Mapping<CaselessString, Int>(mk_(toId1("hello"), 4))[toNonEmptyCaselessString("hello")])
         assertEquals(4, mk_Mapping(mk_(toCaselessString("HellO"), 4))[toId2("hELLo")])
@@ -131,7 +131,7 @@ class TestComparisons {
 
     @Test
     fun caselessString_descendant_siblings_hash() {
-        assertEquals(1, mk_Set(toId1("hEllO"), toId2("Hello")).card)
+        assertEquals(1uL, mk_Set(toId1("hEllO"), toId2("Hello")).card)
 
         assertEquals(4, mk_Mapping<CaselessString, Int>(mk_(toId1("hello"), 4))[toId2("hello")])
         assertEquals(4, mk_Mapping<CaselessString, Int>(mk_(toId2("HellO"), 4))[toId1("hELLo")])
@@ -139,8 +139,8 @@ class TestComparisons {
 
     @Test
     fun caselessString_descendant_override_hash() {
-        assertEquals(1, mk_Set(toId3("hel lo"), toId3(" hello")).card)
-        assertEquals(2, mk_Set(toId1("hEllO"), toId3("Hello")).card)
+        assertEquals(1uL, mk_Set(toId3("hel lo"), toId3(" hello")).card)
+        assertEquals(2uL, mk_Set(toId1("hEllO"), toId3("Hello")).card)
 
         causesPreconditionFailure {
             mk_Mapping<CaselessString, Int>(mk_(toId1("hello"), 4))[toId3("hello")]
@@ -261,8 +261,8 @@ class TestComparisons {
 
     @Test
     fun time_hash() {
-        assertEquals(1, mk_Set(mk_Time(15, 23, 13, Time.Zone.GMT), mk_Time(16, 23, 13, Time.Zone.CET)).card)
-        assertEquals(1, mk_Set(mk_Time(15, 23, 13, Time.Zone.GMT), mk_Time(15, 23, 13, Time.Zone.GMT)).card)
+        assertEquals(1uL, mk_Set(mk_Time(15, 23, 13, Time.Zone.GMT), mk_Time(16, 23, 13, Time.Zone.CET)).card)
+        assertEquals(1uL, mk_Set(mk_Time(15, 23, 13, Time.Zone.GMT), mk_Time(15, 23, 13, Time.Zone.GMT)).card)
 
         assertEquals(4, mk_Mapping(mk_(mk_Time(15, 23, 13, Time.Zone.GMT), 4))[mk_Time(15, 23, 13, Time.Zone.GMT)])
         assertEquals(4, mk_Mapping(mk_(mk_Time(15, 23, 13, Time.Zone.GMT), 4))[mk_Time(10, 23, 13, Time.Zone.EST)])
@@ -335,8 +335,8 @@ class TestComparisons {
 
     @Test
     fun time_descendant_noOverride_hash() {
-        assertEquals(1, mk_Set(mk_Time(15, 23, 13, Time.Zone.GMT), mk_AfternoonTime(16, 23, 13, Time.Zone.CET)).card)
-        assertEquals(1, mk_Set(mk_EveningTime(19, 23, 13, Time.Zone.GMT), mk_Time(19, 23, 13, Time.Zone.GMT)).card)
+        assertEquals(1uL, mk_Set(mk_Time(15, 23, 13, Time.Zone.GMT), mk_AfternoonTime(16, 23, 13, Time.Zone.CET)).card)
+        assertEquals(1uL, mk_Set(mk_EveningTime(19, 23, 13, Time.Zone.GMT), mk_Time(19, 23, 13, Time.Zone.GMT)).card)
 
         assertEquals(
             6,
@@ -351,11 +351,11 @@ class TestComparisons {
     @Test
     fun time_descendant_siblings_hash() {
         assertEquals(
-            1,
+            1uL,
             mk_Set(mk_AfternoonTime(15, 23, 13, Time.Zone.GMT), mk_WorkingTime(16, 23, 13, Time.Zone.CET)).card
         )
         assertEquals(
-            1,
+            1uL,
             mk_Set(mk_WorkingTime(13, 36, 18, Time.Zone.EST), mk_AfternoonTime(18, 36, 18, Time.Zone.GMT)).card
         )
 
@@ -382,14 +382,14 @@ class TestComparisons {
     @Test
     fun time_descendant_override_hash() {
         assertEquals(
-            1,
+            1uL,
             mk_Set(
                 mk_NearestMinuteTime(15, 23, 13, Time.Zone.GMT),
                 mk_NearestMinuteTime(16, 23, 13, Time.Zone.CET)
             ).card
         )
         assertEquals(
-            2,
+            2uL,
             mk_Set(mk_NearestMinuteTime(13, 36, 48, Time.Zone.EST), mk_Time(18, 36, 18, Time.Zone.GMT)).card
         )
 

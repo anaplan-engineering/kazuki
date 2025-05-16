@@ -13,4 +13,11 @@ internal object InbuiltNames {
     internal val mkSeq = MemberName(corePackage, "mk_Seq")
     internal val mkSeq1 = MemberName(corePackage, "mk_Seq1")
     internal val forall = MemberName(corePackage, "forall")
+
+    internal val toNat = MemberName(corePackage, "toNat")
+    internal val toNat1 = MemberName(corePackage, "toNat1")
+    internal val toInteger = MemberName(corePackage, "toInteger")
+    internal val safeToInt = MemberName(corePackage, "safeToInt")
+
+
 }

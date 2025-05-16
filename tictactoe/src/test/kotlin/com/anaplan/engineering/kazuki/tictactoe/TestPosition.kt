@@ -11,36 +11,36 @@ class TestPosition {
 
     @Test
     fun checkInvariantPasses() {
-        val position = mk_Position(1, 3)
-        assertEquals(1, position.row)
-        assertEquals(3, position.col)
+        val position = mk_Position(1u, 3u)
+        assertEquals(1u, position.row)
+        assertEquals(3u, position.col)
     }
 
     @Test(expected = InvariantFailure::class)
     fun checkRowInvariant_tooBig() {
-        mk_Position(4, 2)
+        mk_Position(4u, 2u)
     }
 
     @Test(expected = InvariantFailure::class)
     fun checkColInvariant_tooBig() {
-        mk_Position(2, 4)
+        mk_Position(2u, 4u)
     }
 
     @Test(expected = InvariantFailure::class)
     fun checkRowInvariant_tooSmall() {
-        mk_Position(0, 2)
+        mk_Position(0u, 2u)
     }
 
     @Test(expected = InvariantFailure::class)
     fun checkColInvariant_tooSmall() {
-        mk_Position(2, 0)
+        mk_Position(2u, 0u)
     }
 
     @Test
     fun checkEquality() {
-        val p1 = mk_Position(1, 1)
-        val p2 = mk_Position(2, 1)
-        val p3 = mk_Position(1, 1)
+        val p1 = mk_Position(1u, 1u)
+        val p2 = mk_Position(2u, 1u)
+        val p3 = mk_Position(1u, 1u)
 
         assertTrue(p1 == p1)
         assertFalse(p1 == p2)

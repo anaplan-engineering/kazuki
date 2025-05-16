@@ -3,31 +3,55 @@ package com.anaplan.engineering.kazuki.toolkit.iso8601
 import com.anaplan.engineering.kazuki.core.bool
 import com.anaplan.engineering.kazuki.core.function
 import com.anaplan.engineering.kazuki.core.implies
+import com.anaplan.engineering.kazuki.core.nat
+import com.anaplan.engineering.kazuki.core.nat1
+import com.anaplan.engineering.kazuki.core.toNat
+import com.anaplan.engineering.kazuki.core.toNat1
 import com.anaplan.engineering.kazuki.toolkit.iso8601.DateUtilities.daysInMonth
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Date_Module.mk_Date
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Dtg_Module.mk_Dtg
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Time_Module.mk_Time
 
 object DateFormattingUtilities {
+    
+    private fun String.toNat1() = toInt().toNat1()
+    private fun String.toNat() = toInt().toNat()
+    private fun String.toNat1OrNull(): nat1? {
+        val int = toIntOrNull()
+        return if (int != null && int > 0) {
+            int.toNat1()
+        } else {
+            null
+        }
+    }
+    private fun String.toNatOrNull(): nat? {
+        val int = toIntOrNull()
+        return if (int != null && int >= 0) {
+            int.toNat()
+        } else {
+            null
+        }
+    }
+
     val stringToDate: (String) -> Date = function(
         command = { string ->
-            val year = string.substring(0, 4).toInt()
-            val month = string.substring(5, 7).toInt()
-            val day = string.substring(8, 10).toInt()
+            val year = string.substring(0, 4).toNat()
+            val month = string.substring(5, 7).toNat1()
+            val day = string.substring(8, 10).toNat1()
 
             mk_Date(year, month, day)
         }, pre = { string -> isStringIsoDate(string) })
 
     val stringToDtg: (String) -> Dtg = function(
         command = { string ->
-            val year = string.substring(0, 4).toInt()
-            val month = string.substring(5, 7).toInt()
-            val day = string.substring(8, 10).toInt()
+            val year = string.substring(0, 4).toNat()
+            val month = string.substring(5, 7).toNat1()
+            val day = string.substring(8, 10).toNat1()
 
-            val hour = string.substring(11, 13).toInt()
-            val minute = string.substring(14, 16).toInt()
-            val second = string.substring(17, 19).toInt()
-            val millisecond = if (string.length == 19) 0 else string.substring(20, 23).toInt()
+            val hour = string.substring(11, 13).toNat1()
+            val minute = string.substring(14, 16).toNat1()
+            val second = string.substring(17, 19).toNat()
+            val millisecond = if (string.length == 19) 0u else string.substring(20, 23).toNat()
 
             mk_Dtg(mk_Date(year, month, day), mk_Time(hour, minute, second, millisecond))
         }, pre = { string -> isStringIsoDtg(string) })
@@ -65,17 +89,16 @@ object DateFormattingUtilities {
 
     private val isoDateNumbersValid: (String) -> bool = function(
         command = { string ->
-
-            val year = string.substring(0, 4).toIntOrNull()
-            val month = string.substring(5, 7).toIntOrNull()
-            val day = string.substring(8, 10).toIntOrNull()
+            val year = string.substring(0, 4).toNatOrNull()
+            val month = string.substring(5, 7).toNat1OrNull()
+            val day = string.substring(8, 10).toNat1OrNull()
 
             val isoDateNumbersNonNull = (year != null && month != null && day != null)
 
             val isoDateNumbersValid by lazy {
                 val yearValid = year in FirstYear..LastYear
-                val monthValid = month in 1..MonthsPerYear
-                val dayValid by lazy { day in 1..daysInMonth(year!!, month!!) }
+                val monthValid = month in 1uL..MonthsPerYear
+                val dayValid by lazy { day in 1uL..daysInMonth(year!!, month!!) }
                 yearValid && monthValid && dayValid
             }
 
@@ -87,15 +110,15 @@ object DateFormattingUtilities {
 
             val dateValid = isoDateNumbersValid(string)
 
-            val hour = string.substring(11, 13).toIntOrNull()
-            val minute = string.substring(14, 16).toIntOrNull()
-            val second = string.substring(17, 19).toIntOrNull()
+            val hour = string.substring(11, 13).toNatOrNull()
+            val minute = string.substring(14, 16).toNatOrNull()
+            val second = string.substring(17, 19).toNatOrNull()
             val isoTimeNonNull = hour != null && minute != null && second != null
 
             val timeValid by lazy {
-                val hourValid = hour in 0 until HoursPerDay
-                val minuteValid = minute in 0 until MinutesPerHour
-                val secondValid = second in 0 until SecondsPerMinute
+                val hourValid = hour in 0uL until HoursPerDay
+                val minuteValid = minute in 0uL until MinutesPerHour
+                val secondValid = second in 0uL until SecondsPerMinute
                 isoTimeNonNull && hourValid && minuteValid && secondValid
             }
 
@@ -113,8 +136,8 @@ object DateFormattingUtilities {
 
     private val isoMillisecondValid: (String) -> bool = function(
         command = { string ->
-            val millisecond = string.substring(20, 23).toIntOrNull()
-            millisecond != null && millisecond in 0 until MillisPerSecond
+            val millisecond = string.substring(20, 23).toNatOrNull()
+            millisecond != null && millisecond in 0uL until MillisPerSecond
         }
     )
 }
