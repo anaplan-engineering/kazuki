@@ -312,13 +312,47 @@ class TestSequence(
         assertEquals(mk_Seq(mk_(1uL, 1), mk_(2uL, 1), mk_(3uL, 1)), create(1, 1, 1).tuples)
     }
 
+
     @Test
     fun filter() {
-        assertEquals(mk_Seq(1, 2, 3), mk_Seq(-3, -2, -1, 0, 1, 2, 3).filter { e -> e > 0 })
-        assertEquals(mk_Seq(-3, -2, -1, 0, 1, 2, 3), mk_Seq(-3, -2, -1, 0, 1, 2, 3).filter { e -> e > -4 })
-        assertEquals(mk_Seq(-3, -2, -1), mk_Seq(-3, -2, -1, 0, 1, 2, 3).filter { e -> e < 0 })
-        assertEquals(mk_Seq(), mk_Seq(-3, -2, -1, 0, 1, 2, 3).filter { e -> e > 3 })
-        assertEquals(mk_Seq<Int>(), mk_Seq<Int>().filter { e -> e in mk_Seq(1) })
+        if (allowsEmpty) {
+            assertEquals(create(), create().filter { true })
+            assertEquals(create(), create().filter { false })
+            assertEquals(create(), create(1, 2, 3).filter { false })
+            assertEquals(create(), create(1).filter { it != 1 })
+        } else {
+            // inter creates a set of the same type as the first input
+            causesPreconditionFailure { create(1).filter { it != 1 } }
+        }
+        assertEquals(create(2, 3), create(1, 2, 3).filter { it != 1 })
+        assertEquals(create(1), create(1, 2, 3).filter { it == 1 })
+    }
+
+    @Test
+    fun filter_retainType_true() {
+        if (allowsEmpty) {
+            assertEquals(create(), create().filter(retainType = true) { true })
+            assertEquals(create(), create().filter(retainType = true) { false })
+            assertEquals(create(), create(1, 2, 3).filter(retainType = true) { false })
+            assertEquals(create(), create(1).filter(retainType = true) { it != 1 })
+        } else {
+            // inter creates a set of the same type as the first input
+            causesPreconditionFailure { create(1).filter(retainType = true) { it != 1 } }
+        }
+        assertEquals(create(2, 3), create(1, 2, 3).filter(retainType = true) { it != 1 })
+        assertEquals(create(1), create(1, 2, 3).filter(retainType = true) { it == 1 })
+    }
+
+    @Test
+    fun filter_retainType_false() {
+        if (allowsEmpty) {
+            assertEquals(mk_Seq(), create().filter(retainType = false) { true })
+            assertEquals(mk_Seq(), create().filter(retainType = false) { false })
+        }
+        assertEquals(mk_Seq(), create(1, 2, 3).filter(retainType = false) { false })
+        assertEquals(mk_Seq(), create(1).filter(retainType = false) { it != 1 })
+        assertEquals(mk_Seq(2, 3), create(1, 2, 3).filter(retainType = false) { it != 1 })
+        assertEquals(mk_Seq(1), create(1, 2, 3).filter(retainType = false) { it == 1 })
     }
 
 }

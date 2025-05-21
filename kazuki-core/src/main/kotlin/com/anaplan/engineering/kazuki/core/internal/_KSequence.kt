@@ -17,7 +17,11 @@ interface _KSequence<T, S : Sequence<T>> : Sequence<T>, _KazukiObject {
 
 internal fun <T, S : Sequence<T>> S.transformSequence(fn: (_KSequence<T, S>) -> List<T>): S {
     val kSequence = this as? _KSequence<T, S> ?: throw PreconditionFailure("Sequence was implemented outside Kazuki")
-    return kSequence.construct(fn(kSequence))
+    val elements = fn(kSequence)
+    if (elements.isEmpty() && this is Sequence1<*>) {
+        throw PreconditionFailure("Cannot create seq1 without elements")
+    }
+    return kSequence.construct(elements)
 }
 
 // TODO generate impls to ensure consistenct
