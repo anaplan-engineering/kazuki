@@ -41,13 +41,14 @@ fun <T> as_Set1(elems: Array<T>): Set1<T> =
 
 fun Set<*>.pretty() = this.prettyOrDefault()
 
-fun <T, S : Set<T>> S.filter(fn: (T) -> Boolean): S = transformSet {
-    val filtered = it.elements.kotlinFilter(fn)
-    if (filtered.isEmpty() && this is Set1<*>) {
-        throw PreconditionFailure("Cannot create empty set1")
+fun <T, S : Set<T>> S.filter(fn: (T) -> Boolean): S = transformSet { it.elements.kotlinFilter(fn) }
+
+fun <T> Set<T>.filter(retainType: Boolean, fn: (T) -> Boolean): Set<T> =
+    if (retainType) {
+        this.filter(fn)
+    } else {
+        as_Set(this.kotlinFilter(fn))
     }
-    filtered
-}
 
 infix fun <T> Set<T>.subset(other: Set<T>) = other.containsAll(this)
 
@@ -57,7 +58,7 @@ infix fun <T, S : Set<T>> S.inter(other: Set<T>) = transformSet { it.elements.ko
 
 infix fun <T, S : Set<T>> S.union(other: Set<T>) = transformSet { it.elements.toMutableSet().apply { addAll(other) } }
 
-val <T> Set<T>.card : nat get() = size.toNat()
+val <T> Set<T>.card: nat get() = size.toNat()
 
 fun <T> Set<T>.arbitrary() =
     if (isEmpty()) throw PreconditionFailure("Cannot get arbitrary member of emptyset") else first()

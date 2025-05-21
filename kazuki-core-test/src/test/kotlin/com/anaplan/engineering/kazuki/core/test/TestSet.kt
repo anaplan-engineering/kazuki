@@ -47,6 +47,48 @@ class TestSet(
     }
 
     @Test
+    fun filter() {
+        if (allowsEmpty) {
+            assertEquals(create(), create().filter { true })
+            assertEquals(create(), create().filter { false })
+            assertEquals(create(), create(1, 2, 3).filter { false })
+            assertEquals(create(), create(1).filter { it != 1 })
+        } else {
+            // inter creates a set of the same type as the first input
+            causesPreconditionFailure { create(1).filter { it != 1 } }
+        }
+        assertEquals(create(2, 3), create(1, 2, 3).filter { it != 1 })
+        assertEquals(create(1), create(1, 2, 3).filter { it == 1 })
+    }
+
+    @Test
+    fun filter_retainType_true() {
+        if (allowsEmpty) {
+            assertEquals(create(), create().filter(retainType = true) { true })
+            assertEquals(create(), create().filter(retainType = true) { false })
+            assertEquals(create(), create(1, 2, 3).filter(retainType = true) { false })
+            assertEquals(create(), create(1).filter(retainType = true) { it != 1 })
+        } else {
+            // inter creates a set of the same type as the first input
+            causesPreconditionFailure { create(1).filter(retainType = true) { it != 1 } }
+        }
+        assertEquals(create(2, 3), create(1, 2, 3).filter(retainType = true) { it != 1 })
+        assertEquals(create(1), create(1, 2, 3).filter(retainType = true) { it == 1 })
+    }
+
+    @Test
+    fun filter_retainType_false() {
+        if (allowsEmpty) {
+            assertEquals(mk_Set(), create().filter(retainType = false) { true })
+            assertEquals(mk_Set(), create().filter(retainType = false) { false })
+        }
+        assertEquals(mk_Set(), create(1, 2, 3).filter(retainType = false) { false })
+        assertEquals(mk_Set(), create(1).filter(retainType = false) { it != 1 })
+        assertEquals(mk_Set(2, 3), create(1, 2, 3).filter(retainType = false) { it != 1 })
+        assertEquals(mk_Set(1), create(1, 2, 3).filter(retainType = false) { it == 1 })
+    }
+
+    @Test
     fun union() {
         if (allowsEmpty) {
             assertEquals(create(), create() union create())

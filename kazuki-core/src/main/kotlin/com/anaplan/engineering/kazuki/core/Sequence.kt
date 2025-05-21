@@ -4,6 +4,7 @@ import com.anaplan.engineering.kazuki.core.internal.__KSequence
 import com.anaplan.engineering.kazuki.core.internal.__KSequence1
 import com.anaplan.engineering.kazuki.core.internal.transformSequence
 import kotlin.collections.count as kotlinCount
+import kotlin.collections.filter as kotlinFilter
 
 // TODO should sequence inherit from relation rather than list?
 interface Sequence<out T> : Collection<T> {
@@ -106,13 +107,14 @@ fun <T, S : Sequence<T>> S.insert(s: S, i: nat1) =
         transformSequence { it.elements.toMutableList().apply { addAll((i - 1u).safeToInt(), s) } }
     }
 
-fun <T, S : Sequence<T>> S.filter(fn: (T) -> Boolean) = transformSequence {
-    val filtered = it.elements.filter(fn)
-    if (filtered.isEmpty() && this is Sequence1<*>) {
-        throw PreconditionFailure("Cannot create empty seq1")
+fun <T, S : Sequence<T>> S.filter(fn: (T) -> Boolean) = transformSequence { it.elements.kotlinFilter(fn) }
+
+fun <T> Sequence<T>.filter(retainType: Boolean, fn: (T) -> Boolean) =
+    if (retainType) {
+        this.filter(fn)
+    } else {
+        as_Seq(this.kotlinFilter(fn))
     }
-    filtered
-}
 
 fun <T> Sequence<T>.indexOf(s: Sequence<T>) =
     if (!(s subseq this)) {
@@ -131,7 +133,7 @@ infix fun <T, S : Sequence<T>> S.domRestrictTo(s: Set<nat1>) = transformSequence
 infix fun <T, S : Sequence<T>> S.drt(s: Set<nat1>) = domRestrictTo(s)
 
 infix fun <T, S : Sequence<T>> S.rngRestrictTo(s: Set<T>) = transformSequence {
-    it.elements.filter { e -> e in s }
+    it.elements.kotlinFilter { e -> e in s }
 }
 
 infix fun <T, S : Sequence<T>> S.rrt(s: Set<T>) = rngRestrictTo(s)
@@ -145,7 +147,7 @@ infix fun <T, S : Sequence<T>> S.domSubtract(s: Set<nat1>) = transformSequence {
 infix fun <T, S : Sequence<T>> S.dsub(s: Set<nat1>) = domSubtract(s)
 
 infix fun <T, S : Sequence<T>> S.rngSubtract(s: Set<T>) = transformSequence {
-    it.elements.filter { e -> e !in s }
+    it.elements.kotlinFilter { e -> e !in s }
 }
 
 infix fun <T, S : Sequence<T>> S.rsub(s: Set<T>) = rngSubtract(s)
