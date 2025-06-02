@@ -164,38 +164,29 @@ object DtgUtilities {
 
     val monthsBetweenDtgs: (Dtg, Dtg) -> nat = function(
         command = { earlierDtg, laterDtg ->
-            MonthsPerYear * yearsBetweenDtgs(earlierDtg, laterDtg) +
-                    (if (laterDtg.date.month < earlierDtg.date.month) 12uL else 0uL) +
-                    if (laterDtg.date.day >= earlierDtg.date.day) {
-                        laterDtg.date.month - earlierDtg.date.month
-                    } else {
-                        laterDtg.date.month - earlierDtg.date.month - 1uL
-                    }
+            val earlierDate = earlierDtg.date
+            val laterDate = laterDtg.date
+
+            val baseYears = laterDate.year - earlierDate.year
+            val baseMonths = ((baseYears * 12U) + laterDate.month) - earlierDate.month
+
+            // The above calculation is off by one if laterDate is earlier on in its month than earlierDate
+            // (for example, 1 March is only one month after 2 January)
+            val partialMonth =
+                laterDate.day < earlierDate.day || laterDate.day == earlierDate.day && laterDtg.time < earlierDtg.time
+
+            if (partialMonth) {
+                baseMonths - 1U
+            } else {
+                baseMonths
+            }
         },
         pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg }
     )
 
     val yearsBetweenDtgs: (Dtg, Dtg) -> nat = function(
         command = { earlierDtg, laterDtg ->
-
-            val durationInYearUpToEarlierDtg =
-                earlierDtg.properties.durationSinceFirstDtg.functions.subtractDuration(
-                    Duration.durationFromFirstYearUpToStartOfYear(
-                        earlierDtg.date.year
-                    )
-                )
-            val durationInYearUpToLaterDtg =
-                laterDtg.properties.durationSinceFirstDtg.functions.subtractDuration(
-                    Duration.durationFromFirstYearUpToStartOfYear(
-                        laterDtg.date.year
-                    )
-                )
-
-            if (durationInYearUpToEarlierDtg <= durationInYearUpToLaterDtg) {
-                laterDtg.date.year - earlierDtg.date.year
-            } else {
-                laterDtg.date.year - earlierDtg.date.year - 1uL
-            }
+            monthsBetweenDtgs(earlierDtg, laterDtg) / 12U
         },
         pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg }
     )

@@ -1915,6 +1915,203 @@ class TestIso8601 {
     }
 
     @Test
+    fun monthsBetweenDtgs_OneMilliShort() {
+        val time1 = mk_Time(hour=0U, minute=0U, second=0U, millisecond=1U)
+        val time2 = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=1U, day=1U), time1)
+        val dtg2 = mk_Dtg(mk_Date(year=2008U, month=2U, day=1U), time2)
+
+        assertEquals(0U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun monthsBetweenDtgs_OneDayShort() {
+        val midnight = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=1U, day=2U), midnight)
+        val dtg2 = mk_Dtg(mk_Date(year=2008U, month=2U, day=1U), midnight)
+
+        assertEquals(0U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun monthsBetweenDtgs_OneDayOneMilliShort() {
+        val time1 = mk_Time(hour=0U, minute=0U, second=0U, millisecond=1U)
+        val time2 = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=1U, day=2U), time1)
+        val dtg2 = mk_Dtg(mk_Date(year=2008U, month=2U, day=1U), time2)
+
+        assertEquals(0U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun monthsBetweenDtgs_OneMilliShortOfTwo() {
+        val time1 = mk_Time(hour=0U, minute=0U, second=0U, millisecond=1U)
+        val time2 = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=1U, day=1U), time1)
+        val dtg2 = mk_Dtg(mk_Date(year=2008U, month=3U, day=1U), time2)
+
+        assertEquals(1U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun monthsBetweenDtgs_OneDayOneMilliShortOfTwo() {
+        val time1 = mk_Time(hour=0U, minute=0U, second=0U, millisecond=1U)
+        val time2 = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=1U, day=2U), time1)
+        val dtg2 = mk_Dtg(mk_Date(year=2008U, month=3U, day=1U), time2)
+
+        assertEquals(1U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun monthsBetweenDtgs_OneDayLongOneMilliShort() {
+        val time1 = mk_Time(hour=0U, minute=0U, second=0U, millisecond=1U)
+        val time2 = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=2U, day=1U), time1)
+        val dtg2 = mk_Dtg(mk_Date(year=2008U, month=3U, day=2U), time2)
+
+        assertEquals(1U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun monthsBetweenDtgs_IncompleteDifferentMonth() {
+        val midnight = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=1U, day=1U), midnight)
+        val dtg2 = mk_Dtg(mk_Date(year=2009U, month=2U, day=2U), midnight)
+
+        //(earlierDate.month <= laterDate.month) &&
+//    (laterDate.day < earlierDate.day || laterDate.day == earlierDate.day && laterDtg.time < earlierDtg.time)
+        assertEquals(13U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun monthsBetweenDtgs_YearStraddle() {
+        val midnight = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=12U, day=1U), midnight)
+        val dtg2 = mk_Dtg(mk_Date(year=2009U, month=2U, day=1U), midnight)
+
+        assertEquals(2U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun monthsBetweenDtgs_YearPlusMonth() {
+        val midnight = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=12U, day=1U), midnight)
+        val dtg2 = mk_Dtg(mk_Date(year=2010U, month=1U, day=1U), midnight)
+
+        assertEquals(13U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun monthsBetweenDtgs_ExactlyOneMonth_Common() {
+        val midnight = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2006U, month=2U, day=28U), midnight)
+        val dtg2 = mk_Dtg(mk_Date(year=2006U, month=3U, day=28U), midnight)
+
+        assertEquals(1U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun monthsBetweenDtgs_ExactlyOneMonth_BeforeLeapDay() {
+        val midnight = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=2U, day=28U), midnight)
+        val dtg2 = mk_Dtg(mk_Date(year=2008U, month=3U, day=28U), midnight)
+
+        assertEquals(1U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun monthsBetweenDtgs_ExactlyOneMonth_AfterLeapDay() {
+        val midnight = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=3U, day=1U), midnight)
+        val dtg2 = mk_Dtg(mk_Date(year=2008U, month=4U, day=1U), midnight)
+
+        assertEquals(1U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun monthsBetweenDtgs_ExactlyOneYear_Common() {
+        val midnight = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2006U, month=2U, day=28U), midnight)
+        val dtg2 = mk_Dtg(mk_Date(year=2007U, month=2U, day=28U), midnight)
+
+        assertEquals(12U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun monthsBetweenDtgs_ExactlyOneYear_BeforeLeapDay() {
+        val midnight = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=2U, day=28U), midnight)
+        val dtg2 = mk_Dtg(mk_Date(year=2009U, month=2U, day=28U), midnight)
+
+        assertEquals(12U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun monthsBetweenDtgs_ExactlyOneYear_AfterLeapDay() {
+        val midnight = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=3U, day=1U), midnight)
+        val dtg2 = mk_Dtg(mk_Date(year=2009U, month=3U, day=1U), midnight)
+
+        assertEquals(12U, DtgUtilities.monthsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun yearsBetweenDtgs_ExactlyOneYear_Common() {
+        val midnight = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2006U, month=2U, day=28U), midnight)
+        val dtg2 = mk_Dtg(mk_Date(year=2007U, month=2U, day=28U), midnight)
+
+        assertEquals(1U, DtgUtilities.yearsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun yearsBetweenDtgs_ExactlyOneYear_BeforeLeapDay() {
+        val midnight = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=2U, day=28U), midnight)
+        val dtg2 = mk_Dtg(mk_Date(year=2009U, month=2U, day=28U), midnight)
+
+        assertEquals(1U, DtgUtilities.yearsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun yearsBetweenDtgs_ExactlyOneYear_AfterLeapDay() {
+        val midnight = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=3U, day=1U), midnight)
+        val dtg2 = mk_Dtg(mk_Date(year=2009U, month=3U, day=1U), midnight)
+
+        assertEquals(1U, DtgUtilities.yearsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
+    fun yearsBetweenDtgs_LeapToLeap() {
+        val midnight = mk_Time(hour=0U, minute=0U, second=0U, millisecond=0U)
+
+        val dtg1 = mk_Dtg(mk_Date(year=2008U, month=2U, day=29U), midnight)
+        val dtg2 = mk_Dtg(mk_Date(year=2012U, month=2U, day=29U), midnight)
+
+        assertEquals(4U, DtgUtilities.yearsBetweenDtgs(dtg1, dtg2))
+    }
+
+    @Test
     fun isStringADateTest() {
         assertEquals(true, DateFormattingUtilities.isStringIsoDate("2018-04-01"))
         assertEquals(false, DateFormattingUtilities.isStringIsoDate("2018/04/01"))
