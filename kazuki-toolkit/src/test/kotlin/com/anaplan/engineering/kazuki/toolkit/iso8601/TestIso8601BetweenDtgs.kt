@@ -171,7 +171,21 @@ class TestIso8601BetweenDtgs(
                     later = midnightOn(year=2009U, month=2U, day=2U),
                     months = 13,
                     years = 1
-                )
+                ),
+                case(
+                    "postcondition forwards clipping",
+                    earlier = midnightOn(year = 2007U, month = 1U, day = 31U),
+                    later = midnightOn(year = 2007U, month = 2U, day = 28U),
+                    months = 0,
+                    years = 0,
+                ),
+                case(
+                    "postcondition backwards clipping",
+                    earlier = midnightOn(year = 2007U, month = 2U, day = 28U),
+                    later = midnightOn(year = 2007U, month = 3U, day = 31U),
+                    months = 1,
+                    years = 0,
+                ),
             )
 
         private fun case(name: String, earlier: Dtg, later: Dtg, months: Int, years: Int): Array<Any?> =

@@ -184,7 +184,7 @@ object DtgUtilities {
         pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
         post = { earlierDtg, laterDtg, result ->
             earlierDtg.functions.addMonths(result) <= laterDtg &&
-                    earlierDtg.functions.addMonths(result + 1U) > laterDtg
+                    laterDtg.functions.subtractMonths(result) >= earlierDtg
         }
     )
 
@@ -195,7 +195,7 @@ object DtgUtilities {
         pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
         post = { earlierDtg, laterDtg, result ->
             earlierDtg.functions.addMonths(result * 12U) <= laterDtg &&
-                    earlierDtg.functions.addMonths((result + 1U) * 12U) > laterDtg
+                    laterDtg.functions.subtractMonths(result * 12U) >= earlierDtg
         }
     )
 }
