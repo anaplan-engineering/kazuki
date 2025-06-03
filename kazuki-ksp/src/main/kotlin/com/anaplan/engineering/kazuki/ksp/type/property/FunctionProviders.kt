@@ -2,6 +2,7 @@ package com.anaplan.engineering.kazuki.ksp.type.property
 
 import com.anaplan.engineering.kazuki.core.FunctionProvider
 import com.anaplan.engineering.kazuki.ksp.getClassDeclaration
+import com.anaplan.engineering.kazuki.ksp.lazy
 import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeParameters
 import com.anaplan.engineering.kazuki.ksp.superModules
 import com.anaplan.engineering.kazuki.ksp.type.TypeGenerationContext
@@ -118,9 +119,11 @@ internal fun TypeSpec.Builder.addFunctionProviders(
                 KModifier.OVERRIDE
             ).apply {
                 if (makeable) {
-                    initializer(
+                    this.delegate(
                         CodeBlock.builder().apply {
+                            beginControlFlow("lazy")
                             addStatement("$providerQualifiedName(this)")
+                            endControlFlow()
                         }.build()
                     )
                 } else {
