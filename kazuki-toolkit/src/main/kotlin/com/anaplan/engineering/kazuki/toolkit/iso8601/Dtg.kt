@@ -84,6 +84,14 @@ class DtgFunctions(private val dtg: Dtg) {
         pre = { granularity -> granularity != NoDuration }
     )
 
+    val addYears: (nat) -> Dtg = function(
+        command = { n -> mk_Dtg(dtg.date.functions.addYears(n), dtg.time) },
+    )
+
+    val subtractYears: (nat) -> Dtg = function(
+        command = { n -> mk_Dtg(dtg.date.functions.subtractYears(n), dtg.time) },
+    )
+
     val addMonths: (nat) -> Dtg = function(
         command = { n -> mk_Dtg(dtg.date.functions.addMonths(n), dtg.time) },
     )
@@ -194,8 +202,8 @@ object DtgUtilities {
         },
         pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
         post = { earlierDtg, laterDtg, result ->
-            laterDtg.functions.subtractMonths((result + 1u) * MonthsPerYear) < earlierDtg &&
-                    laterDtg.functions.subtractMonths(result * MonthsPerYear) >= earlierDtg
+            laterDtg.functions.subtractYears(result + 1u) < earlierDtg &&
+                    laterDtg.functions.subtractYears(result) >= earlierDtg
         }
     )
 }

@@ -1770,6 +1770,43 @@ class TestIso8601 {
     }
 
     @Test
+    fun dateAddYears() {
+        assertEquals(
+            mk_Date(1990u, 1u, 31u), mk_Date(1990u, 1u, 31u).functions.addYears(0u)
+        )
+        assertEquals(
+            mk_Date(1995u, 3u, 31u), mk_Date(1990u, 3u, 31u).functions.addYears(5u)
+        )
+        assertEquals(
+            mk_Date(2009u, 2u, 28u),
+            mk_Date(2008u, 2u, 29u).functions.addYears(1u)
+        )
+        assertEquals(
+            mk_Date(2012u, 2u, 29u),
+            mk_Date(2008u, 2u, 29u).functions.addYears(4u)
+        )
+    }
+
+    @Test
+    fun dateSubtractYears() {
+        assertFailsWith<PreconditionFailure> { FirstDate.functions.subtractYears(1u) }
+        assertEquals(
+            mk_Date(1990u, 4u, 2u), mk_Date(1990u, 4u, 2u).functions.subtractYears(0u)
+        )
+        assertEquals(
+            mk_Date(1990u, 2u, 2u), mk_Date(1993u, 2u, 2u).functions.subtractYears(3u)
+        )
+        assertEquals(
+            mk_Date(2007u, 2u, 28u),
+            mk_Date(2008u, 2u, 29u).functions.subtractYears(1u)
+        )
+        assertEquals(
+            mk_Date(2004u, 2u, 29u),
+            mk_Date(2008u, 2u, 29u).functions.subtractYears(4u)
+        )
+    }
+
+    @Test
     fun dtgAddDays() {
         assertEquals(
             mk_Date(1990u, 1u, 1u).properties.dtgAtStartOfDay,

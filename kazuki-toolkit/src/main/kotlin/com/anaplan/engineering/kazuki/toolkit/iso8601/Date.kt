@@ -56,6 +56,28 @@ class DateProperties(private val date: Date) {
 }
 
 class DateFunctions(private val date: Date) {
+    val addYears = function(
+        command = { n: nat ->
+            val nextYear = date.year + n
+            val nextMonth = date.month
+            val nextDay = min(date.day, daysInMonth(nextYear, nextMonth))
+
+            mk_Date(nextYear, nextMonth, nextDay)
+        },
+        post = { n, result -> result == date.functions.addMonths(n * MonthsPerYear) }
+    )
+
+    val subtractYears = function(
+        command = { n: nat ->
+            val nextYear = date.year - n
+            val nextMonth = date.month
+            val nextDay = min(date.day, daysInMonth(nextYear, nextMonth))
+
+            mk_Date(nextYear, nextMonth, nextDay)
+        },
+        pre = { n -> date.year > n },
+        post = { n, result -> result == date.functions.subtractMonths(n * MonthsPerYear) }
+    )
 
     val addMonths: (nat) -> Date = function(
         command = { n ->
