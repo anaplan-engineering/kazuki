@@ -181,13 +181,25 @@ object DtgUtilities {
                 baseMonths
             }
         },
-        pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg }
+        pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
+        post = { earlierDtg, laterDtg, result ->
+            val x = result.toLong()
+
+            earlierDtg.functions.addMonths(x) <= laterDtg &&
+                    earlierDtg.functions.addMonths(x + 1) > laterDtg
+        }
     )
 
     val yearsBetweenDtgs: (Dtg, Dtg) -> nat = function(
         command = { earlierDtg, laterDtg ->
             monthsBetweenDtgs(earlierDtg, laterDtg) / 12U
         },
-        pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg }
+        pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
+        post = { earlierDtg, laterDtg, result ->
+            val x = result.toLong()
+
+            earlierDtg.functions.addMonths(x * 12) <= laterDtg &&
+                    earlierDtg.functions.addMonths((x + 1) * 12) > laterDtg
+        }
     )
 }
