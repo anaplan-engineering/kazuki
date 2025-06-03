@@ -162,8 +162,8 @@ object DtgUtilities {
         post = { dtgs, result -> result in dtgs && forall(dtgs) { result >= it } }
     )
 
-    val monthsBetweenDtgs: (Dtg, Dtg) -> nat = function(
-        command = { earlierDtg, laterDtg ->
+    val monthsBetweenDtgs = function(
+        command = { earlierDtg: Dtg, laterDtg: Dtg ->
             val earlierDate = earlierDtg.date
             val laterDate = laterDtg.date
 
@@ -183,18 +183,18 @@ object DtgUtilities {
         },
         pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
         post = { earlierDtg, laterDtg, result ->
-            earlierDtg.functions.addMonths(result) <= laterDtg &&
+            laterDtg.functions.subtractMonths(result + 1u) < earlierDtg &&
                     laterDtg.functions.subtractMonths(result) >= earlierDtg
         }
     )
 
-    val yearsBetweenDtgs: (Dtg, Dtg) -> nat = function(
-        command = { earlierDtg, laterDtg ->
+    val yearsBetweenDtgs = function(
+        command = { earlierDtg: Dtg, laterDtg: Dtg ->
             monthsBetweenDtgs(earlierDtg, laterDtg) / MonthsPerYear
         },
         pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
         post = { earlierDtg, laterDtg, result ->
-            earlierDtg.functions.addMonths(result * MonthsPerYear) <= laterDtg &&
+            laterDtg.functions.subtractMonths((result + 1u) * MonthsPerYear) < earlierDtg &&
                     laterDtg.functions.subtractMonths(result * MonthsPerYear) >= earlierDtg
         }
     )
