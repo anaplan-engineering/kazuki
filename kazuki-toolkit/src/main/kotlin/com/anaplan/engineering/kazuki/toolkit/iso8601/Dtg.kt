@@ -168,7 +168,7 @@ object DtgUtilities {
             val laterDate = laterDtg.date
 
             val baseYears = laterDate.year - earlierDate.year
-            val baseMonths = ((baseYears * 12U) + laterDate.month) - earlierDate.month
+            val baseMonths = ((baseYears * MonthsPerYear) + laterDate.month) - earlierDate.month
 
             // The above calculation is off by one if laterDate is earlier on in its month than earlierDate
             // (for example, 1 March is only one month after 2 January)
@@ -176,7 +176,7 @@ object DtgUtilities {
                 laterDate.day < earlierDate.day || laterDate.day == earlierDate.day && laterDtg.time < earlierDtg.time
 
             if (partialMonth) {
-                baseMonths - 1U
+                baseMonths - 1u
             } else {
                 baseMonths
             }
@@ -190,12 +190,12 @@ object DtgUtilities {
 
     val yearsBetweenDtgs: (Dtg, Dtg) -> nat = function(
         command = { earlierDtg, laterDtg ->
-            monthsBetweenDtgs(earlierDtg, laterDtg) / 12U
+            monthsBetweenDtgs(earlierDtg, laterDtg) / MonthsPerYear
         },
         pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
         post = { earlierDtg, laterDtg, result ->
-            earlierDtg.functions.addMonths(result * 12U) <= laterDtg &&
-                    laterDtg.functions.subtractMonths(result * 12U) >= earlierDtg
+            earlierDtg.functions.addMonths(result * MonthsPerYear) <= laterDtg &&
+                    laterDtg.functions.subtractMonths(result * MonthsPerYear) >= earlierDtg
         }
     )
 }
