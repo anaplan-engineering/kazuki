@@ -84,12 +84,12 @@ class DtgFunctions(private val dtg: Dtg) {
         pre = { granularity -> granularity != NoDuration }
     )
 
-    val addMonths: (integer) -> Dtg = function(
+    val addMonths: (nat) -> Dtg = function(
         command = { n -> mk_Dtg(dtg.date.functions.addMonths(n), dtg.time) },
     )
 
-    val subtractMonths: (integer) -> Dtg = function(
-        command = { n -> dtg.functions.addMonths(-n) },
+    val subtractMonths: (nat) -> Dtg = function(
+        command = { n -> mk_Dtg(dtg.date.functions.subtractMonths(n), dtg.time) },
     )
 
     val addDays: (nat) -> Dtg = function(
@@ -183,10 +183,8 @@ object DtgUtilities {
         },
         pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
         post = { earlierDtg, laterDtg, result ->
-            val x = result.toLong()
-
-            earlierDtg.functions.addMonths(x) <= laterDtg &&
-                    earlierDtg.functions.addMonths(x + 1) > laterDtg
+            earlierDtg.functions.addMonths(result) <= laterDtg &&
+                    earlierDtg.functions.addMonths(result + 1U) > laterDtg
         }
     )
 
@@ -196,10 +194,8 @@ object DtgUtilities {
         },
         pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
         post = { earlierDtg, laterDtg, result ->
-            val x = result.toLong()
-
-            earlierDtg.functions.addMonths(x * 12) <= laterDtg &&
-                    earlierDtg.functions.addMonths((x + 1) * 12) > laterDtg
+            earlierDtg.functions.addMonths(result * 12U) <= laterDtg &&
+                    earlierDtg.functions.addMonths((result + 1U) * 12U) > laterDtg
         }
     )
 }

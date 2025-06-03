@@ -1699,73 +1699,73 @@ class TestIso8601 {
     fun dtgAddMonthsTest() {
         assertEquals(
             mk_Date(1990u, 3u, 31u).properties.dtgAtStartOfDay,
-            mk_Date(1990u, 1u, 31u).properties.dtgAtStartOfDay.functions.addMonths(2)
+            mk_Date(1990u, 1u, 31u).properties.dtgAtStartOfDay.functions.addMonths(2u)
         )
         assertEquals(
             mk_Dtg(mk_Date(1990u, 3u, 28u), mk_Time(3u, 0u, 0u, 0u)),
             mk_Dtg(
                 mk_Date(1990u, 1u, 31u),
                 mk_Time(3u, 0u, 0u, 0u)
-            ).functions.addMonths(1).functions.addMonths(1)
+            ).functions.addMonths(1u).functions.addMonths(1u)
         )
         assertEquals(
             mk_Date(1991u, 1u, 30u).properties.dtgAtStartOfDay,
-            mk_Date(1990u, 11u, 30u).properties.dtgAtStartOfDay.functions.addMonths(2)
+            mk_Date(1990u, 11u, 30u).properties.dtgAtStartOfDay.functions.addMonths(2u)
         )
     }
 
     @Test
     fun dtgSubtractMonthsTest() {
-        assertFailsWith<PreconditionFailure> { FirstDtg.functions.subtractMonths(1) }
+        assertFailsWith<PreconditionFailure> { FirstDtg.functions.subtractMonths(1u) }
         assertEquals(
             mk_Date(1990u, 2u, 2u).properties.dtgAtStartOfDay,
-            mk_Date(1990u, 4u, 2u).properties.dtgAtStartOfDay.functions.subtractMonths(2)
+            mk_Date(1990u, 4u, 2u).properties.dtgAtStartOfDay.functions.subtractMonths(2u)
         )
         assertEquals(
             mk_Dtg(mk_Date(1990u, 1u, 28u), mk_Time(3u, 0u, 0u, 0u)),
             (mk_Dtg(
                 mk_Date(1990u, 3u, 31u),
                 mk_Time(3u, 0u, 0u, 0u)
-            )).functions.subtractMonths(1).functions.subtractMonths(1)
+            )).functions.subtractMonths(1u).functions.subtractMonths(1u)
         )
         assertEquals(
             mk_Date(1990u, 11u, 2u).properties.dtgAtStartOfDay,
-            mk_Date(1991u, 1u, 2u).properties.dtgAtStartOfDay.functions.subtractMonths(2)
+            mk_Date(1991u, 1u, 2u).properties.dtgAtStartOfDay.functions.subtractMonths(2u)
         )
     }
 
     @Test
     fun dateAddMonthsTest() {
         assertEquals(
-            mk_Date(1990u, 1u, 31u), mk_Date(1990u, 1u, 31u).functions.addMonths(0)
+            mk_Date(1990u, 1u, 31u), mk_Date(1990u, 1u, 31u).functions.addMonths(0u)
         )
         assertEquals(
-            mk_Date(1990u, 3u, 31u), mk_Date(1990u, 1u, 31u).functions.addMonths(2)
+            mk_Date(1990u, 3u, 31u), mk_Date(1990u, 1u, 31u).functions.addMonths(2u)
         )
         assertEquals(
             mk_Date(1990u, 3u, 28u),
-            mk_Date(1990u, 1u, 31u).functions.addMonths(1).functions.addMonths(1)
+            mk_Date(1990u, 1u, 31u).functions.addMonths(1u).functions.addMonths(1u)
         )
         assertEquals(
-            mk_Date(1991u, 1u, 30u), mk_Date(1990u, 11u, 30u).functions.addMonths(2)
+            mk_Date(1991u, 1u, 30u), mk_Date(1990u, 11u, 30u).functions.addMonths(2u)
         )
     }
 
     @Test
     fun dateSubtractMonthsTest() {
-        assertFailsWith<PreconditionFailure> { FirstDate.functions.subtractMonths(1) }
+        assertFailsWith<PreconditionFailure> { FirstDate.functions.subtractMonths(1u) }
         assertEquals(
-            mk_Date(1990u, 4u, 2u), mk_Date(1990u, 4u, 2u).functions.subtractMonths(0)
+            mk_Date(1990u, 4u, 2u), mk_Date(1990u, 4u, 2u).functions.subtractMonths(0u)
         )
         assertEquals(
-            mk_Date(1990u, 2u, 2u), mk_Date(1990u, 4u, 2u).functions.subtractMonths(2)
+            mk_Date(1990u, 2u, 2u), mk_Date(1990u, 4u, 2u).functions.subtractMonths(2u)
         )
         assertEquals(
             mk_Date(1990u, 1u, 28u),
-            mk_Date(1990u, 3u, 31u).functions.subtractMonths(1).functions.subtractMonths(1)
+            mk_Date(1990u, 3u, 31u).functions.subtractMonths(1u).functions.subtractMonths(1u)
         )
         assertEquals(
-            mk_Date(1990u, 11u, 2u), mk_Date(1991u, 1u, 2u).functions.subtractMonths(2)
+            mk_Date(1990u, 11u, 2u), mk_Date(1991u, 1u, 2u).functions.subtractMonths(2u)
         )
     }
 

@@ -146,29 +146,29 @@ class TestIso8601BetweenDtgs(
                 ),
                 case(
                     "one day long, one milli short",
-                    earlier = oneMilliAfterMidnightOn(year = 2008U, month = 2U, day = 1U),
-                    later = midnightOn(year = 2008U, month = 3U, day = 2U),
+                    earlier = oneMilliAfterMidnightOn(year=2008U, month=2U, day=1U),
+                    later = midnightOn(year=2008U, month=3U, day=2U),
                     months = 1,
                     years = 0
                 ),
                 case(
                     "one milli short of two months",
-                    earlier = oneMilliAfterMidnightOn(year = 1995U, month = 1U, day = 1U),
-                    later = midnightOn(year = 1995U, month = 3U, day = 1U),
+                    earlier = oneMilliAfterMidnightOn(year=1995U, month=1U, day=1U),
+                    later = midnightOn(year=1995U, month=3U, day=1U),
                     months = 1,
                     years = 0
                 ),
                 case(
                     "one day one milli short of two months",
-                    earlier = oneMilliAfterMidnightOn(year = 1995U, month = 1U, day = 1U),
-                    later = midnightOn(year = 1995U, month = 2U, day = 28U),
+                    earlier = oneMilliAfterMidnightOn(year=1995U, month=1U, day=1U),
+                    later = midnightOn(year=1995U, month=2U, day=28U),
                     months = 1,
                     years = 0
                 ),
                 case(
                     "incomplete different month",
-                    earlier = midnightOn(year = 2008U, month = 1U, day = 1U),
-                    later = midnightOn(year = 2009U, month = 2U, day = 2U),
+                    earlier = midnightOn(year=2008U, month=1U, day=1U),
+                    later = midnightOn(year=2009U, month=2U, day=2U),
                     months = 13,
                     years = 1
                 )
