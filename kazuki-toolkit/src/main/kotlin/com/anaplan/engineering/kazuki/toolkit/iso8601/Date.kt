@@ -56,20 +56,66 @@ class DateProperties(private val date: Date) {
 }
 
 class DateFunctions(private val date: Date) {
-
-    val addMonths: (integer) -> Date = function(
-        command = { n ->
-            val nextMonth = (date.month.safeToInt() + n - 1).mod(MonthsPerYear.safeToInt()).toNat() + 1u
-            val yearShift = (date.month.safeToInt() + n - 1).floorDiv(MonthsPerYear.safeToInt())
-            val nextYear = (date.year.safeToInt() + yearShift).toNat()
+    val addYears = function(
+        command = { n: nat ->
+            val nextYear = date.year + n
+            val nextMonth = date.month
             val nextDay = min(date.day, daysInMonth(nextYear, nextMonth))
+
             mk_Date(nextYear, nextMonth, nextDay)
         },
-        pre = { n -> (date.year * 12u + date.month).safeToInt() + n > 0 }
+        pre = { n -> date.year + n <= LastYear },
+        post = { n, result -> result == date.functions.addMonths(n * MonthsPerYear) }
     )
 
-    val subtractMonths: (integer) -> Date = function(
-        command = { n -> date.functions.addMonths(-n) },
+    val subtractYears = function(
+        command = { n: nat ->
+            val nextYear = date.year - n
+            val nextMonth = date.month
+            val nextDay = min(date.day, daysInMonth(nextYear, nextMonth))
+
+            mk_Date(nextYear, nextMonth, nextDay)
+        },
+        pre = { n -> date.year > n },
+        post = { n, result -> result == date.functions.subtractMonths(n * MonthsPerYear) }
+    )
+
+    val addMonths: (nat) -> Date = function(
+        command = { n ->
+            val yearsToAdd = n / MonthsPerYear
+            val monthsToAdd = n % MonthsPerYear
+
+            val willOverflowYear = MonthsPerYear < date.month + monthsToAdd
+            val (nextYear, nextMonth) = if (willOverflowYear) {
+                mk_(date.year + (yearsToAdd + 1u), date.month + (monthsToAdd - MonthsPerYear))
+            } else {
+                mk_(date.year + yearsToAdd, date.month + monthsToAdd)
+            }
+
+            val nextDay = min(date.day, daysInMonth(nextYear, nextMonth))
+
+            mk_Date(nextYear, nextMonth, nextDay)
+        },
+        pre = { n -> (date.year * MonthsPerYear) + date.month + n <= (LastYear * MonthsPerYear) },
+    )
+
+    val subtractMonths: (nat) -> Date = function(
+        command = { n ->
+            val yearsToSubtract = n / MonthsPerYear
+            val monthsToSubtract = n % MonthsPerYear
+
+            val willUnderflowYear = date.month <= monthsToSubtract
+            val (nextYear, nextMonth) = if (willUnderflowYear) {
+                mk_(date.year - (yearsToSubtract + 1u), (date.month + MonthsPerYear) - monthsToSubtract)
+            } else {
+                mk_(date.year - yearsToSubtract, date.month - monthsToSubtract)
+            }
+
+            val nextDay = min(date.day, daysInMonth(nextYear, nextMonth))
+
+            mk_Date(nextYear, nextMonth, nextDay)
+        },
+        pre = { n -> (date.year * MonthsPerYear) + date.month > n },
     )
 
     val addDays: (nat) -> Date = function(

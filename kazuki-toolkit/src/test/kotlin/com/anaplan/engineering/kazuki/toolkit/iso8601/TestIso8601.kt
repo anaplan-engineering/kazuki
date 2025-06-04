@@ -1,9 +1,6 @@
 package com.anaplan.engineering.kazuki.toolkit.iso8601
 
-import com.anaplan.engineering.kazuki.core.InvariantFailure
-import com.anaplan.engineering.kazuki.core.PreconditionFailure
-import com.anaplan.engineering.kazuki.core.mk_Seq
-import com.anaplan.engineering.kazuki.core.mk_Set1
+import com.anaplan.engineering.kazuki.core.*
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Date_Module.mk_Date
 import com.anaplan.engineering.kazuki.toolkit.iso8601.DtgInZone_Module.mk_DtgInZone
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Dtg_Module.mk_Dtg
@@ -1702,73 +1699,112 @@ class TestIso8601 {
     fun dtgAddMonthsTest() {
         assertEquals(
             mk_Date(1990u, 3u, 31u).properties.dtgAtStartOfDay,
-            mk_Date(1990u, 1u, 31u).properties.dtgAtStartOfDay.functions.addMonths(2)
+            mk_Date(1990u, 1u, 31u).properties.dtgAtStartOfDay.functions.addMonths(2u)
         )
         assertEquals(
             mk_Dtg(mk_Date(1990u, 3u, 28u), mk_Time(3u, 0u, 0u, 0u)),
             mk_Dtg(
                 mk_Date(1990u, 1u, 31u),
                 mk_Time(3u, 0u, 0u, 0u)
-            ).functions.addMonths(1).functions.addMonths(1)
+            ).functions.addMonths(1u).functions.addMonths(1u)
         )
         assertEquals(
             mk_Date(1991u, 1u, 30u).properties.dtgAtStartOfDay,
-            mk_Date(1990u, 11u, 30u).properties.dtgAtStartOfDay.functions.addMonths(2)
+            mk_Date(1990u, 11u, 30u).properties.dtgAtStartOfDay.functions.addMonths(2u)
         )
     }
 
     @Test
     fun dtgSubtractMonthsTest() {
-        assertFailsWith<PreconditionFailure> { FirstDtg.functions.subtractMonths(1) }
+        assertFailsWith<PreconditionFailure> { FirstDtg.functions.subtractMonths(1u) }
         assertEquals(
             mk_Date(1990u, 2u, 2u).properties.dtgAtStartOfDay,
-            mk_Date(1990u, 4u, 2u).properties.dtgAtStartOfDay.functions.subtractMonths(2)
+            mk_Date(1990u, 4u, 2u).properties.dtgAtStartOfDay.functions.subtractMonths(2u)
         )
         assertEquals(
             mk_Dtg(mk_Date(1990u, 1u, 28u), mk_Time(3u, 0u, 0u, 0u)),
             (mk_Dtg(
                 mk_Date(1990u, 3u, 31u),
                 mk_Time(3u, 0u, 0u, 0u)
-            )).functions.subtractMonths(1).functions.subtractMonths(1)
+            )).functions.subtractMonths(1u).functions.subtractMonths(1u)
         )
         assertEquals(
             mk_Date(1990u, 11u, 2u).properties.dtgAtStartOfDay,
-            mk_Date(1991u, 1u, 2u).properties.dtgAtStartOfDay.functions.subtractMonths(2)
+            mk_Date(1991u, 1u, 2u).properties.dtgAtStartOfDay.functions.subtractMonths(2u)
         )
     }
 
     @Test
     fun dateAddMonthsTest() {
+        assertFailsWith<PreconditionFailure> { LastDate.functions.addMonths(1u) }
         assertEquals(
-            mk_Date(1990u, 1u, 31u), mk_Date(1990u, 1u, 31u).functions.addMonths(0)
+            mk_Date(1990u, 1u, 31u), mk_Date(1990u, 1u, 31u).functions.addMonths(0u)
         )
         assertEquals(
-            mk_Date(1990u, 3u, 31u), mk_Date(1990u, 1u, 31u).functions.addMonths(2)
+            mk_Date(1990u, 3u, 31u), mk_Date(1990u, 1u, 31u).functions.addMonths(2u)
         )
         assertEquals(
             mk_Date(1990u, 3u, 28u),
-            mk_Date(1990u, 1u, 31u).functions.addMonths(1).functions.addMonths(1)
+            mk_Date(1990u, 1u, 31u).functions.addMonths(1u).functions.addMonths(1u)
         )
         assertEquals(
-            mk_Date(1991u, 1u, 30u), mk_Date(1990u, 11u, 30u).functions.addMonths(2)
+            mk_Date(1991u, 1u, 30u), mk_Date(1990u, 11u, 30u).functions.addMonths(2u)
         )
     }
 
     @Test
     fun dateSubtractMonthsTest() {
-        assertFailsWith<PreconditionFailure> { FirstDate.functions.subtractMonths(1) }
+        assertFailsWith<PreconditionFailure> { FirstDate.functions.subtractMonths(1u) }
         assertEquals(
-            mk_Date(1990u, 4u, 2u), mk_Date(1990u, 4u, 2u).functions.subtractMonths(0)
+            mk_Date(1990u, 4u, 2u), mk_Date(1990u, 4u, 2u).functions.subtractMonths(0u)
         )
         assertEquals(
-            mk_Date(1990u, 2u, 2u), mk_Date(1990u, 4u, 2u).functions.subtractMonths(2)
+            mk_Date(1990u, 2u, 2u), mk_Date(1990u, 4u, 2u).functions.subtractMonths(2u)
         )
         assertEquals(
             mk_Date(1990u, 1u, 28u),
-            mk_Date(1990u, 3u, 31u).functions.subtractMonths(1).functions.subtractMonths(1)
+            mk_Date(1990u, 3u, 31u).functions.subtractMonths(1u).functions.subtractMonths(1u)
         )
         assertEquals(
-            mk_Date(1990u, 11u, 2u), mk_Date(1991u, 1u, 2u).functions.subtractMonths(2)
+            mk_Date(1990u, 11u, 2u), mk_Date(1991u, 1u, 2u).functions.subtractMonths(2u)
+        )
+    }
+
+    @Test
+    fun dateAddYears() {
+        assertFailsWith<PreconditionFailure> { LastDate.functions.addYears(1u) }
+        assertEquals(
+            mk_Date(1990u, 1u, 31u), mk_Date(1990u, 1u, 31u).functions.addYears(0u)
+        )
+        assertEquals(
+            mk_Date(1995u, 3u, 31u), mk_Date(1990u, 3u, 31u).functions.addYears(5u)
+        )
+        assertEquals(
+            mk_Date(2009u, 2u, 28u),
+            mk_Date(2008u, 2u, 29u).functions.addYears(1u)
+        )
+        assertEquals(
+            mk_Date(2012u, 2u, 29u),
+            mk_Date(2008u, 2u, 29u).functions.addYears(4u)
+        )
+    }
+
+    @Test
+    fun dateSubtractYears() {
+        assertFailsWith<PreconditionFailure> { FirstDate.functions.subtractYears(1u) }
+        assertEquals(
+            mk_Date(1990u, 4u, 2u), mk_Date(1990u, 4u, 2u).functions.subtractYears(0u)
+        )
+        assertEquals(
+            mk_Date(1990u, 2u, 2u), mk_Date(1993u, 2u, 2u).functions.subtractYears(3u)
+        )
+        assertEquals(
+            mk_Date(2007u, 2u, 28u),
+            mk_Date(2008u, 2u, 29u).functions.subtractYears(1u)
+        )
+        assertEquals(
+            mk_Date(2004u, 2u, 29u),
+            mk_Date(2008u, 2u, 29u).functions.subtractYears(4u)
         )
     }
 
@@ -1968,3 +2004,4 @@ class TestIso8601 {
         assertFailsWith<PreconditionFailure> { DateFormattingUtilities.stringToDtg("1990-01-01T25:24:00.001") }
     }
 }
+

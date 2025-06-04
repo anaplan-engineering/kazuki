@@ -84,12 +84,20 @@ class DtgFunctions(private val dtg: Dtg) {
         pre = { granularity -> granularity != NoDuration }
     )
 
-    val addMonths: (integer) -> Dtg = function(
+    val addYears: (nat) -> Dtg = function(
+        command = { n -> mk_Dtg(dtg.date.functions.addYears(n), dtg.time) },
+    )
+
+    val subtractYears: (nat) -> Dtg = function(
+        command = { n -> mk_Dtg(dtg.date.functions.subtractYears(n), dtg.time) },
+    )
+
+    val addMonths: (nat) -> Dtg = function(
         command = { n -> mk_Dtg(dtg.date.functions.addMonths(n), dtg.time) },
     )
 
-    val subtractMonths: (integer) -> Dtg = function(
-        command = { n -> dtg.functions.addMonths(-n) },
+    val subtractMonths: (nat) -> Dtg = function(
+        command = { n -> mk_Dtg(dtg.date.functions.subtractMonths(n), dtg.time) },
     )
 
     val addDays: (nat) -> Dtg = function(
@@ -162,41 +170,65 @@ object DtgUtilities {
         post = { dtgs, result -> result in dtgs && forall(dtgs) { result >= it } }
     )
 
-    val monthsBetweenDtgs: (Dtg, Dtg) -> nat = function(
-        command = { earlierDtg, laterDtg ->
-            MonthsPerYear * yearsBetweenDtgs(earlierDtg, laterDtg) +
-                    (if (laterDtg.date.month < earlierDtg.date.month) 12uL else 0uL) +
-                    if (laterDtg.date.day >= earlierDtg.date.day) {
-                        laterDtg.date.month - earlierDtg.date.month
-                    } else {
-                        laterDtg.date.month - earlierDtg.date.month - 1uL
-                    }
-        },
-        pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg }
-    )
+    val monthsBetweenDtgs = function(
+        command = { earlierDtg: Dtg, laterDtg: Dtg ->
+            val earlierDate = earlierDtg.date
+            val laterDate = laterDtg.date
 
-    val yearsBetweenDtgs: (Dtg, Dtg) -> nat = function(
-        command = { earlierDtg, laterDtg ->
+            val baseYears = laterDate.year - earlierDate.year
+            val baseMonths = ((baseYears * MonthsPerYear) + laterDate.month) - earlierDate.month
 
-            val durationInYearUpToEarlierDtg =
-                earlierDtg.properties.durationSinceFirstDtg.functions.subtractDuration(
-                    Duration.durationFromFirstYearUpToStartOfYear(
-                        earlierDtg.date.year
-                    )
-                )
-            val durationInYearUpToLaterDtg =
-                laterDtg.properties.durationSinceFirstDtg.functions.subtractDuration(
-                    Duration.durationFromFirstYearUpToStartOfYear(
-                        laterDtg.date.year
-                    )
-                )
+            // The above calculation is off by one if laterDate is earlier on in its month than earlierDate
+            // (for example, 1 March is only one month after 2 January)
+            val isPartialMonth =
+                laterDate.day < earlierDate.day || (laterDate.day == earlierDate.day && laterDtg.time < earlierDtg.time)
 
-            if (durationInYearUpToEarlierDtg <= durationInYearUpToLaterDtg) {
-                laterDtg.date.year - earlierDtg.date.year
+            if (isPartialMonth) {
+                baseMonths - 1u
             } else {
-                laterDtg.date.year - earlierDtg.date.year - 1uL
+                baseMonths
             }
         },
-        pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg }
+        pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
+        post = { earlierDtg, laterDtg, result ->
+            val upperBound = laterDtg.functions.subtractMonths(result)
+            val inUpperBoundMonth =
+                upperBound.date.year == earlierDtg.date.year && upperBound.date.month == earlierDtg.date.month
+
+            (earlierDtg <= upperBound) and {
+                inUpperBoundMonth or {
+                    val lowerBound = laterDtg.functions.subtractMonths(result + 1u)
+                    val inLowerBoundMonth =
+                        lowerBound.date.year == earlierDtg.date.year && lowerBound.date.month == earlierDtg.date.month
+
+                    (lowerBound < earlierDtg) && inLowerBoundMonth
+                }
+            }
+        }
+    )
+
+    val yearsBetweenDtgs = function(
+        command = { earlierDtg: Dtg, laterDtg: Dtg ->
+            val earlierDate = earlierDtg.date
+            val laterDate = laterDtg.date
+
+            val baseYears = laterDate.year - earlierDate.year
+
+            // The above calculation is off by one if laterDate is earlier on in its year than earlierDate
+            // (for example, 1 January 2009 is only one year after 2 January 2008)
+            val isPartialYear =
+                laterDate.month < earlierDate.month || (laterDate.month == earlierDate.month &&
+                        (laterDate.day < earlierDate.day || (laterDate.day == earlierDate.day && laterDtg.time < earlierDtg.time)))
+
+            if (isPartialYear) {
+                baseYears - 1u
+            } else {
+                baseYears
+            }
+        },
+        pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
+        post = { earlierDtg, laterDtg, result ->
+            result == monthsBetweenDtgs(earlierDtg, laterDtg) / MonthsPerYear
+        }
     )
 }
