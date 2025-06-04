@@ -1736,6 +1736,7 @@ class TestIso8601 {
 
     @Test
     fun dateAddMonthsTest() {
+        assertFailsWith<PreconditionFailure> { LastDate.functions.addMonths(1u) }
         assertEquals(
             mk_Date(1990u, 1u, 31u), mk_Date(1990u, 1u, 31u).functions.addMonths(0u)
         )
@@ -1771,6 +1772,7 @@ class TestIso8601 {
 
     @Test
     fun dateAddYears() {
+        assertFailsWith<PreconditionFailure> { LastDate.functions.addYears(1u) }
         assertEquals(
             mk_Date(1990u, 1u, 31u), mk_Date(1990u, 1u, 31u).functions.addYears(0u)
         )

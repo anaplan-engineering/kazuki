@@ -186,6 +186,20 @@ class TestIso8601BetweenDtgs(
                     months = 1,
                     years = 0,
                 ),
+                case(
+                    "minimum",
+                    earlier = FirstDtg,
+                    later = FirstDtg.functions.addMonths(1u),
+                    months = 1,
+                    years = 0,
+                ),
+                case(
+                    "maximum",
+                    earlier = LastDtg.functions.subtractMonths(1u),
+                    later = LastDtg,
+                    months = 1,
+                    years = 0,
+                )
             )
 
         private fun case(name: String, earlier: Dtg, later: Dtg, months: Int, years: Int): Array<Any?> =

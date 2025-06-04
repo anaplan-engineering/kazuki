@@ -64,6 +64,7 @@ class DateFunctions(private val date: Date) {
 
             mk_Date(nextYear, nextMonth, nextDay)
         },
+        pre = { n -> date.year + n <= LastYear },
         post = { n, result -> result == date.functions.addMonths(n * MonthsPerYear) }
     )
 
@@ -83,42 +84,31 @@ class DateFunctions(private val date: Date) {
         command = { n ->
             val yearsToAdd = n / MonthsPerYear
             val monthsToAdd = n % MonthsPerYear
-            val willOverflow = MonthsPerYear < date.month + monthsToAdd
 
-            val nextYear = if (willOverflow) {
-                date.year + (yearsToAdd + 1u)
+            val willOverflowYear = MonthsPerYear < date.month + monthsToAdd
+            val (nextYear, nextMonth) = if (willOverflowYear) {
+                mk_(date.year + (yearsToAdd + 1u), date.month + (monthsToAdd - MonthsPerYear))
             } else {
-                date.year + yearsToAdd
-            }
-
-            val nextMonth = if (willOverflow) {
-                date.month + (monthsToAdd - MonthsPerYear)
-            } else {
-                date.month + monthsToAdd
+                mk_(date.year + yearsToAdd, date.month + monthsToAdd)
             }
 
             val nextDay = min(date.day, daysInMonth(nextYear, nextMonth))
 
             mk_Date(nextYear, nextMonth, nextDay)
         },
+        pre = { n -> (date.year * MonthsPerYear) + date.month + n <= (LastYear * MonthsPerYear) },
     )
 
     val subtractMonths: (nat) -> Date = function(
         command = { n ->
             val yearsToSubtract = n / MonthsPerYear
             val monthsToSubtract = n % MonthsPerYear
-            val willUnderflow = date.month <= monthsToSubtract
 
-            val nextYear = if (willUnderflow) {
-                date.year - (yearsToSubtract + 1u)
+            val willUnderflowYear = date.month <= monthsToSubtract
+            val (nextYear, nextMonth) = if (willUnderflowYear) {
+                mk_(date.year - (yearsToSubtract + 1u), (date.month + MonthsPerYear) - monthsToSubtract)
             } else {
-                date.year - yearsToSubtract
-            }
-
-            val nextMonth = if (willUnderflow) {
-                (date.month + MonthsPerYear) - monthsToSubtract
-            } else {
-                date.month - monthsToSubtract
+                mk_(date.year - yearsToSubtract, date.month - monthsToSubtract)
             }
 
             val nextDay = min(date.day, daysInMonth(nextYear, nextMonth))

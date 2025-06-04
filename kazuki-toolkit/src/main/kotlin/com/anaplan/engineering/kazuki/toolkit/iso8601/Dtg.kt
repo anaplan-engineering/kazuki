@@ -180,10 +180,10 @@ object DtgUtilities {
 
             // The above calculation is off by one if laterDate is earlier on in its month than earlierDate
             // (for example, 1 March is only one month after 2 January)
-            val partialMonth =
-                laterDate.day < earlierDate.day || laterDate.day == earlierDate.day && laterDtg.time < earlierDtg.time
+            val isPartialMonth =
+                laterDate.day < earlierDate.day || (laterDate.day == earlierDate.day && laterDtg.time < earlierDtg.time)
 
-            if (partialMonth) {
+            if (isPartialMonth) {
                 baseMonths - 1u
             } else {
                 baseMonths
@@ -191,19 +191,44 @@ object DtgUtilities {
         },
         pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
         post = { earlierDtg, laterDtg, result ->
-            laterDtg.functions.subtractMonths(result + 1u) < earlierDtg &&
-                    laterDtg.functions.subtractMonths(result) >= earlierDtg
+            val upperBound = laterDtg.functions.subtractMonths(result)
+            val inUpperBoundMonth =
+                upperBound.date.year == earlierDtg.date.year && upperBound.date.month == earlierDtg.date.month
+
+            (earlierDtg <= upperBound) and {
+                inUpperBoundMonth or {
+                    val lowerBound = laterDtg.functions.subtractMonths(result + 1u)
+                    val inLowerBoundMonth =
+                        lowerBound.date.year == earlierDtg.date.year && lowerBound.date.month == earlierDtg.date.month
+
+                    (lowerBound < earlierDtg) && inLowerBoundMonth
+                }
+            }
         }
     )
 
     val yearsBetweenDtgs = function(
         command = { earlierDtg: Dtg, laterDtg: Dtg ->
-            monthsBetweenDtgs(earlierDtg, laterDtg) / MonthsPerYear
+            val earlierDate = earlierDtg.date
+            val laterDate = laterDtg.date
+
+            val baseYears = laterDate.year - earlierDate.year
+
+            // The above calculation is off by one if laterDate is earlier on in its year than earlierDate
+            // (for example, 1 January 2009 is only one year after 2 January 2008)
+            val isPartialYear =
+                laterDate.month < earlierDate.month || (laterDate.month == earlierDate.month &&
+                        (laterDate.day < earlierDate.day || (laterDate.day == earlierDate.day && laterDtg.time < earlierDtg.time)))
+
+            if (isPartialYear) {
+                baseYears - 1u
+            } else {
+                baseYears
+            }
         },
         pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
         post = { earlierDtg, laterDtg, result ->
-            laterDtg.functions.subtractYears(result + 1u) < earlierDtg &&
-                    laterDtg.functions.subtractYears(result) >= earlierDtg
+            result == monthsBetweenDtgs(earlierDtg, laterDtg) / MonthsPerYear
         }
     )
 }
