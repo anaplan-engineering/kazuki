@@ -5,7 +5,7 @@ import com.anaplan.engineering.kazuki.toolkit.iso8601.NormalisedTime_Module.mk_N
 
 
 @Module
-interface Time : Comparable<Time> {
+interface Time : Comparable<Time>, PrettyPrintable {
     val hour: Hour
     val minute: Minute
     val second: Second
@@ -15,6 +15,8 @@ interface Time : Comparable<Time> {
         get() = compareBy<Time> { it.hour }.thenBy { it.minute }.thenBy { it.second }.thenBy { it.millisecond }
 
     override fun compareTo(other: Time) = timeComparator.compare(this, other)
+
+    override fun pretty() = properties.formatted
 
     @FunctionProvider(TimeFunctions::class)
     val functions: TimeFunctions

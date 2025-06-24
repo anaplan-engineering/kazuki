@@ -7,7 +7,7 @@ import com.anaplan.engineering.kazuki.toolkit.iso8601.Dtg_Module.mk_Dtg
 import kotlin.math.min
 
 @Module
-interface Date : Comparable<Date> {
+interface Date : Comparable<Date>, PrettyPrintable {
     val year: Year
     val month: Month
     val day: Day
@@ -18,6 +18,8 @@ interface Date : Comparable<Date> {
 
     @Invariant
     fun isDayValid() = day <= daysInMonth(year, month)
+
+    override fun pretty() = properties.formatted
 
     private val dateComparator get() = compareBy<Date> { it.year }.thenBy { it.month }.thenBy { it.day }
     override fun compareTo(other: Date) = dateComparator.compare(this, other)

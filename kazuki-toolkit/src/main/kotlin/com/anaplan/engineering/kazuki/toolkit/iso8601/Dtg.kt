@@ -6,12 +6,15 @@ import com.anaplan.engineering.kazuki.toolkit.iso8601.DurationUtiltites.duration
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Interval_Module.mk_Interval
 
 @Module
-interface Dtg : Comparable<Dtg> {
+interface Dtg : Comparable<Dtg>, PrettyPrintable {
     val date: Date
     val time: Time
 
     private val dtgComparator get() = compareBy<Dtg> { it.date }.thenBy { it.time }
     override fun compareTo(other: Dtg) = dtgComparator.compare(this, other)
+
+
+    override fun pretty() = properties.formatted
 
     @FunctionProvider(DtgFunctions::class)
     val functions: DtgFunctions
