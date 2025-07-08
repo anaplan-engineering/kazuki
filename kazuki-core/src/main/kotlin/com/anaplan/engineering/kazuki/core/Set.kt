@@ -50,6 +50,10 @@ fun <T> Set<T>.filter(retainType: Boolean, fn: (T) -> Boolean): Set<T> =
         as_Set(this.kotlinFilter(fn))
     }
 
+fun <T> Set1<T>.fold1(fn: (T, T) -> T): T = toList().let { list ->
+    list.drop(1).fold(list.first(), fn)
+}
+
 infix fun <T> Set<T>.subset(other: Set<T>) = other.containsAll(this)
 
 infix fun <T, U> Iterable<T>.x(other: Iterable<U>) = as_Set(flatMap { t -> other.map { u -> mk_(t, u) } })

@@ -191,6 +191,8 @@ fun <T> Sequence<T>.lastOrNull(): T? {
     return this[len]
 }
 
+fun <T> Sequence1<T>.fold1(fn: (T, T) -> T): T = drop(1uL).fold(first(), fn)
+
 fun <T> Sequence<T>.head() = first()
 
 fun <T> Sequence<T>.count(predicate: (T) -> Boolean): nat = kotlinCount(predicate).toNat()
