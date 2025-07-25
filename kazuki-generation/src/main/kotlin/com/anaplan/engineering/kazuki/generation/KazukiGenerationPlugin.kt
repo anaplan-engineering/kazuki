@@ -16,6 +16,13 @@ open class KazukiGenerationPluginExtension @javax.inject.Inject constructor(obje
 internal const val RootPackageName = "com.anaplan.engineering.kazuki.core"
 internal const val InternalPackageName = "$RootPackageName.internal"
 internal val PrettyPrintableInterfaceName = ClassName(RootPackageName, "PrettyPrintable")
+internal val TupleInterfaceName = ClassName(RootPackageName, "Tuple")
+internal val KazukiLogName = ClassName(RootPackageName, "Kazuki.Log")
+internal val CacheKeyName = ClassName(InternalPackageName, "_CacheKey")
+internal val EvaluationCacheName = ClassName(InternalPackageName, "_EvaluationCache")
+
+internal val PrettyFunctionName = "pretty"
+internal val PrettyOrDefaultFunctionName = "_prettyOrDefault"
 
 class KazukiGenerationPlugin : Plugin<Project> {
 

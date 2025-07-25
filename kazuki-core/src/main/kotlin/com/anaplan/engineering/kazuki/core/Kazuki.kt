@@ -1,6 +1,12 @@
 package com.anaplan.engineering.kazuki.core
 
+import org.slf4j.LoggerFactory
+import kotlin.jvm.java
 import kotlin.reflect.KClass
+
+object Kazuki {
+    internal val Log = LoggerFactory.getLogger(Kazuki::class.java)
+}
 
 
 annotation class RecordType

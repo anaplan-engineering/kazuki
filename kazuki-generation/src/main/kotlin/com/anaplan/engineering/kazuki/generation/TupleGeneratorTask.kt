@@ -64,7 +64,7 @@ fun FileSpec.Builder.addNAryTuple(nary: Int) {
 
     addType(TypeSpec.interfaceBuilder(interfaceName).apply {
         addTypeVariables(typeNames)
-        addSuperinterface(PrettyPrintableInterfaceName)
+        addSuperinterface(TupleInterfaceName)
         (1..nary).forEach {
             addProperty(PropertySpec.builder("_$it", TypeVariableName("T$it")).build())
             addFunction(
@@ -143,6 +143,11 @@ fun FileSpec.Builder.addNAryTupleInternal(nary: Int) {
             PropertySpec.builder(comparableWithPropertyName, comparableWithTypeName, KModifier.OPEN, KModifier.OVERRIDE)
                 .initializer(CodeBlock.of("$publicInterfaceName::class")).build()
         )
+        addFunction(FunSpec.builder(PrettyFunctionName).apply {
+            addModifiers(KModifier.OVERRIDE)
+            returns(String::class)
+            addStatement("return %P", "(${(1..nary).joinToString(", ") { "$it=\${$PrettyOrDefaultFunctionName(_$it)}" }})")
+        }.build())
         addFunction(FunSpec.builder("toString").apply {
             addModifiers(KModifier.OVERRIDE)
             returns(String::class)

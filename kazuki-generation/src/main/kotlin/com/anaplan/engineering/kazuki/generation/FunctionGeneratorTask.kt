@@ -8,6 +8,7 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 @CacheableTask
 abstract class FunctionGeneratorTask : DefaultTask() {
@@ -41,13 +42,18 @@ private const val PrePropertyName = "pre"
 private const val PostPropertyName = "post"
 private const val MeasurePropertyName = "measure"
 private const val InvocationsPropertyName = "Invocations"
+private const val CachePropertyName = "cache"
+private const val LogAsPropertyName = "logAs"
+private const val InvocationCountPropertyName = "invocationCount"
 
 fun FileSpec.Builder.addNArgFunction(argCount: Int) {
     val className = "VFunction$argCount"
     val inputTypeNames = (1..argCount).map { TypeVariableName("I$it") }
     val outputTypeName = TypeVariableName("O")
     val booleanName = Boolean::class.asClassName()
+    val nullableStringName = String::class.asClassName().copy(nullable = true)
     val natName = ULong::class.asClassName()
+    val atomicIntName = AtomicInteger::class.asClassName()
     val superInterfaceName = ClassName(KotlinFunctionPackage, "Function$argCount")
         .parameterizedBy(inputTypeNames + outputTypeName)
     val preTypeName = ClassName(KotlinFunctionPackage, "Function$argCount")
@@ -61,6 +67,8 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
         addParameter(PrePropertyName, preTypeName)
         addParameter(PostPropertyName, postTypeName)
         addParameter(MeasurePropertyName, measureTypeName)
+        addParameter(CachePropertyName, booleanName)
+        addParameter(LogAsPropertyName, nullableStringName)
     }.build()
 
     addType(TypeSpec.classBuilder(className).apply {
@@ -82,6 +90,21 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
             PropertySpec.builder(MeasurePropertyName, measureTypeName).initializer(MeasurePropertyName)
                 .build()
         )
+        addProperty(
+            PropertySpec.builder(CachePropertyName, booleanName, KModifier.PRIVATE).initializer(CachePropertyName)
+                .build()
+        )
+        addProperty(
+            PropertySpec.builder(LogAsPropertyName, nullableStringName, KModifier.PRIVATE)
+                .initializer(LogAsPropertyName)
+                .build()
+        )
+        addProperty(
+            PropertySpec.builder(InvocationCountPropertyName, atomicIntName, KModifier.PRIVATE)
+                .initializer(CodeBlock.builder().apply {
+                    addStatement("%T()", atomicIntName)
+                }.build()).build()
+        )
         addType(TypeSpec.companionObjectBuilder().apply {
             val invocationsTypeName = ConcurrentHashMap::class.asClassName().parameterizedBy(
                 ClassName(RootPackageName, className).parameterizedBy((0..argCount).map { STAR }),
@@ -100,10 +123,59 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
             }
             returns(outputTypeName)
             addCode(CodeBlock.builder().apply {
+                val inputs = (1..argCount).joinToString(", ") { "i$it" }
+
+                val invocationIdVariableName = "invocation"
+                addStatement("val %N = %N.andIncrement", invocationIdVariableName, InvocationCountPropertyName)
+
+                val logVariableName = "log"
+                addStatement(
+                    "val %N = %N != null && %T.isDebugEnabled",
+                    logVariableName,
+                    LogAsPropertyName,
+                    KazukiLogName
+                )
+                beginControlFlow("if (%N)", logVariableName)
+                addStatement(
+                    "%T.debug(\"{} [{}] Invoke: {}\", %N, %N, mk_($inputs).pretty())",
+                    KazukiLogName,
+                    LogAsPropertyName,
+                    invocationIdVariableName
+                )
+                endControlFlow()
+
+                beginControlFlow("if (%N)", CachePropertyName)
+                val keyVariableName = "key"
+                addStatement(
+                    "val %N = %T(this, mk_($inputs))",
+                    keyVariableName,
+                    CacheKeyName
+                )
+                beginControlFlow("if (%T.cache.contains(%N))", EvaluationCacheName, keyVariableName)
+                val resultVariableName = "result"
+                addStatement(
+                    "val %N = %T.cache[%N] as %T",
+                    resultVariableName,
+                    EvaluationCacheName,
+                    keyVariableName,
+                    outputTypeName
+                )
+                beginControlFlow("if (%N)", logVariableName)
+                addStatement(
+                    "%T.debug(\"{} [{}] Cached result: {}\", %N, %N, %N)",
+                    KazukiLogName,
+                    LogAsPropertyName,
+                    invocationIdVariableName,
+                    resultVariableName
+                )
+                endControlFlow()
+                addStatement("return %N", resultVariableName)
+                endControlFlow()
+                endControlFlow()
+
                 val lastMeasureValName = "lastMeasure"
                 val currentMeasureValName = "currentMeasure"
                 val initialRecursionValName = "initialRecursion"
-                val inputs = (1..argCount).joinToString(", ") { "i$it" }
                 val resultValName = "result"
 
                 addComment("TODO -- detect recursion without measure?")
@@ -118,6 +190,16 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
                 // not thread safe - could include current thread in tracked object -- but doesn't account for MT in command
                 beginControlFlow("if (%N != null)", MeasurePropertyName)
                 addStatement("val %N = %N.invoke($inputs)", currentMeasureValName, MeasurePropertyName)
+                beginControlFlow("if (%N)", logVariableName)
+                addStatement(
+                    "%T.debug(\"{} [{}] Measure: current={} last={}\", %N, %N, %N, %N)",
+                    KazukiLogName,
+                    LogAsPropertyName,
+                    invocationIdVariableName,
+                    currentMeasureValName,
+                    lastMeasureValName,
+                )
+                endControlFlow()
                 beginControlFlow(
                     "if (%N != null && %N >= %N)",
                     lastMeasureValName,
@@ -139,6 +221,9 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
 //              }
 
                 beginControlFlow("if (!$PrePropertyName($inputs))")
+                val msgVariableName = "msg"
+                // TODO - val msg = if (this.logAs == null) null else "In $logAs${mk_(i1, i2).pretty()}"
+//                addStatement("val %N = if (%N == null) null else \"In %N)
                 addStatement("throw PreconditionFailure()")
                 endControlFlow()
 
@@ -151,7 +236,27 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
 
                 val postInputs = ((1..argCount).map { "i$it" } + resultValName).joinToString(", ")
                 beginControlFlow("if (!$PostPropertyName($postInputs))")
+                // TODO val msg = if (this.logAs == null) null else "In $logAs${mk_(i1, i2).pretty()}=$result"
                 addStatement("throw PostconditionFailure()")
+                endControlFlow()
+
+                beginControlFlow("if (%N)", logVariableName)
+                addStatement(
+                    "%T.debug(\"{} [{}] Result: {}\", %N, %N, %N)",
+                    KazukiLogName,
+                    LogAsPropertyName,
+                    invocationIdVariableName,
+                    resultVariableName
+                )
+                endControlFlow()
+
+                beginControlFlow("if (%N)", CachePropertyName)
+                addStatement(
+                    "val %N = %T(this, mk_($inputs))",
+                    keyVariableName,
+                    CacheKeyName
+                )
+                addStatement("%T.cache[%N] = %N", EvaluationCacheName, keyVariableName, resultVariableName)
                 endControlFlow()
 
                 addStatement("return $resultValName")
@@ -179,7 +284,13 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
         addParameter(ParameterSpec.builder(MeasurePropertyName, measureTypeName).apply {
             defaultValue("null")
         }.build())
-        addCode("return $className($CommandPropertyName, $PrePropertyName, $PostPropertyName, $MeasurePropertyName)")
+        addParameter(ParameterSpec.builder(CachePropertyName, booleanName).apply {
+            defaultValue("false")
+        }.build())
+        addParameter(ParameterSpec.builder(LogAsPropertyName, nullableStringName).apply {
+            defaultValue("null")
+        }.build())
+        addCode("return $className($CommandPropertyName, $PrePropertyName, $PostPropertyName, $MeasurePropertyName, $CachePropertyName, $LogAsPropertyName)")
         returns(ClassName(RootPackageName, className).parameterizedBy(inputTypeNames + outputTypeName))
     }.build())
 }

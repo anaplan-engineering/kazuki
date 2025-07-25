@@ -52,7 +52,7 @@ class TestPretty {
     @Test
     fun basicRelation() {
         assertEquals("{}", mk_Relation<Int, Int>().pretty())
-        assertEquals("{(1, 2), (3, 4)}", mk_Relation(mk_(1, 2), mk_(3, 4)).pretty())
+        assertEquals("{(1=1, 2=2), (1=3, 2=4)}", mk_Relation(mk_(1, 2), mk_(3, 4)).pretty())
     }
 
     // tbd
