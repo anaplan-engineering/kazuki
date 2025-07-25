@@ -379,14 +379,14 @@ internal fun TypeSpec.Builder.addRecordType(
         }.build()
     )
 
+    val erasedInterfaceTypeName = if (interfaceTypeArguments.isEmpty()) {
+        interfaceClassDcl.toClassName()
+    } else {
+        interfaceClassDcl.toClassName().parameterizedBy(interfaceTypeArguments.map { STAR })
+    }
     addStaticPrettyFunction(interfaceTypeName, interfaceTypeArguments)
     addFunction(
         FunSpec.builder("pretty").apply {
-            val erasedInterfaceTypeName = if (interfaceTypeArguments.isEmpty()) {
-                interfaceClassDcl.toClassName()
-            } else {
-                interfaceClassDcl.toClassName().parameterizedBy(interfaceTypeArguments.map { STAR })
-            }
             receiver(erasedInterfaceTypeName)
             returns(String::class)
             beginControlFlow("if (this is %T)", PrettyPrintable::class)
@@ -426,12 +426,14 @@ internal fun TypeSpec.Builder.addRecordType(
                 returns(interfaceTypeName)
                 addAnnotation(uncheckedCastAnnotation())
                 addCode(CodeBlock.builder().apply {
+                    beginControlFlow("if (%N·is·%T)", otherParameterName, erasedInterfaceTypeName)
+                    addStatement("return %N·as·%T", otherParameterName, interfaceTypeName)
                     val typeArgs = if (interfaceTypeArguments.isEmpty()) {
                         ""
                     } else {
                         "<${interfaceTypeArguments.joinToString { "$it" }}>"
                     }
-                    beginControlFlow("if (!is_$interfaceName$typeArgs($otherParameterName))")
+                    nextControlFlow("else if (!is_$interfaceName$typeArgs($otherParameterName))")
                     // TODO -- want to print value of other
                     addStatement(
                         "throw %T(%P)",
