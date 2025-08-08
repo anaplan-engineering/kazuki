@@ -9,10 +9,9 @@ import com.anaplan.engineering.kazuki.toolkit.iso8601.Duration.Companion.duratio
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Duration.Companion.durationInYearUpToStartOfMonth
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Duration.Companion.fromDays
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Duration.Companion.fromYear
-import com.anaplan.engineering.kazuki.toolkit.iso8601.DurationUtiltites.sumDuration
+import com.anaplan.engineering.kazuki.toolkit.iso8601.DurationUtilities.sumDuration
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Duration_Module.mk_Duration
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Time_Module.mk_Time
-import kotlin.math.abs
 
 @Module
 interface Duration : Comparable<Duration> {
@@ -103,7 +102,7 @@ class DurationProperties(private val duration: Duration) {
 
     val formatted by lazy {
         val numDays = days
-        val timeOfDay = duration.functions.modDays().functions.toTimeAfterFirstTime()
+        val timeOfDay = modDays.properties.timeAfterFirstTime
         val date = formatItem(numDays, 'D')
         val time = formatItem(timeOfDay.hour, 'H') + formatItem(timeOfDay.minute, 'M') +
                 if (timeOfDay.millisecond == 0uL) {
@@ -121,10 +120,25 @@ class DurationProperties(private val duration: Duration) {
     private val formatItemSec: (nat, nat) -> String = function(
         command = { seconds, milliseconds -> String.format("%d.%03dS", seconds.safeToInt(), milliseconds.safeToInt()) }
     )
+
+    val modSeconds by lazy { mk_Duration(duration.milliseconds % OneSecondDuration.milliseconds) }
+
+    val modMinutes by lazy { mk_Duration(duration.milliseconds % OneMinuteDuration.milliseconds) }
+
+    val modHours by lazy { mk_Duration(duration.milliseconds % OneHourDuration.milliseconds) }
+
+    val modDays by lazy { mk_Duration(duration.milliseconds % OneDayDuration.milliseconds) }
+
+    val timeAfterFirstTime by lazy { duration.functions.toTimeAfterGivenTime(FirstTime) }
+
+    val dateAfterFirstDate by lazy { duration.functions.toDateAfterGivenDate(FirstDate) }
+
+    val dtgAfterFirstDtg by lazy { duration.functions.toDtgAfterGivenDtg(FirstDtg) }
+
+    val yearsAfterFirstYear by lazy { duration.functions.toYearsAfterGivenYear(FirstYear) }
 }
 
 class DurationFunctions(private val duration: Duration) {
-
 
     val toMonthsInGivenYear: (Year) -> nat1 = function(
         command = { year ->
@@ -135,9 +149,7 @@ class DurationFunctions(private val duration: Duration) {
         pre = { year -> duration < fromYear(year) }
     )
 
-    val toYearsAfterFirstYear: () -> nat = function<nat>(
-        command = { toYearsAfterGivenYear(FirstYear) }
-    )
+
 
     val toYearsAfterGivenYear: (Year) -> nat =
         function(
@@ -157,18 +169,12 @@ class DurationFunctions(private val duration: Duration) {
             },
         )
 
-    val toDtgAfterFirstDtg: () -> Dtg = function(
-        command = { duration.functions.toDtgAfterGivenDtg(FirstDtg) },
-        pre = { duration <= LastDtg.properties.durationSinceFirstDtg },
-        post = { result -> result.properties.durationSinceFirstDtg == duration }
-    )
-
     val toDtgAfterGivenDtg: (Dtg) -> Dtg = function(
         command = { givenDtg ->
             val totalDuration = givenDtg.properties.durationSinceFirstDtg.functions.addDuration(duration)
             val daysDuration = fromDays(totalDuration.properties.days)
-            val timeDuration = totalDuration.functions.modDays()
-            mk_Dtg(daysDuration.functions.toDateAfterFirstDate(), timeDuration.functions.toTimeAfterFirstTime())
+            val timeDuration = totalDuration.properties.modDays
+            mk_Dtg(daysDuration.properties.dateAfterFirstDate, timeDuration.properties.timeAfterFirstTime)
         },
         pre = { givenDtg ->
             val maxDuration = LastDtg.properties.durationSinceFirstDtg
@@ -177,22 +183,10 @@ class DurationFunctions(private val duration: Duration) {
         }
     )
 
-    val toDateAfterFirstDate: () -> Date = function(
-        command = { toDateAfterGivenDate(FirstDate) },
-        pre = {
-            val maxDuration = LastDate.properties.durationSinceFirstDate.functions.addDuration(OneDayDuration)
-            duration < maxDuration
-        },
-        post = { result ->
-            result.properties.durationSinceFirstDate <= duration &&
-                    duration < result.properties.durationSinceFirstDate.functions.addDuration(OneDayDuration)
-        }
-    )
-
     val toDateAfterGivenDate: (Date) -> Date = function(
         command = { givenDate ->
             val totalDuration = givenDate.properties.durationSinceFirstDate.functions.addDuration(duration)
-            val year = totalDuration.functions.toYearsAfterGivenYear(FirstYear)
+            val year = totalDuration.properties.yearsAfterFirstYear
             val totalDurationModYear =
                 totalDuration.functions.subtractDuration(durationFromFirstYearUpToStartOfYear(year))
             val month = totalDurationModYear.functions.toMonthsInGivenYear(year) + 1uL
@@ -208,19 +202,13 @@ class DurationFunctions(private val duration: Duration) {
         }
     )
 
-    val toTimeAfterFirstTime: () -> Time = function(
-        command = { toTimeAfterGivenTime(FirstTime) },
-        pre = { duration < OneDayDuration },
-        post = { result -> result.properties.durationSinceFirstTime == duration }
-    )
-
     val toTimeAfterGivenTime: (Time) -> Time = function(
         command = { givenTime ->
             val totalDuration = givenTime.properties.durationSinceFirstTime.functions.addDuration(duration)
             val hour = totalDuration.properties.hours
-            val minute = totalDuration.functions.modHours().properties.minutes
-            val second = totalDuration.functions.modMinutes().properties.seconds
-            val millisecond = totalDuration.functions.modSeconds().milliseconds
+            val minute = totalDuration.properties.modHours.properties.minutes
+            val second = totalDuration.properties.modMinutes.properties.seconds
+            val millisecond = totalDuration.properties.modSeconds.milliseconds
             mk_Time(hour, minute, second, millisecond)
         },
         pre = { givenTime ->
@@ -261,40 +249,25 @@ class DurationFunctions(private val duration: Duration) {
 //        However, it is still a valid post condition so is left here for completeness.
     )
 
-    val modSeconds: () -> Duration = function(
-        command = { mk_Duration(duration.milliseconds % OneSecondDuration.milliseconds) },
-        post = { result -> result < OneSecondDuration }
-    )
-
-    val modMinutes: () -> Duration = function(
-        command = { mk_Duration(duration.milliseconds % OneMinuteDuration.milliseconds) },
-        post = { result -> result < OneMinuteDuration }
-    )
-    val modHours: () -> Duration = function(
-        command = { mk_Duration(duration.milliseconds % OneHourDuration.milliseconds) },
-        post = { result -> result < OneHourDuration }
-    )
-    val modDays: () -> Duration = function(
-        command = { mk_Duration(duration.milliseconds % OneDayDuration.milliseconds) },
-        post = { result -> result < OneDayDuration }
-    )
-
 }
 
-object DurationUtiltites {
+object DurationUtilities {
 
     val minDuration: (Set1<Duration>) -> Duration = function(
         command = { durations -> durations.min() },
         post = { durations, result -> result in durations && forall(durations) { result <= it } }
     )
+
     val maxDuration: (Set1<Duration>) -> Duration = function(
         command = { durations -> durations.max() },
         post = { durations, result -> result in durations && forall(durations) { result >= it } }
     )
+
     val sumDuration: (Sequence<Duration>) -> Duration = function(
         command = { durationSequence -> mk_Duration((seq(durationSequence) { it.milliseconds }).sum()) },
         post = { durationSequence, result -> forall(durationSequence) { result >= it } }
     )
+
     val durationDiff: (Duration, Duration) -> Duration = function(
         command = { duration1, duration2 ->
             val diff = if (duration1 > duration2) {

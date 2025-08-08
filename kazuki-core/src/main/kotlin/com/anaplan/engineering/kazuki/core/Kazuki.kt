@@ -1,11 +1,24 @@
 package com.anaplan.engineering.kazuki.core
 
+import com.anaplan.engineering.kazuki.core.internal._EvaluationProfiler
 import org.slf4j.LoggerFactory
 import kotlin.jvm.java
 import kotlin.reflect.KClass
 
 object Kazuki {
     internal val Log = LoggerFactory.getLogger(Kazuki::class.java)
+
+    internal val Profile by lazy {
+        System.getProperty("com.anaplan.engineering.kazuki.profile").toBoolean()
+    }
+
+    fun logEvaluationProfile() {
+        if (Profile) {
+            _EvaluationProfiler.log()
+        } else {
+            Log.warn("Cannot log evaluation profile as not enabled")
+        }
+    }
 }
 
 

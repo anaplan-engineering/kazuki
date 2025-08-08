@@ -20,6 +20,7 @@ internal val TupleInterfaceName = ClassName(RootPackageName, "Tuple")
 internal val KazukiLogName = ClassName(RootPackageName, "Kazuki.Log")
 internal val CacheKeyName = ClassName(InternalPackageName, "_CacheKey")
 internal val EvaluationCacheName = ClassName(InternalPackageName, "_EvaluationCache")
+internal val EvaluationProfilerName = ClassName(InternalPackageName, "_EvaluationProfiler")
 
 internal val PrettyFunctionName = "pretty"
 internal val PrettyOrDefaultFunctionName = "_prettyOrDefault"

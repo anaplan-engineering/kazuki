@@ -80,25 +80,33 @@ class TimeInZoneProperties(private val timeInZone: TimeInZone) {
 
     private val normaliseTimeInZonePlus: (Duration, Duration) -> NormalisedTime = function(
         command = { utcTimeDuration, offsetDuration ->
-            if (offsetDuration <= utcTimeDuration) mk_NormalisedTime(
-                utcTimeDuration.functions.subtractDuration(offsetDuration).functions.toTimeAfterFirstTime(),
-                OffsetDirection.None
-            ) else mk_NormalisedTime(
-                utcTimeDuration.functions.addDuration(OneDayDuration).functions.subtractDuration(offsetDuration).functions.toTimeAfterFirstTime(),
-                OffsetDirection.Plus
-            )
+            if (offsetDuration <= utcTimeDuration) {
+                mk_NormalisedTime(
+                    utcTimeDuration.functions.subtractDuration(offsetDuration).properties.timeAfterFirstTime,
+                    OffsetDirection.None
+                )
+            } else {
+                mk_NormalisedTime(
+                    utcTimeDuration.functions.addDuration(OneDayDuration).functions.subtractDuration(offsetDuration).properties.timeAfterFirstTime,
+                    OffsetDirection.Plus
+                )
+            }
         }
     )
     private val normaliseTimeInZoneMinus: (Duration, Duration) -> NormalisedTime = function(
         command = { utcTimeDuration, offsetDuration ->
             val adjusted = utcTimeDuration.functions.addDuration(offsetDuration)
-            if (adjusted < OneDayDuration) mk_NormalisedTime(
-                adjusted.functions.toTimeAfterFirstTime(),
-                OffsetDirection.None
-            ) else mk_NormalisedTime(
-                adjusted.functions.subtractDuration(OneDayDuration).functions.toTimeAfterFirstTime(),
-                OffsetDirection.Minus
-            )
+            if (adjusted < OneDayDuration) {
+                mk_NormalisedTime(
+                    adjusted.properties.timeAfterFirstTime,
+                    OffsetDirection.None
+                )
+            } else {
+                mk_NormalisedTime(
+                    adjusted.functions.subtractDuration(OneDayDuration).properties.timeAfterFirstTime,
+                    OffsetDirection.Minus
+                )
+            }
         }
     )
 
@@ -131,7 +139,7 @@ interface Offset {
     fun offsetMoreThanDay() = offsetDuration < OneDayDuration
 
     @Invariant
-    fun offsetGranularityTooFine() = offsetDuration.functions.modMinutes() == NoDuration
+    fun offsetGranularityTooFine() = offsetDuration.properties.modMinutes == NoDuration
 
     @FunctionProvider(OffsetProperties::class)
     val properties: OffsetProperties
@@ -141,7 +149,7 @@ interface Offset {
 class OffsetProperties(private val offset: Offset) {
 
     val formatted by lazy {
-        val hourMinute = offset.offsetDuration.functions.toTimeAfterFirstTime()
+        val hourMinute = offset.offsetDuration.properties.timeAfterFirstTime
         val sign = when (offset.offsetDirection) {
             OffsetDirection.Plus -> "+"; OffsetDirection.Minus -> "-"; OffsetDirection.None -> ""
         }

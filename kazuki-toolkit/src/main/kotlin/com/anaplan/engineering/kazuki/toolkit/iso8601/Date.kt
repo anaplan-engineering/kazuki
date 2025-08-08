@@ -121,12 +121,12 @@ class DateFunctions(private val date: Date) {
     )
 
     val addDays: (nat) -> Date = function(
-        command = { n -> date.properties.durationSinceFirstDate.functions.addDuration(Duration.fromDays(n)).functions.toDateAfterFirstDate() },
+        command = { n -> date.properties.durationSinceFirstDate.functions.addDuration(Duration.fromDays(n)).properties.dateAfterFirstDate },
         post = { n, result -> result.functions.subtractDays(n) == date }
     )
 
     val subtractDays: (nat) -> Date = function(
-        command = { n -> date.properties.durationSinceFirstDate.functions.subtractDuration(Duration.fromDays(n)).functions.toDateAfterFirstDate() },
+        command = { n -> date.properties.durationSinceFirstDate.functions.subtractDuration(Duration.fromDays(n)).properties.dateAfterFirstDate },
         pre = { n -> date.properties.durationSinceFirstDate.properties.days >= n },
 //            post = {n, result -> result.functions.addDays(n) == date}
 //        This post condition uses a function whose post condition uses this function as a post condition.

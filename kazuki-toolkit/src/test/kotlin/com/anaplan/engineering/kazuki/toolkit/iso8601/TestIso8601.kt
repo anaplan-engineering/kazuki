@@ -713,27 +713,27 @@ class TestIso8601 {
     fun durationDiffTest() {
         assertEquals(
             Duration.fromDays(5u),
-            DurationUtiltites.durationDiff(Duration.fromDays(10u), Duration.fromDays(5u))
+            DurationUtilities.durationDiff(Duration.fromDays(10u), Duration.fromDays(5u))
         )
         assertEquals(
             Duration.fromDays(5u),
-            DurationUtiltites.durationDiff(Duration.fromDays(0u), Duration.fromDays(5u))
+            DurationUtilities.durationDiff(Duration.fromDays(0u), Duration.fromDays(5u))
         )
         assertEquals(
             Duration.fromDays(5u),
-            DurationUtiltites.durationDiff(Duration.fromDays(5u), Duration.fromDays(10u))
+            DurationUtilities.durationDiff(Duration.fromDays(5u), Duration.fromDays(10u))
         )
         assertEquals(
             Duration.fromDays(0u),
-            DurationUtiltites.durationDiff(Duration.fromDays(10u), Duration.fromDays(10u))
+            DurationUtilities.durationDiff(Duration.fromDays(10u), Duration.fromDays(10u))
         )
         assertEquals(
             Duration.fromDays(1999999995u),
-            DurationUtiltites.durationDiff(Duration.fromDays(2000000000u), Duration.fromDays(5u))
+            DurationUtilities.durationDiff(Duration.fromDays(2000000000u), Duration.fromDays(5u))
         )
         assertEquals(
             Duration.fromMillis(15u),
-            DurationUtiltites.durationDiff(Duration.fromMillis(20u), Duration.fromMillis(5u))
+            DurationUtilities.durationDiff(Duration.fromMillis(20u), Duration.fromMillis(5u))
         )
     }
 
@@ -783,19 +783,19 @@ class TestIso8601 {
     fun durationModSecondsTest() {
         assertEquals(
             Duration.fromMillis(10u),
-            Duration.fromSeconds(100u).functions.addDuration(Duration.fromMillis(10u)).functions.modSeconds()
+            Duration.fromSeconds(100u).functions.addDuration(Duration.fromMillis(10u)).properties.modSeconds
         )
         assertEquals(
             Duration.fromHours(0u),
-            Duration.fromSeconds(100u).functions.modSeconds()
+            Duration.fromSeconds(100u).properties.modSeconds
         )
         assertEquals(
             Duration.fromMillis(100u),
-            Duration.fromSeconds(0u).functions.addDuration(Duration.fromMillis(100u)).functions.modSeconds()
+            Duration.fromSeconds(0u).functions.addDuration(Duration.fromMillis(100u)).properties.modSeconds
         )
         assertEquals(
             Duration.fromMillis(10u),
-            Duration.fromDays(10000u).functions.addDuration(Duration.fromMillis(10u)).functions.modSeconds()
+            Duration.fromDays(10000u).functions.addDuration(Duration.fromMillis(10u)).properties.modSeconds
         )
 
     }
@@ -804,19 +804,19 @@ class TestIso8601 {
     fun durationModMinutesTest() {
         assertEquals(
             Duration.fromSeconds(10u),
-            Duration.fromMinutes(5u).functions.addDuration(Duration.fromSeconds(10u)).functions.modMinutes()
+            Duration.fromMinutes(5u).functions.addDuration(Duration.fromSeconds(10u)).properties.modMinutes
         )
         assertEquals(
             Duration.fromDays(0u),
-            Duration.fromMinutes(5u).functions.modMinutes()
+            Duration.fromMinutes(5u).properties.modMinutes
         )
         assertEquals(
             Duration.fromSeconds(10u),
-            Duration.fromMinutes(0u).functions.addDuration(Duration.fromSeconds(10u)).functions.modMinutes()
+            Duration.fromMinutes(0u).functions.addDuration(Duration.fromSeconds(10u)).properties.modMinutes
         )
         assertEquals(
             Duration.fromSeconds(10u),
-            Duration.fromMinutes(2000000u).functions.addDuration(Duration.fromSeconds(10u)).functions.modMinutes()
+            Duration.fromMinutes(2000000u).functions.addDuration(Duration.fromSeconds(10u)).properties.modMinutes
         )
     }
 
@@ -839,19 +839,19 @@ class TestIso8601 {
     fun durationModHoursTest() {
         assertEquals(
             Duration.fromSeconds(10u),
-            Duration.fromHours(5u).functions.addDuration(Duration.fromSeconds(10u)).functions.modHours()
+            Duration.fromHours(5u).functions.addDuration(Duration.fromSeconds(10u)).properties.modHours
         )
         assertEquals(
             Duration.fromSeconds(10u),
-            Duration.fromHours(0u).functions.addDuration(Duration.fromSeconds(10u)).functions.modHours()
+            Duration.fromHours(0u).functions.addDuration(Duration.fromSeconds(10u)).properties.modHours
         )
         assertEquals(
             Duration.fromSeconds(0u),
-            Duration.fromHours(110u).functions.modHours()
+            Duration.fromHours(110u).properties.modHours
         )
         assertEquals(
             Duration.fromSeconds(70u),
-            Duration.fromHours(2000000u).functions.addDuration(Duration.fromSeconds(70u)).functions.modHours()
+            Duration.fromHours(2000000u).functions.addDuration(Duration.fromSeconds(70u)).properties.modHours
         )
     }
 
@@ -908,19 +908,19 @@ class TestIso8601 {
     fun durationModDaysTest() {
         assertEquals(
             Duration.fromSeconds(10u),
-            Duration.fromDays(5u).functions.addDuration(Duration.fromSeconds(10u)).functions.modDays()
+            Duration.fromDays(5u).functions.addDuration(Duration.fromSeconds(10u)).properties.modDays
         )
         assertEquals(
             Duration.fromMinutes(0u),
-            Duration.fromDays(5u).functions.modDays()
+            Duration.fromDays(5u).properties.modDays
         )
         assertEquals(
             Duration.fromHours(10u),
-            Duration.fromDays(0u).functions.addDuration(Duration.fromHours(10u)).functions.modDays()
+            Duration.fromDays(0u).functions.addDuration(Duration.fromHours(10u)).properties.modDays
         )
         assertEquals(
             Duration.fromSeconds(10u),
-            Duration.fromDays(200000u).functions.addDuration(Duration.fromSeconds(10u)).functions.modDays()
+            Duration.fromDays(200000u).functions.addDuration(Duration.fromSeconds(10u)).properties.modDays
         )
     }
 
@@ -958,10 +958,10 @@ class TestIso8601 {
 
     @Test
     fun durationToYearsAfterFirstYearTest() {
-        assertEquals(0u, Duration.fromDays(0u).functions.toYearsAfterFirstYear())
-        assertEquals(2u, Duration.fromDays(800u).functions.toYearsAfterFirstYear())
-        assertEquals(0u, Duration.fromDays(365u).functions.toYearsAfterFirstYear())
-        assertEquals(1u, Duration.fromDays(366u).functions.toYearsAfterFirstYear())
+        assertEquals(0u, Duration.fromDays(0u).properties.yearsAfterFirstYear)
+        assertEquals(2u, Duration.fromDays(800u).properties.yearsAfterFirstYear)
+        assertEquals(0u, Duration.fromDays(365u).properties.yearsAfterFirstYear)
+        assertEquals(1u, Duration.fromDays(366u).properties.yearsAfterFirstYear)
     }
 
     @Test
@@ -981,19 +981,19 @@ class TestIso8601 {
     fun durationToDtgAfterFirstDtgTest() {
         assertEquals(
             mk_Date(0u, 1u, 6u).properties.dtgAtStartOfDay,
-            Duration.fromDays(5u).functions.toDtgAfterFirstDtg()
+            Duration.fromDays(5u).properties.dtgAfterFirstDtg
         )
         assertEquals(
             mk_Date(0u, 1u, 1u).properties.dtgAtStartOfDay,
-            Duration.fromDays(0u).functions.toDtgAfterFirstDtg()
+            Duration.fromDays(0u).properties.dtgAfterFirstDtg
         )
         assertEquals(
             mk_Date(0u, 2u, 7u).properties.dtgAtStartOfDay,
-            Duration.fromDays(37u).functions.toDtgAfterFirstDtg()
+            Duration.fromDays(37u).properties.dtgAfterFirstDtg
         )
         assertEquals(
             mk_Dtg(FirstDate, mk_Time(0u, 0u, 24u, 0u)),
-            Duration.fromSeconds(24u).functions.toDtgAfterFirstDtg()
+            Duration.fromSeconds(24u).properties.dtgAfterFirstDtg
         )
     }
 
@@ -1054,8 +1054,8 @@ class TestIso8601 {
 
     @Test
     fun durationToDateAfterFirstDateTest() {
-        assertEquals(mk_Date(0u, 1u, 4u), Duration.fromDays(3u).functions.toDateAfterFirstDate())
-        assertEquals(mk_Date(0u, 1u, 1u), Duration.fromDays(0u).functions.toDateAfterFirstDate())
+        assertEquals(mk_Date(0u, 1u, 4u), Duration.fromDays(3u).properties.dateAfterFirstDate)
+        assertEquals(mk_Date(0u, 1u, 1u), Duration.fromDays(0u).properties.dateAfterFirstDate)
     }
 
     @Test
@@ -1078,9 +1078,9 @@ class TestIso8601 {
 
     @Test
     fun durationToTimeAfterFirstTimeTest() {
-        assertEquals(mk_Time(3u, 0u, 0u, 0u), Duration.fromHours(3u).functions.toTimeAfterFirstTime())
-        assertEquals(FirstTime, Duration.fromHours(0u).functions.toTimeAfterFirstTime())
-        assertFailsWith<PreconditionFailure> { Duration.fromHours(25u).functions.toTimeAfterFirstTime() }
+        assertEquals(mk_Time(3u, 0u, 0u, 0u), Duration.fromHours(3u).properties.timeAfterFirstTime)
+        assertEquals(FirstTime, Duration.fromHours(0u).properties.timeAfterFirstTime)
+        assertFailsWith<PreconditionFailure> { Duration.fromHours(25u).properties.timeAfterFirstTime }
     }
 
     @Test
@@ -1382,13 +1382,13 @@ class TestIso8601 {
     @Test
     fun minDurationTest() {
         assertEquals(
-            Duration.fromMinutes(40u), DurationUtiltites.minDuration(
+            Duration.fromMinutes(40u), DurationUtilities.minDuration(
                 mk_Set1(Duration.fromHours(3u), Duration.fromMinutes(40u), Duration.fromDays(2u), Duration.fromHours(5u))
             )
         )
         assertEquals(
             Duration.fromHours(0u),
-            DurationUtiltites.minDuration(
+            DurationUtilities.minDuration(
                 mk_Set1(Duration.fromHours(0u), Duration.fromMinutes(14u), Duration.fromDays(2u), Duration.fromHours(23u))
             )
         )
@@ -1398,13 +1398,13 @@ class TestIso8601 {
     fun maxDurationTest() {
         assertEquals(
             Duration.fromDays(2u),
-            DurationUtiltites.maxDuration(
+            DurationUtilities.maxDuration(
                 mk_Set1(Duration.fromHours(3u), Duration.fromMinutes(40u), Duration.fromDays(2u), Duration.fromHours(5u))
             )
         )
         assertEquals(
             Duration.fromDays(2000000000u),
-            DurationUtiltites.maxDuration(
+            DurationUtilities.maxDuration(
                 mk_Set1(
                     Duration.fromHours(0u),
                     Duration.fromMinutes(14u),
@@ -1419,13 +1419,13 @@ class TestIso8601 {
     fun sumDurationTest() {
         assertEquals(
             mk_Duration(204000000u),
-            DurationUtiltites.sumDuration(
+            DurationUtilities.sumDuration(
                 mk_Seq(Duration.fromHours(3u), Duration.fromMinutes(40u), Duration.fromDays(2u), Duration.fromHours(5u))
             )
         )
         assertEquals(
             mk_Duration(0u),
-            DurationUtiltites.sumDuration(mk_Seq(Duration.fromHours(0u), Duration.fromMinutes(0u), Duration.fromDays(0u)))
+            DurationUtilities.sumDuration(mk_Seq(Duration.fromHours(0u), Duration.fromMinutes(0u), Duration.fromDays(0u)))
         )
     }
 
