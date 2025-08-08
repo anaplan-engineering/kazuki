@@ -214,14 +214,14 @@ class TestIso8601BetweenDtgs(
 
     @Test
     fun testMonths() {
-        val actual = DtgUtilities.monthsBetweenDtgs(earlier, later)
+        val actual = DtgUtilities.monthsBetween(earlier, later)
 
         assertEquals(months, actual.toInt())
     }
 
     @Test
     fun testYears() {
-        val actual = DtgUtilities.yearsBetweenDtgs(earlier, later)
+        val actual = DtgUtilities.yearsBetween(earlier, later)
 
         assertEquals(years, actual.toInt())
     }

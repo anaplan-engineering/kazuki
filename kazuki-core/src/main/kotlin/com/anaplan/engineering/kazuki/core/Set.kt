@@ -77,11 +77,24 @@ fun <T> Set<T>.single(): T {
 fun <T> dunion(sets: Set<Set<T>>) = as_Set(sets.flatten())
 
 infix operator fun <T, S : Set<T>> S.plus(s: Set<T>) = transformSet { it.elements.toMutableSet().apply { addAll(s) } }
-
 infix operator fun <T, S : Set<T>> S.plus(t: T) = transformSet { it.elements.toMutableSet().apply { add(t) } }
 
-infix operator fun <T, S : Set<T>> S.minus(s: Set<T>) =
-    transformSet { it.elements.toMutableSet().apply { removeAll(s) } }
+infix operator fun <T, S : Set<T>> S.minus(s: Set<T>) = diff(retainType = true, s)
+infix operator fun <T, S : Set<T>> S.minus(t: T) = diff(retainType = true, t)
 
-infix operator fun <T, S : Set<T>> S.minus(t: T) = transformSet { it.elements.toMutableSet().apply { remove(t) } }
+infix operator fun <T> Set<T>.div(s: Set<T>) = diff(retainType = false, s)
+infix operator fun <T> Set<T>.div(t: T) = diff(retainType = false, t)
 
+fun <T> Set<T>.diff(retainType: Boolean, s: Set<T>): Set<T> =
+    if (retainType) {
+        transformSet { it.elements.toMutableSet().apply { removeAll(s) } }
+    } else {
+        toMutableSet().apply { removeAll(s) }
+    }
+
+fun <T> Set<T>.diff(retainType: Boolean, t: T): Set<T> =
+    if (retainType) {
+        transformSet { it.elements.toMutableSet().apply { remove(t) } }
+    } else {
+        toMutableSet().apply { remove(t) }
+    }

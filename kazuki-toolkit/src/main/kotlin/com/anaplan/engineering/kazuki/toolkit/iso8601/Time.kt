@@ -1,20 +1,19 @@
 package com.anaplan.engineering.kazuki.toolkit.iso8601
 
 import com.anaplan.engineering.kazuki.core.*
+import com.anaplan.engineering.kazuki.toolkit.iso8601.Duration_Module.mk_Duration
 import com.anaplan.engineering.kazuki.toolkit.iso8601.NormalisedTime_Module.mk_NormalisedTime
+import com.anaplan.engineering.kazuki.toolkit.iso8601.Time_Module.mk_Time
+import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 
 
 @Module
-interface Time : Comparable<Time>, PrettyPrintable {
+interface Time: PrettyPrintable {
     val hour: Hour
     val minute: Minute
     val second: Second
     val millisecond: Millisecond
-
-    private val timeComparator
-        get() = compareBy<Time> { it.hour }.thenBy { it.minute }.thenBy { it.second }.thenBy { it.millisecond }
-
-    override fun compareTo(other: Time) = timeComparator.compare(this, other)
 
     override fun pretty() = properties.formatted
 
@@ -27,13 +26,7 @@ interface Time : Comparable<Time>, PrettyPrintable {
 
 class TimeProperties(private val time: Time) {
     val durationSinceFirstTime by lazy {
-        Duration.fromHours(time.hour).functions.addDuration(
-            Duration.fromMinutes(time.minute).functions.addDuration(
-                Duration.fromSeconds(time.second).functions.addDuration(
-                    Duration.fromMillis(time.millisecond)
-                )
-            )
-        )
+        mk_Duration(ChronoUnit.MILLIS.between(FirstTime.toLocalTime(), time.toLocalTime()).toNat())
     }
 
     val formatted by lazy {
@@ -50,16 +43,24 @@ class TimeProperties(private val time: Time) {
 
 class TimeFunctions(private val time: Time) {
 
+    private val localTime by lazy { time.toLocalTime() }
+    
+    val isEarlierThan = function(
+        command = { other: Time -> localTime < other.toLocalTime() },
+        post = { other, result ->
+            result iff (time.hour < other.hour || (time.hour == other.hour && (time.minute < other.minute || (time.minute == other.minute && (time.second < other.second || (time.second == other.second && time.millisecond < other.millisecond))))))
+        }
+    )
 }
 
 @Module
-interface TimeInZone : Comparable<TimeInZone> {
+interface TimeInZone {
     val time: Time
     val offset: Offset
 
     // TODO -- surely this doesn't account for day offset?
-    override fun compareTo(other: TimeInZone) =
-        properties.normalisedTime.time.compareTo(other.properties.normalisedTime.time)
+//    override fun compareTo(other: TimeInZone) =
+//        properties.normalisedTime.time.compareTo(other.properties.normalisedTime.time)
 
     @FunctionProvider(TimeInZoneFunctions::class)
     val functions: TimeInZoneFunctions
@@ -80,25 +81,33 @@ class TimeInZoneProperties(private val timeInZone: TimeInZone) {
 
     private val normaliseTimeInZonePlus: (Duration, Duration) -> NormalisedTime = function(
         command = { utcTimeDuration, offsetDuration ->
-            if (offsetDuration <= utcTimeDuration) mk_NormalisedTime(
-                utcTimeDuration.functions.subtractDuration(offsetDuration).functions.toTimeAfterFirstTime(),
-                OffsetDirection.None
-            ) else mk_NormalisedTime(
-                utcTimeDuration.functions.addDuration(OneDayDuration).functions.subtractDuration(offsetDuration).functions.toTimeAfterFirstTime(),
-                OffsetDirection.Plus
-            )
+            if (offsetDuration <= utcTimeDuration) {
+                mk_NormalisedTime(
+                    utcTimeDuration.functions.subtract(offsetDuration).properties.timeAfterFirstTime,
+                    OffsetDirection.None
+                )
+            } else {
+                mk_NormalisedTime(
+                    utcTimeDuration.functions.add(OneDayDuration).functions.subtract(offsetDuration).properties.timeAfterFirstTime,
+                    OffsetDirection.Plus
+                )
+            }
         }
     )
     private val normaliseTimeInZoneMinus: (Duration, Duration) -> NormalisedTime = function(
         command = { utcTimeDuration, offsetDuration ->
-            val adjusted = utcTimeDuration.functions.addDuration(offsetDuration)
-            if (adjusted < OneDayDuration) mk_NormalisedTime(
-                adjusted.functions.toTimeAfterFirstTime(),
-                OffsetDirection.None
-            ) else mk_NormalisedTime(
-                adjusted.functions.subtractDuration(OneDayDuration).functions.toTimeAfterFirstTime(),
-                OffsetDirection.Minus
-            )
+            val adjusted = utcTimeDuration.functions.add(offsetDuration)
+            if (adjusted < OneDayDuration) {
+                mk_NormalisedTime(
+                    adjusted.properties.timeAfterFirstTime,
+                    OffsetDirection.None
+                )
+            } else {
+                mk_NormalisedTime(
+                    adjusted.functions.subtract(OneDayDuration).properties.timeAfterFirstTime,
+                    OffsetDirection.Minus
+                )
+            }
         }
     )
 
@@ -114,7 +123,10 @@ class TimeInZoneProperties(private val timeInZone: TimeInZone) {
     }
 }
 
-class TimeInZoneFunctions(private val timeInZone: TimeInZone)
+class TimeInZoneFunctions(private val timeInZone: TimeInZone) {
+    
+
+}
 
 @Module
 interface NormalisedTime {
@@ -131,7 +143,7 @@ interface Offset {
     fun offsetMoreThanDay() = offsetDuration < OneDayDuration
 
     @Invariant
-    fun offsetGranularityTooFine() = offsetDuration.functions.modMinutes() == NoDuration
+    fun offsetGranularityTooFine() = offsetDuration.properties.modMinutes == NoDuration
 
     @FunctionProvider(OffsetProperties::class)
     val properties: OffsetProperties
@@ -141,7 +153,7 @@ interface Offset {
 class OffsetProperties(private val offset: Offset) {
 
     val formatted by lazy {
-        val hourMinute = offset.offsetDuration.functions.toTimeAfterFirstTime()
+        val hourMinute = offset.offsetDuration.properties.timeAfterFirstTime
         val sign = when (offset.offsetDirection) {
             OffsetDirection.Plus -> "+"; OffsetDirection.Minus -> "-"; OffsetDirection.None -> ""
         }
@@ -162,12 +174,20 @@ fun secondNotInRange(second: nat) = second < SecondsPerMinute
 fun millisecondNotInRange(millisecond: nat) = millisecond < MillisPerSecond
 
 object TimeUtilities {
-    val minTime: (Set1<Time>) -> Time = function(
-        command = { times -> times.min() },
-        post = { times, result -> result in times && forall(times) { result <= it } }
+
+    val earliest: (Set1<Time>) -> Time = function(
+        command = { times -> times.minOf { it.toLocalTime() }.toTime() },
+        post = { times, result -> result in times && forall(times - result) { result.functions.isEarlierThan(it) } }
     )
-    val maxTime: (Set1<Time>) -> Time = function(
-        command = { times -> times.max() },
-        post = { times, result -> result in times && forall(times) { result >= it } }
+
+    val latest: (Set1<Time>) -> Time = function(
+        command = { times -> times.maxOf { it.toLocalTime() }.toTime() },
+        post = { times, result -> result in times && forall(times - result) { it.functions.isEarlierThan(result) } }
     )
 }
+
+
+
+internal fun LocalTime.toTime() = mk_Time(this.hour.toNat(), this.minute.toNat(), this.second.toNat(), (this.nano / 1_000_000).toNat())
+
+internal fun Time.toLocalTime() = LocalTime.of(this.hour.toInt(), this.minute.toInt(), this.second.toInt(), this.millisecond.toInt() * 1_000_000)

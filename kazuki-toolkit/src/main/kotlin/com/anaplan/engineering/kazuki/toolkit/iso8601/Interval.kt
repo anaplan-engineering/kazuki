@@ -5,7 +5,9 @@ import com.anaplan.engineering.kazuki.core.Invariant
 import com.anaplan.engineering.kazuki.core.Module
 import com.anaplan.engineering.kazuki.core.bool
 import com.anaplan.engineering.kazuki.core.function
-import com.anaplan.engineering.kazuki.toolkit.iso8601.DtgUtilities.dtgDiff
+import com.anaplan.engineering.kazuki.core.iff
+import com.anaplan.engineering.kazuki.toolkit.iso8601.DtgUtilities.durationBetween
+import com.anaplan.engineering.kazuki.toolkit.iso8601.DtgUtilities.isEarlierThanOrEqual
 
 
 @Module
@@ -17,7 +19,7 @@ interface Interval {
     fun zeroSizeInterval() = begins != ends
 
     @Invariant
-    fun beginAfterEnd() = begins <= ends
+    fun beginAfterEnd() = begins.isEarlierThanOrEqual(ends)
 
     @FunctionProvider(IntervalFunctions::class)
     val functions: IntervalFunctions
@@ -32,24 +34,30 @@ open class IntervalProperties(private val interval: Interval) {
         interval.begins.properties.formatted + "/" + interval.ends.properties.formatted
     }
 
-    val duration by lazy { dtgDiff(interval.begins, interval.ends) }
+    val duration by lazy { durationBetween(interval.begins, interval.ends) }
 }
 
 open class IntervalFunctions(private val interval: Interval) {
 
     val within: (Interval) -> bool = function(
         command = { containerInterval ->
-            containerInterval.begins <= interval.begins && interval.ends <= containerInterval.ends
+            containerInterval.begins.isEarlierThanOrEqual(interval.begins) &&
+                    interval.ends.isEarlierThanOrEqual(containerInterval.ends)
         },
         post = { containerInterval, result ->
-            result == (containerInterval.begins <= interval.begins
-                    && interval.ends <= containerInterval.ends)
+            result iff (containerInterval.begins.isEarlierThanOrEqual(interval.begins)
+                    && interval.ends.isEarlierThanOrEqual(containerInterval.ends))
         }
     )
 
     val overlap: (Interval) -> bool = function(
-        command = { otherInterval -> otherInterval.begins < interval.ends && interval.begins < otherInterval.ends },
-        post = { otherInterval, result -> result == (otherInterval.begins < interval.ends && interval.begins < otherInterval.ends) }
+        command = { otherInterval ->
+            otherInterval.begins.functions.isEarlierThan(interval.ends) &&
+                    interval.begins.functions.isEarlierThan(otherInterval.ends)
+        },
+        post = { otherInterval, result ->
+            result == (otherInterval.begins.functions.isEarlierThan(interval.ends) &&
+                    interval.begins.functions.isEarlierThan(otherInterval.ends)) }
     )
 
     val finestGranularity: (Duration) -> bool = function(

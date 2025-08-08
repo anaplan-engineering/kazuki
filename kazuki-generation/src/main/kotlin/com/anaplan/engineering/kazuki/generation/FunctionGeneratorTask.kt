@@ -45,13 +45,15 @@ private const val InvocationsPropertyName = "Invocations"
 private const val CachePropertyName = "cache"
 private const val LogAsPropertyName = "logAs"
 private const val InvocationCountPropertyName = "invocationCount"
+private const val FunctionIdPropertyName = "functionId"
 
 fun FileSpec.Builder.addNArgFunction(argCount: Int) {
     val className = "VFunction$argCount"
     val inputTypeNames = (1..argCount).map { TypeVariableName("I$it") }
     val outputTypeName = TypeVariableName("O")
     val booleanName = Boolean::class.asClassName()
-    val nullableStringName = String::class.asClassName().copy(nullable = true)
+    val stringName = String::class.asClassName()
+    val nullableStringName = stringName.copy(nullable = true)
     val natName = ULong::class.asClassName()
     val atomicIntName = AtomicInteger::class.asClassName()
     val superInterfaceName = ClassName(KotlinFunctionPackage, "Function$argCount")
@@ -104,6 +106,16 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
                 .initializer(CodeBlock.builder().apply {
                     addStatement("%T()", atomicIntName)
                 }.build()).build()
+        )
+        addProperty(
+            PropertySpec.builder(FunctionIdPropertyName, stringName, KModifier.PRIVATE).build()
+        )
+        addInitializerBlock(
+            CodeBlock.builder().apply {
+                addStatement("val frame = StackWalker.getInstance(setOf(StackWalker.Option.SHOW_HIDDEN_FRAMES), 6).walk·{ it.limit(4).reduce·{ _, r -> r }.get() }")
+                addStatement("%N = \"\${frame.className}(\${frame.fileName}:\${frame.lineNumber})\"", FunctionIdPropertyName)
+                addStatement("%T.createInstance(%N)", EvaluationProfilerName, FunctionIdPropertyName)
+            }.build()
         )
         addType(TypeSpec.companionObjectBuilder().apply {
             val invocationsTypeName = ConcurrentHashMap::class.asClassName().parameterizedBy(
@@ -213,6 +225,7 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
                 endControlFlow()
 
                 beginControlFlow("try")
+                addStatement("%T.startInvocation(%N, this, %N)", EvaluationProfilerName, FunctionIdPropertyName, invocationIdVariableName)
 
                 addComment("TODO -- validate primitive args and result")
 //              val validParams = validatePrimitive(i2) && validatePrimitive(i2)
@@ -221,10 +234,9 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
 //              }
 
                 beginControlFlow("if (!$PrePropertyName($inputs))")
-                val msgVariableName = "msg"
-                // TODO - val msg = if (this.logAs == null) null else "In $logAs${mk_(i1, i2).pretty()}"
-//                addStatement("val %N = if (%N == null) null else \"In %N)
-                addStatement("throw PreconditionFailure()")
+                addStatement("val name = %N ?: %N", LogAsPropertyName, FunctionIdPropertyName)
+                addStatement("val msg = \"In \$name\${mk_($inputs).pretty()}\"")
+                addStatement("throw PreconditionFailure(msg)")
                 endControlFlow()
 
                 addStatement("val $resultValName = $CommandPropertyName($inputs)")
@@ -236,8 +248,9 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
 
                 val postInputs = ((1..argCount).map { "i$it" } + resultValName).joinToString(", ")
                 beginControlFlow("if (!$PostPropertyName($postInputs))")
-                // TODO val msg = if (this.logAs == null) null else "In $logAs${mk_(i1, i2).pretty()}=$result"
-                addStatement("throw PostconditionFailure()")
+                addStatement("val name = %N ?: %N", LogAsPropertyName, FunctionIdPropertyName)
+                addStatement("val msg = \"In \$name\${mk_($inputs).pretty()}=\${%N.prettyOrDefault()}\"", resultValName)
+                addStatement("throw PostconditionFailure(msg)")
                 endControlFlow()
 
                 beginControlFlow("if (%N)", logVariableName)
@@ -265,6 +278,7 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
                 beginControlFlow("if (%N)", initialRecursionValName)
                 addStatement("%N.remove(this)", InvocationsPropertyName)
                 endControlFlow()
+                addStatement("%T.endInvocation(%N, this, %N)", EvaluationProfilerName, FunctionIdPropertyName, invocationIdVariableName)
                 endControlFlow()
             }.build())
         }.build())

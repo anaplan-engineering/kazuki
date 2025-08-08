@@ -1,18 +1,18 @@
 package com.anaplan.engineering.kazuki.toolkit.iso8601
 
 import com.anaplan.engineering.kazuki.core.*
+import com.anaplan.engineering.kazuki.toolkit.iso8601.Date_Module.mk_Date
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Dtg_Module.mk_Dtg
-import com.anaplan.engineering.kazuki.toolkit.iso8601.DurationUtiltites.durationDiff
+import com.anaplan.engineering.kazuki.toolkit.iso8601.Duration_Module.mk_Duration
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Interval_Module.mk_Interval
+import com.anaplan.engineering.kazuki.toolkit.iso8601.Time_Module.mk_Time
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 @Module
-interface Dtg : Comparable<Dtg>, PrettyPrintable {
+interface Dtg : PrettyPrintable {
     val date: Date
     val time: Time
-
-    private val dtgComparator get() = compareBy<Dtg> { it.date }.thenBy { it.time }
-    override fun compareTo(other: Dtg) = dtgComparator.compare(this, other)
-
 
     override fun pretty() = properties.formatted
 
@@ -26,7 +26,9 @@ interface Dtg : Comparable<Dtg>, PrettyPrintable {
 
 class DtgProperties(private val dtg: Dtg) {
 
-    val durationSinceFirstDtg by lazy { dtg.date.properties.durationSinceFirstDate.functions.addDuration(dtg.time.properties.durationSinceFirstTime) }
+    val durationSinceFirstDtg by lazy {
+        dtg.date.properties.durationSinceFirstDate.functions.add(dtg.time.properties.durationSinceFirstTime)
+    }
 
     val instant by lazy { mk_Interval(dtg, dtg.functions.addDuration(OneMillisecondDuration)) }
 
@@ -35,203 +37,138 @@ class DtgProperties(private val dtg: Dtg) {
 
 class DtgFunctions(private val dtg: Dtg) {
 
-    val addDuration: (Duration) -> Dtg = function(
-        command = { duration -> dtg.properties.durationSinceFirstDtg.functions.addDuration(duration).functions.toDtgAfterFirstDtg() },
-        post = { duration, result -> result.functions.subtractDuration(duration) == dtg }
+    private val localDateTime by lazy { dtg.toLocalDateTime() }
+
+    val isEarlierThan = function(
+        command = { other: Dtg -> localDateTime < other.toLocalDateTime() },
+        post = { other, result ->
+            result iff (dtg.date.functions.isEarlierThan(other.date) || (
+                    dtg.date == other.date && dtg.time.functions.isEarlierThan(other.time)))
+        }
+    )
+
+    val addDuration = function(
+        command = { duration: Duration ->
+            dtg.toLocalDateTime().plusNanos(duration.milliseconds.toLong() * 1_000_000).toDtg()
+        },
+        post = { duration, result -> DtgUtilities.durationBetween(dtg, result) == duration }
     )
 
     val subtractDuration: (Duration) -> Dtg = function(
-        command = { duration -> dtg.properties.durationSinceFirstDtg.functions.subtractDuration(duration).functions.toDtgAfterFirstDtg() },
-        pre = { duration -> duration <= dtg.properties.durationSinceFirstDtg },
-//          post = { duration, result -> result.functions.addDuration(duration) == dtg }
-//          This post condition uses a function whose post condition uses this function as a post condition.
-//          If not commented, the two functions will recur until a stack overflow error occurs.
-//          However, it is still a valid post condition so is left here for completeness.
-    )
-
-
-    val withinDurationOfDtg: (Duration, Dtg) -> bool = function(
-        command = { duration, targetDtg ->
-            if (duration.milliseconds == 0uL) {
-                dtg == targetDtg
-            } else {
-                dtg.functions.inInterval(
-                    mk_Interval(
-                        targetDtg.functions.subtractDuration(duration),
-                        targetDtg.functions.addDuration(duration)
-                    )
-                )
-            }
+        command = { duration ->
+            dtg.toLocalDateTime().minusNanos(duration.milliseconds.toLong() * 1_000_000).toDtg()
         },
-        post = { duration, targetDtg, result ->
-            if (duration == NoDuration) {
-                (dtg == targetDtg) == result
-            } else {
-                (targetDtg.functions.subtractDuration(duration) <= dtg && dtg < targetDtg.functions.addDuration(
-                    duration
-                )) == result
-            }
-        }
+        pre = { duration -> duration <= dtg.properties.durationSinceFirstDtg },
+        post = { duration, result -> DtgUtilities.durationBetween(result, dtg) == duration }
     )
 
-    val inInterval: (Interval) -> bool = function(
-        command = { interval -> dtg.functions.inRange(interval.begins, interval.ends) }
-    )
-
-    val inRange: (Dtg, Dtg) -> bool = function(
-        command = { min, max -> min <= dtg && dtg < max }
-    )
-
-    val finestGranularity: (Duration) -> bool = function(
-        command = { granularity -> dtg.properties.durationSinceFirstDtg.milliseconds % granularity.milliseconds == 0uL },
-        pre = { granularity -> granularity != NoDuration }
-    )
-
-    val addYears: (nat) -> Dtg = function(
-        command = { n -> mk_Dtg(dtg.date.functions.addYears(n), dtg.time) },
-    )
-
-    val subtractYears: (nat) -> Dtg = function(
-        command = { n -> mk_Dtg(dtg.date.functions.subtractYears(n), dtg.time) },
-    )
-
-    val addMonths: (nat) -> Dtg = function(
-        command = { n -> mk_Dtg(dtg.date.functions.addMonths(n), dtg.time) },
-    )
-
-    val subtractMonths: (nat) -> Dtg = function(
-        command = { n -> mk_Dtg(dtg.date.functions.subtractMonths(n), dtg.time) },
-    )
-
-    val addDays: (nat) -> Dtg = function(
-        command = { n -> mk_Dtg(dtg.date.functions.addDays(n), dtg.time) },
-        post = { n, result -> result.functions.subtractDays(n) == dtg }
-    )
-    val subtractDays: (nat) -> Dtg = function(
-        command = { n -> mk_Dtg(dtg.date.functions.subtractDays(n), dtg.time) },
-        pre = { n -> dtg.properties.durationSinceFirstDtg.properties.days >= n },
-//          post = { n, result -> result.functions.addDays(n) == dtg }
-//          This post condition uses a function whose post condition uses this function as a post condition.
-//          If not commented, the two functions will recur until a stack overflow error occurs.
-//          However, it is still a valid post condition so is left here for completeness.
-
-    )
-
-}
-
-@Module
-interface DtgInZone : Comparable<DtgInZone> {
-    val date: Date
-    val time: TimeInZone
-
-    @Invariant
-    fun dtgBeforeFirstDate() =
-        !(date == FirstDate && time.properties.normalisedTime.plusOrMinusADay == PlusOrMinus.Plus)
-
-    @Invariant
-    fun dtgAfterLastDate() =
-        !(date == LastDate && time.properties.normalisedTime.plusOrMinusADay == PlusOrMinus.Minus)
-
-    override fun compareTo(other: DtgInZone) = properties.normalised.compareTo(other.properties.normalised)
-
-    @FunctionProvider(DtgInZoneProperties::class)
-    val properties: DtgInZoneProperties
-
-}
-
-class DtgInZoneProperties(private val dtgInZone: DtgInZone) {
-
-    val normalised by lazy {
-            val normalisedTime = dtgInZone.time.properties.normalisedTime
-            val baseDtg = mk_Dtg(dtgInZone.date, normalisedTime.time)
-            when (normalisedTime.plusOrMinusADay) {
-                PlusOrMinus.Plus -> baseDtg.functions.subtractDuration(OneDayDuration)
-                PlusOrMinus.Minus -> baseDtg.functions.addDuration(OneDayDuration)
-                PlusOrMinus.None -> baseDtg
-            }
-        }
-
-    val formatted by lazy { dtgInZone.date.properties.formatted + "T" + dtgInZone.time.properties.formatted }
-}
-
-object DtgUtilities {
-    val dtgDiff: (Dtg, Dtg) -> Duration = function(
-        command = { dtg1, dtg2 ->
-            durationDiff(
-                dtg1.properties.durationSinceFirstDtg,
-                dtg2.properties.durationSinceFirstDtg
+    val withinDurationOfDtg = function(
+        command = { duration: Duration, other: Dtg ->
+            dtg.functions.inRange(other.functions.subtractDuration(duration), other.functions.addDuration(duration))
+        },
+        post = { duration, other, result ->
+            result iff dtg.functions.inRange(
+                other.functions.subtractDuration(duration),
+                other.functions.addDuration(duration)
             )
         }
     )
 
-    val minDtg: (Set1<Dtg>) -> Dtg = function(
-        command = { dtgs -> dtgs.min() },
-        post = { dtgs, result -> result in dtgs && forall(dtgs) { result <= it } }
-    )
-    val maxDtg: (Set1<Dtg>) -> Dtg = function(
-        command = { dtgs -> dtgs.max() },
-        post = { dtgs, result -> result in dtgs && forall(dtgs) { result >= it } }
+    val inInterval = function(
+        command = { interval: Interval -> dtg.functions.inRange(interval.begins, interval.ends) }
     )
 
-    val monthsBetweenDtgs = function(
-        command = { earlierDtg: Dtg, laterDtg: Dtg ->
-            val earlierDate = earlierDtg.date
-            val laterDate = laterDtg.date
+    val inRange = function(
+        command = { start: Dtg, end: Dtg ->
+            dtg == start || (start.functions.isEarlierThan(dtg) && dtg.functions.isEarlierThan(end))
+        }
+    )
 
-            val baseYears = laterDate.year - earlierDate.year
-            val baseMonths = ((baseYears * MonthsPerYear) + laterDate.month) - earlierDate.month
+    val finestGranularity = function(
+        command = { granularity: Duration -> dtg.properties.durationSinceFirstDtg.milliseconds % granularity.milliseconds == 0uL },
+        pre = { granularity -> granularity != NoDuration }
+    )
 
-            // The above calculation is off by one if laterDate is earlier on in its month than earlierDate
-            // (for example, 1 March is only one month after 2 January)
-            val isPartialMonth =
-                laterDate.day < earlierDate.day || (laterDate.day == earlierDate.day && laterDtg.time < earlierDtg.time)
+    val addYears = function(command = { n: nat -> mk_Dtg(dtg.date.functions.addYears(n), dtg.time) })
 
-            if (isPartialMonth) {
-                baseMonths - 1u
-            } else {
-                baseMonths
-            }
+    val subtractYears = function(command = { n: nat -> mk_Dtg(dtg.date.functions.subtractYears(n), dtg.time) })
+
+    val addMonths = function(command = { n: nat -> mk_Dtg(dtg.date.functions.addMonths(n), dtg.time) })
+
+    val subtractMonths = function(command = { n: nat -> mk_Dtg(dtg.date.functions.subtractMonths(n), dtg.time) })
+
+    val addDays = function(command = { n: nat -> mk_Dtg(dtg.date.functions.addDays(n), dtg.time) })
+
+    val subtractDays = function(command = { n: nat -> mk_Dtg(dtg.date.functions.subtractDays(n), dtg.time) })
+
+}
+
+
+object DtgUtilities {
+
+    fun Dtg.isEarlierThanOrEqual(other: Dtg) =
+        this == other || this.functions.isEarlierThan(other)
+
+    val durationBetween = function(
+        command = { dtg1: Dtg, dtg2: Dtg ->
+            mk_Duration(ChronoUnit.MILLIS.between(dtg1.toLocalDateTime(), dtg2.toLocalDateTime()).toNat())
         },
-        pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
+        pre = { dtg1, dtg2 -> dtg1.isEarlierThanOrEqual(dtg2) },
+    )
+
+    val earliest = function(
+        command = { dtgs: Set1<Dtg> -> dtgs.minOf { it.toLocalDateTime() }.toDtg() },
+        post = { dtgs, result -> result in dtgs && forall(dtgs / result) { result.functions.isEarlierThan(it) } }
+    )
+
+    val latest = function(
+        command = { dtgs: Set1<Dtg> -> dtgs.maxOf { it.toLocalDateTime() }.toDtg() },
+        post = { dtgs, result -> result in dtgs && forall(dtgs / result) { it.functions.isEarlierThan(result) } }
+    )
+
+    val monthsBetween = function(
+        command = { earlierDtg: Dtg, laterDtg: Dtg ->
+            ChronoUnit.MONTHS.between(earlierDtg.toLocalDateTime(), laterDtg.toLocalDateTime()).toNat()
+        },
+        pre = { earlierDtg, laterDtg -> earlierDtg.isEarlierThanOrEqual(laterDtg) },
         post = { earlierDtg, laterDtg, result ->
             val upperBound = laterDtg.functions.subtractMonths(result)
             val inUpperBoundMonth =
                 upperBound.date.year == earlierDtg.date.year && upperBound.date.month == earlierDtg.date.month
 
-            (earlierDtg <= upperBound) and {
+            (earlierDtg.isEarlierThanOrEqual(upperBound)) and {
                 inUpperBoundMonth or {
                     val lowerBound = laterDtg.functions.subtractMonths(result + 1u)
                     val inLowerBoundMonth =
                         lowerBound.date.year == earlierDtg.date.year && lowerBound.date.month == earlierDtg.date.month
 
-                    (lowerBound < earlierDtg) && inLowerBoundMonth
+                    (lowerBound.functions.isEarlierThan(earlierDtg)) && inLowerBoundMonth
                 }
             }
         }
     )
 
-    val yearsBetweenDtgs = function(
+    val yearsBetween = function(
         command = { earlierDtg: Dtg, laterDtg: Dtg ->
-            val earlierDate = earlierDtg.date
-            val laterDate = laterDtg.date
-
-            val baseYears = laterDate.year - earlierDate.year
-
-            // The above calculation is off by one if laterDate is earlier on in its year than earlierDate
-            // (for example, 1 January 2009 is only one year after 2 January 2008)
-            val isPartialYear =
-                laterDate.month < earlierDate.month || (laterDate.month == earlierDate.month &&
-                        (laterDate.day < earlierDate.day || (laterDate.day == earlierDate.day && laterDtg.time < earlierDtg.time)))
-
-            if (isPartialYear) {
-                baseYears - 1u
-            } else {
-                baseYears
-            }
+            ChronoUnit.YEARS.between(earlierDtg.toLocalDateTime(), laterDtg.toLocalDateTime()).toNat()
         },
-        pre = { earlierDtg, laterDtg -> earlierDtg <= laterDtg },
-        post = { earlierDtg, laterDtg, result ->
-            result == monthsBetweenDtgs(earlierDtg, laterDtg) / MonthsPerYear
-        }
+        pre = { earlierDtg, laterDtg -> earlierDtg.isEarlierThanOrEqual(laterDtg) },
+        post = { earlierDtg, laterDtg, result -> result == monthsBetween(earlierDtg, laterDtg) / MonthsPerYear }
     )
 }
+
+private fun LocalDateTime.toDtg() =
+    mk_Dtg(
+        mk_Date(this.year.toNat(), this.monthValue.toNat1(), this.dayOfMonth.toNat1()),
+        mk_Time(this.hour.toNat(), this.minute.toNat(), this.second.toNat(), (this.nano / 1_000_000).toNat())
+    )
+
+private fun Dtg.toLocalDateTime() = LocalDateTime.of(
+    this.date.year.toInt(),
+    this.date.month.toInt(),
+    this.date.day.toInt(),
+    this.time.hour.toInt(),
+    this.time.minute.toInt(),
+    this.time.second.toInt(),
+    this.time.millisecond.toInt() * 1_000_000
+)
