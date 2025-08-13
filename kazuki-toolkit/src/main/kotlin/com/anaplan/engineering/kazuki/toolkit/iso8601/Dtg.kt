@@ -2,7 +2,7 @@ package com.anaplan.engineering.kazuki.toolkit.iso8601
 
 import com.anaplan.engineering.kazuki.core.*
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Dtg_Module.mk_Dtg
-import com.anaplan.engineering.kazuki.toolkit.iso8601.DurationUtiltites.durationDiff
+import com.anaplan.engineering.kazuki.toolkit.iso8601.DurationUtilities.durationDiff
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Interval_Module.mk_Interval
 
 @Module
@@ -36,12 +36,12 @@ class DtgProperties(private val dtg: Dtg) {
 class DtgFunctions(private val dtg: Dtg) {
 
     val addDuration: (Duration) -> Dtg = function(
-        command = { duration -> dtg.properties.durationSinceFirstDtg.functions.addDuration(duration).functions.toDtgAfterFirstDtg() },
+        command = { duration -> dtg.properties.durationSinceFirstDtg.functions.addDuration(duration).properties.dtgAfterFirstDtg },
         post = { duration, result -> result.functions.subtractDuration(duration) == dtg }
     )
 
     val subtractDuration: (Duration) -> Dtg = function(
-        command = { duration -> dtg.properties.durationSinceFirstDtg.functions.subtractDuration(duration).functions.toDtgAfterFirstDtg() },
+        command = { duration -> dtg.properties.durationSinceFirstDtg.functions.subtractDuration(duration).properties.dtgAfterFirstDtg },
         pre = { duration -> duration <= dtg.properties.durationSinceFirstDtg },
 //          post = { duration, result -> result.functions.addDuration(duration) == dtg }
 //          This post condition uses a function whose post condition uses this function as a post condition.

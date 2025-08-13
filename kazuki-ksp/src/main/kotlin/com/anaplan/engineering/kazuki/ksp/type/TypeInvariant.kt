@@ -2,6 +2,7 @@ package com.anaplan.engineering.kazuki.ksp.type
 
 import com.anaplan.engineering.kazuki.core.Invariant
 import com.anaplan.engineering.kazuki.core.InvariantFailure
+import com.anaplan.engineering.kazuki.core.Tuple0.pretty
 import com.anaplan.engineering.kazuki.core.internal._InvariantClause
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAnnotationPresent
@@ -78,7 +79,7 @@ internal fun TypeSpec.Builder.addInvariantFrom(
             beginControlFlow("if ($enforceInvariantParameterName)")
             beginControlFlow("if ($invariantClausesPropertyName.any·{ !it.holds })")
             addStatement("val $failedClausesVariableName = $invariantClausesPropertyName.filter·{ !it.holds }.joinToString(\"·and·\")·{ it.clauseName }")
-            addStatement("throw %T(\"$moduleName invariant failed in: \" + $failedClausesVariableName)", InvariantFailure::class)
+            addStatement("throw %T(%P)", InvariantFailure::class, "$moduleName invariant failed for \${pretty()} in: \$$failedClausesVariableName")
             endControlFlow()
             endControlFlow()
         }.build())
