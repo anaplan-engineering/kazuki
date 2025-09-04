@@ -192,7 +192,29 @@ class TestSet(
             causesPreconditionFailure { create(1) - create(1, 2) }
         }
         assertEquals(create(1), create(1) - mk_Set())
-        assertEquals(create(1), create(1, 2, 3) - create(2, 3))
+        assertEquals(create(1), create(1, 2, 3) - mk_Set(2, 3))
         assertEquals(create(1, 2), create(1, 2, 3) - create(3, 4))
+    }
+
+    @Test
+    fun diffItem() {
+        if (allowsEmpty) {
+            assertEquals(mk_Set(), create() / 1)
+        }
+        assertEquals(mk_Set(), create(1) / 1)
+        assertEquals(mk_Set(2), create(1, 2) / 1)
+        assertEquals(mk_Set(1, 2), create(1, 2) / 3)
+    }
+
+    @Test
+    fun diffSet() {
+        if (allowsEmpty) {
+            assertEquals(mk_Set<Int>(), create() - create())
+        }
+        assertEquals(mk_Set(), create(1, 2) / create(1, 2, 3))
+        assertEquals(mk_Set(), create(1, 2) / create(1, 2))
+        assertEquals(mk_Set(1), create(1) / mk_Set())
+        assertEquals(mk_Set(1), create(1, 2, 3) / mk_Set(2, 3))
+        assertEquals(mk_Set(1, 2), create(1, 2, 3) / create(3, 4))
     }
 }

@@ -4,92 +4,23 @@ import com.anaplan.engineering.kazuki.core.*
 import com.anaplan.engineering.kazuki.toolkit.iso8601.DateUtilities.daysInMonth
 import com.anaplan.engineering.kazuki.toolkit.iso8601.DateUtilities.daysInYear
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Date_Module.mk_Date
-import com.anaplan.engineering.kazuki.toolkit.iso8601.Dtg_Module.mk_Dtg
-import com.anaplan.engineering.kazuki.toolkit.iso8601.Duration.Companion.durationFromFirstYearUpToStartOfYear
-import com.anaplan.engineering.kazuki.toolkit.iso8601.Duration.Companion.durationInYearUpToStartOfMonth
-import com.anaplan.engineering.kazuki.toolkit.iso8601.Duration.Companion.fromDays
-import com.anaplan.engineering.kazuki.toolkit.iso8601.Duration.Companion.fromYear
-import com.anaplan.engineering.kazuki.toolkit.iso8601.DurationUtilities.sumDuration
+import com.anaplan.engineering.kazuki.toolkit.iso8601.DurationUtilities.fromYear
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Duration_Module.mk_Duration
-import com.anaplan.engineering.kazuki.toolkit.iso8601.Time_Module.mk_Time
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 @Module
 interface Duration : Comparable<Duration> {
 
-    val milliseconds: nat1
-
-    @Invariant
-    fun millisNonNegative() = milliseconds >= 0uL
+    val milliseconds: nat
 
     override fun compareTo(other: Duration) = milliseconds.compareTo(other.milliseconds)
-
-    companion object {
-
-        val fromMillis: (nat1) -> Duration = function(
-            command = { milliseconds -> mk_Duration(milliseconds) },
-//        post = { millisecond, result -> result.functions.toMillis() == millisecond }
-//        This post condition uses a function whose post condition uses this function as a post condition.
-//        If not commented, the two functions will recur until a stack overflow error occurs.
-//        However, it is still a valid post condition so is left here for completeness.
-
-        )
-
-        val fromSeconds: (nat1) -> Duration = function(
-            command = { seconds -> fromMillis(seconds * MillisPerSecond) },
-//        post = { second, result -> result.functions.toSeconds() == second }
-//        This post condition uses a function whose post condition uses this function as a post condition.
-//        If not commented, the two functions will recur until a stack overflow error occurs.
-//        However, it is still a valid post condition so is left here for completeness.
-
-        )
-
-        val fromMinutes: (nat1) -> Duration = function(
-            command = { minutes -> fromSeconds(minutes * SecondsPerMinute) },
-//        post = { minutes, result -> result.functions.toMinutes() == minutes }
-//        This post condition uses a function whose post condition uses this function as a post condition.
-//        If not commented, the two functions will recur until a stack overflow error occurs.
-//        However, it is still a valid post condition so is left here for completeness.
-        )
-
-        val fromHours: (nat1) -> Duration = function(
-            command = { hours -> fromMinutes(hours * MinutesPerHour) },
-//        post = { hour, result -> result.functions.toHours() == hour }
-//        This post condition uses a function whose post condition uses this function as a post condition.
-//        If not commented, the two functions will recur until a stack overflow error occurs.
-//        However, it is still a valid post condition so is left here for completeness.
-        )
-
-        val fromDays: (nat1) -> Duration = function(
-            command = { days -> fromHours(days * HoursPerDay) },
-//        post = { day, result -> result.functions.toDays() == day }
-//        This post condition uses a function whose post condition uses this function as a post condition.
-//        If not commented, the two functions will recur until a stack overflow error occurs.
-//        However, it is still a valid post condition so is left here for completeness.
-        )
-
-        val fromMonth: (Year, Month) -> Duration = function(
-            command = { year, month -> fromDays(daysInMonth(year, month)) }
-        )
-
-        val durationInYearUpToStartOfMonth: (Year, Month) -> Duration = function(
-            command = { year, month -> sumDuration(seq(1uL until month) { fromMonth(year, it) }) }
-        )
-
-        val fromYear: (Year) -> Duration = function(
-            command = { year -> fromDays(daysInYear(year)) }
-        )
-
-        val durationFromFirstYearUpToStartOfYear: (Year) -> Duration = function(
-            command = { year -> sumDuration(seq(FirstYear until year) { fromYear(it) }) }
-        )
-    }
 
     @FunctionProvider(DurationFunctions::class)
     val functions: DurationFunctions
 
     @FunctionProvider(DurationProperties::class)
     val properties: DurationProperties
-
 
 }
 
@@ -129,158 +60,166 @@ class DurationProperties(private val duration: Duration) {
 
     val modDays by lazy { mk_Duration(duration.milliseconds % OneDayDuration.milliseconds) }
 
-    val timeAfterFirstTime by lazy { duration.functions.toTimeAfterGivenTime(FirstTime) }
+    val timeAfterFirstTime by lazy { duration.functions.addToTime(FirstTime) }
 
-    val dateAfterFirstDate by lazy { duration.functions.toDateAfterGivenDate(FirstDate) }
+    val dateAfterFirstDate by lazy { duration.functions.addToDate(FirstDate) }
 
-    val dtgAfterFirstDtg by lazy { duration.functions.toDtgAfterGivenDtg(FirstDtg) }
+    val dtgAfterFirstDtg by lazy { duration.functions.addToDtg(FirstDtg) }
 
-    val yearsAfterFirstYear by lazy { duration.functions.toYearsAfterGivenYear(FirstYear) }
+    val yearsAfterFirstYear by lazy { duration.functions.yearCountFromYear(FirstYear) }
 }
 
 class DurationFunctions(private val duration: Duration) {
 
-    val toMonthsInGivenYear: (Year) -> nat1 = function(
-        command = { year ->
-            (set(
-                1uL..MonthsPerYear,
-                filter = { durationInYearUpToStartOfMonth(year, it) <= duration }) { it }).max() - 1uL
-        },
-        pre = { year -> duration < fromYear(year) }
+    private fun Year.startLocalDateTime() = LocalDateTime.of(toInt(), 1, 1, 0, 0, 0)
+
+    val monthCountInYear = function(
+        command = { year: Year -> (year.startLocalDateTime().plusDuration(duration).monthValue - 1).toNat() },
+        pre = { year -> duration < fromYear(year) },
+        post = { year, result ->
+            val startOfYear = mk_Date(year, 1u, 1u)
+            val startOfResultMonth = startOfYear.functions.addMonths(result)
+            val startOfFollowingMonth = startOfResultMonth.functions.addMonths(1u)
+            duration >= DateUtilities.durationBetween(startOfYear, startOfResultMonth)
+                    && duration < DateUtilities.durationBetween(startOfYear, startOfFollowingMonth)
+        }
     )
 
+    val yearCountFromYear = function(
+        command = { year: Year -> year.startLocalDateTime().plusDuration(duration).year.toNat() as Year - year },
+        post = { year, result ->
+            val startOfGivenYear = mk_Date(year, 1u, 1u)
+            duration >= DateUtilities.durationBetween(startOfGivenYear, mk_Date(year + result, 1u, 1u))
+                    && duration < DateUtilities.durationBetween(startOfGivenYear, mk_Date(year + result + 1u, 1u, 1u))
+        }
+    )
 
-
-    val toYearsAfterGivenYear: (Year) -> nat =
-        function(
-            command = { givenYear ->
-                tailrec fun safeRecursion(acc: nat, duration: Duration, givenYear: Year): nat =
-                    if (duration < fromYear(givenYear)) {
-                        acc
-                    } else {
-                        safeRecursion(
-                            acc + 1uL,
-                            duration.functions.subtractDuration(fromYear(givenYear)),
-                            givenYear + 1uL
-                        )
-                    }
-
-                safeRecursion(0uL, duration, givenYear)
-            },
-        )
-
-    val toDtgAfterGivenDtg: (Dtg) -> Dtg = function(
-        command = { givenDtg ->
-            val totalDuration = givenDtg.properties.durationSinceFirstDtg.functions.addDuration(duration)
-            val daysDuration = fromDays(totalDuration.properties.days)
-            val timeDuration = totalDuration.properties.modDays
-            mk_Dtg(daysDuration.properties.dateAfterFirstDate, timeDuration.properties.timeAfterFirstTime)
-        },
-        pre = { givenDtg ->
+    val addToDtg = function(
+        command = { dtg: Dtg -> dtg.functions.addDuration(duration) },
+        pre = { dtg ->
             val maxDuration = LastDtg.properties.durationSinceFirstDtg
-            val totalDuration = givenDtg.properties.durationSinceFirstDtg.functions.addDuration(duration)
+            val totalDuration = dtg.properties.durationSinceFirstDtg.functions.add(duration)
             totalDuration <= maxDuration
         }
     )
 
-    val toDateAfterGivenDate: (Date) -> Date = function(
-        command = { givenDate ->
-            val totalDuration = givenDate.properties.durationSinceFirstDate.functions.addDuration(duration)
-            val year = totalDuration.properties.yearsAfterFirstYear
-            val totalDurationModYear =
-                totalDuration.functions.subtractDuration(durationFromFirstYearUpToStartOfYear(year))
-            val month = totalDurationModYear.functions.toMonthsInGivenYear(year) + 1uL
-            val day = (totalDurationModYear.functions.subtractDuration(
-                durationInYearUpToStartOfMonth(year, month)
-            ).properties.days + 1uL)
-            mk_Date(year, month, day)
-        },
-        pre = { givenDate ->
-            val totalDuration = givenDate.properties.durationSinceFirstDate.functions.addDuration(duration)
-            val maxDuration = LastDate.properties.durationSinceFirstDate.functions.addDuration(OneDayDuration)
+    val addToDate = function(
+        command = { date: Date -> date.toLocalDate().atStartOfDay().plusDuration(duration).toLocalDate().toDate() },
+        pre = { date ->
+            val totalDuration = date.properties.durationSinceFirstDate.functions.add(duration)
+            val maxDuration = LastDate.properties.durationSinceFirstDate.functions.add(OneDayDuration)
             totalDuration < maxDuration
         }
     )
 
-    val toTimeAfterGivenTime: (Time) -> Time = function(
-        command = { givenTime ->
-            val totalDuration = givenTime.properties.durationSinceFirstTime.functions.addDuration(duration)
-            val hour = totalDuration.properties.hours
-            val minute = totalDuration.properties.modHours.properties.minutes
-            val second = totalDuration.properties.modMinutes.properties.seconds
-            val millisecond = totalDuration.properties.modSeconds.milliseconds
-            mk_Time(hour, minute, second, millisecond)
-        },
-        pre = { givenTime ->
-            val totalDuration = givenTime.properties.durationSinceFirstTime.functions.addDuration(duration)
+    val addToTime = function(
+        command = { time: Time -> time.toLocalTime().plusDuration(duration).toTime() },
+        pre = { time ->
+            val totalDuration = time.properties.durationSinceFirstTime.functions.add(duration)
             totalDuration < OneDayDuration
         },
     )
 
-    val addDuration: (Duration) -> Duration = function(
-        command = { plusDuration -> mk_Duration(duration.milliseconds + plusDuration.milliseconds) },
-        post = { plusDuration, result ->
-            result.functions.subtractDuration(plusDuration) == duration
-                    && result.functions.subtractDuration(duration) == plusDuration
-        }
+    val add = function(
+        command = { other: Duration -> mk_Duration(duration.milliseconds + other.milliseconds) },
+        post = { other, result -> result.milliseconds == duration.milliseconds + other.milliseconds }
     )
 
-    val subtractDuration: (Duration) -> Duration = function(
-        command = { minusDuration -> mk_Duration(duration.milliseconds - minusDuration.milliseconds) },
-        pre = { minusDuration -> duration >= minusDuration },
-//          post = { subtractDuration, result -> result.functions.addDuration(duration) == d }
-//          This post condition uses a function whose post condition uses this function as a post condition.
-//          If not commented, the two functions will recur until a stack overflow error occurs.
-//          However, it is still a valid post condition so is left here for completeness.
-
+    val subtract = function(
+        command = { other: Duration -> mk_Duration(duration.milliseconds - other.milliseconds) },
+        pre = { other -> duration >= other },
+        post = { other, result -> result.milliseconds == duration.milliseconds - other.milliseconds }
     )
 
-    val multiply: (nat) -> Duration = function(
-        command = { n -> mk_Duration(duration.milliseconds * n) },
-        post = { n, result -> (n != 0uL) implies { result.functions.divide(n) == duration } }
+    val multiply = function(
+        command = { n: nat -> mk_Duration(duration.milliseconds * n) },
+        post = { n, result -> result.milliseconds == duration.milliseconds * n }
     )
 
-    val divide: (nat) -> Duration = function(
-        command = { n -> mk_Duration(duration.milliseconds / n) },
-        pre = { n -> n != 0uL }
-//        post = { n, result -> result.functions.multiply(n) <= duration && duration < result.functions.multiply(n+1)}
-//        This post condition uses a function whose post condition uses this function as a post condition.
-//        If not commented, the two functions will recur until a stack overflow error occurs.
-//        However, it is still a valid post condition so is left here for completeness.
+    val divide = function(
+        command = { n: nat1 -> mk_Duration(duration.milliseconds / n) },
+        post = { n, result -> result.milliseconds == duration.milliseconds / n }
     )
 
 }
 
 object DurationUtilities {
 
-    val minDuration: (Set1<Duration>) -> Duration = function(
-        command = { durations -> durations.min() },
+    val min = function(
+        command = { durations: Set1<Duration> -> durations.min() },
         post = { durations, result -> result in durations && forall(durations) { result <= it } }
     )
 
-    val maxDuration: (Set1<Duration>) -> Duration = function(
-        command = { durations -> durations.max() },
+    val max = function(
+        command = { durations: Set1<Duration> -> durations.max() },
         post = { durations, result -> result in durations && forall(durations) { result >= it } }
     )
 
-    val sumDuration: (Sequence<Duration>) -> Duration = function(
-        command = { durationSequence -> mk_Duration((seq(durationSequence) { it.milliseconds }).sum()) },
-        post = { durationSequence, result -> forall(durationSequence) { result >= it } }
+    val sum = function(
+        command = { durations: Sequence<Duration> -> mk_Duration(durations.sumOf { it.milliseconds }) },
+        post = { durations, result -> result.milliseconds == durations.sumOf { it.milliseconds } }
     )
 
-    val durationDiff: (Duration, Duration) -> Duration = function(
-        command = { duration1, duration2 ->
-            val diff = if (duration1 > duration2) {
-                duration1.milliseconds - duration2.milliseconds
+    val durationBetween = function(
+        command = { d1: Duration, d2: Duration ->
+            val diff = if (d1 > d2) {
+                d1.milliseconds - d2.milliseconds
             } else {
-                duration2.milliseconds - duration1.milliseconds
+                d2.milliseconds - d1.milliseconds
             }
             mk_Duration(diff)
         },
-        post = { duration1, duration2, difference ->
-            val smallerDuration = minDuration(mk_Set1(duration1, duration2))
-            val largerDuration = maxDuration(mk_Set1(duration1, duration2))
-            smallerDuration.functions.addDuration(difference) == largerDuration
-        }
+        post = { d1, d2, result -> if (d1 > d2) d2.functions.add(result) == d1 else d1.functions.add(result) == d2 }
+    )
+
+    val fromMillis = function(
+        command = { millis: nat -> mk_Duration(millis) },
+        post = { millis, result -> result.milliseconds == millis },
+    )
+
+    val fromSeconds = function(
+        command = { seconds: nat -> fromMillis(seconds * MillisPerSecond) },
+        post = { seconds, result -> result.properties.seconds == seconds && result.properties.modSeconds == NoDuration },
+    )
+
+    val fromMinutes = function(
+        command = { minutes: nat -> fromSeconds(minutes * SecondsPerMinute) },
+        post = { minutes, result -> result.properties.minutes == minutes && result.properties.modMinutes == NoDuration },
+    )
+
+    val fromHours = function(
+        command = { hours: nat -> fromMinutes(hours * MinutesPerHour) },
+        post = { hours, result -> result.properties.hours == hours && result.properties.modHours == NoDuration },
+    )
+
+    val fromDays = function(
+        command = { days: nat -> fromHours(days * HoursPerDay) },
+        post = { days, result -> result.properties.days == days && result.properties.modDays == NoDuration },
+    )
+
+    val fromMonth = function(
+        command = { year: Year, month: Month -> fromDays(daysInMonth(year, month)) },
+        post = { year, month, result ->
+            result.properties.days == daysInMonth(year, month) && result.properties.modDays == NoDuration
+        },
+    )
+
+    val fromYear = function(
+        command = { year: Year -> fromDays(daysInYear(year)) },
+        post = { year, result ->
+            result.properties.days == daysInYear(year) && result.properties.modDays == NoDuration
+        },
+    )
+
+
+    val durationInYearUpToStartOfMonth: (Year, Month) -> Duration = function(
+        command = { year, month -> sum(seq(1uL until month) { fromMonth(year, it) }) }
+    )
+
+    val durationFromFirstYearUpToStartOfYear: (Year) -> Duration = function(
+        command = { year -> sum(seq(FirstYear until year) { fromYear(it) }) }
     )
 }
+
+internal fun LocalDateTime.plusDuration(d: Duration) = plusNanos((d.milliseconds * NanosPerMilli).toLong())
+internal fun LocalTime.plusDuration(d: Duration) = plusNanos((d.milliseconds * NanosPerMilli).toLong())

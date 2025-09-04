@@ -77,11 +77,16 @@ fun <T> Set<T>.single(): T {
 fun <T> dunion(sets: Set<Set<T>>) = as_Set(sets.flatten())
 
 infix operator fun <T, S : Set<T>> S.plus(s: Set<T>) = transformSet { it.elements.toMutableSet().apply { addAll(s) } }
-
 infix operator fun <T, S : Set<T>> S.plus(t: T) = transformSet { it.elements.toMutableSet().apply { add(t) } }
 
-infix operator fun <T, S : Set<T>> S.minus(s: Set<T>) =
+infix operator fun <T, S : Set<T>> S.minus(s: Set<T>): S = diff(s)
+infix operator fun <T, S : Set<T>> S.minus(t: T): S = diff(t)
+
+infix operator fun <T> Set<T>.div(s: Set<T>): Set<T> = as_Set(this).diff(s)
+infix operator fun <T> Set<T>.div(t: T): Set<T> = as_Set(this).diff(t)
+
+fun <T, S : Set<T>> S.diff(s: Set<T>): S =
     transformSet { it.elements.toMutableSet().apply { removeAll(s) } }
 
-infix operator fun <T, S : Set<T>> S.minus(t: T) = transformSet { it.elements.toMutableSet().apply { remove(t) } }
-
+fun <T, S : Set<T>> S.diff(t: T): S =
+    transformSet { it.elements.toMutableSet().apply { remove(t) } }
