@@ -58,10 +58,6 @@ interface TimeInZone {
     val time: Time
     val offset: Offset
 
-    // TODO -- surely this doesn't account for day offset?
-//    override fun compareTo(other: TimeInZone) =
-//        properties.normalisedTime.time.compareTo(other.properties.normalisedTime.time)
-
     @FunctionProvider(TimeInZoneFunctions::class)
     val functions: TimeInZoneFunctions
 
@@ -177,12 +173,12 @@ object TimeUtilities {
 
     val earliest: (Set1<Time>) -> Time = function(
         command = { times -> times.minOf { it.toLocalTime() }.toTime() },
-        post = { times, result -> result in times && forall(times - result) { result.functions.isEarlierThan(it) } }
+        post = { times, result -> result in times && forall(times / result) { result.functions.isEarlierThan(it) } }
     )
 
     val latest: (Set1<Time>) -> Time = function(
         command = { times -> times.maxOf { it.toLocalTime() }.toTime() },
-        post = { times, result -> result in times && forall(times - result) { it.functions.isEarlierThan(result) } }
+        post = { times, result -> result in times && forall(times / result) { it.functions.isEarlierThan(result) } }
     )
 }
 
