@@ -113,7 +113,7 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
         addInitializerBlock(
             CodeBlock.builder().apply {
                 addStatement("val frame = StackWalker.getInstance(setOf(StackWalker.Option.SHOW_HIDDEN_FRAMES), 6).walk·{ it.limit(4).reduce·{ _, r -> r }.get() }")
-                addStatement("%N = \"\${frame.className}:\${frame.lineNumber}\"", FunctionIdPropertyName)
+                addStatement("%N = \"\${frame.className}(\${frame.fileName}:\${frame.lineNumber})\"", FunctionIdPropertyName)
                 addStatement("%T.createInstance(%N)", EvaluationProfilerName, FunctionIdPropertyName)
             }.build()
         )
