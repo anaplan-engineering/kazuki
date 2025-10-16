@@ -5,6 +5,8 @@ enum class KazukiType {
     SequenceType,
     Set1Type,
     SetType,
+    RelationType,
+    Relation1Type,
     QuoteType,
     RecordType,
     InjectiveMappingType,

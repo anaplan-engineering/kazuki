@@ -90,3 +90,4 @@ fun <T, S : Set<T>> S.diff(s: Set<T>): S =
 
 fun <T, S : Set<T>> S.diff(t: T): S =
     transformSet { it.elements.toMutableSet().apply { remove(t) } }
+
