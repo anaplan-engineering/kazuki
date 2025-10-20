@@ -43,6 +43,8 @@ internal class ModuleProcessor(
             KazukiType.Mapping1Type
         } else if (Mapping::class.qualifiedName in superTypeNames) {
             KazukiType.MappingType
+        } else if (Relation::class.qualifiedName in superTypeNames) {
+            KazukiType.RelationType
         } else if (Set1::class.qualifiedName in superTypeNames) {
             KazukiType.Set1Type
         } else if (Set::class.qualifiedName in superTypeNames) {
@@ -62,6 +64,8 @@ internal class ModuleProcessor(
             when (clazz.kazukiType()) {
                 KazukiType.Sequence1Type -> addSeq1Type(clazz, makeable, typeGenerationContext)
                 KazukiType.SequenceType -> addSeqType(clazz, makeable, typeGenerationContext)
+                KazukiType.Relation1Type -> addRelation1Type(clazz, makeable, typeGenerationContext)
+                KazukiType.RelationType -> addRelationType(clazz, makeable, typeGenerationContext)
                 KazukiType.Set1Type -> addSet1Type(clazz, makeable, typeGenerationContext)
                 KazukiType.SetType -> addSetType(clazz, makeable, typeGenerationContext)
                 KazukiType.QuoteType -> processQuoteType(clazz, makeable, typeGenerationContext)

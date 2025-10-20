@@ -15,6 +15,14 @@ interface Relation<D, R> : Set<Tuple2<D, R>> {
 
 }
 
+// TODO
+//interface Relation1<D, R> : Relation<D, R> {
+//
+//    @Invariant
+//    fun atLeastOneElement() = card > 0uL
+//
+//}
+
 fun <D, R> mk_Relation(vararg elems: Tuple2<D, R>): Relation<D, R> = __KRelation(elems.toSet())
 
 fun <D, R> as_Relation(elems: Iterable<Tuple2<D, R>>): Relation<D, R> = __KRelation(LinkedHashSet<Tuple2<D, R>>(elems.count()).apply { addAll(elems) })

@@ -114,6 +114,7 @@ infix operator fun <D, R, M : Mapping<D, R>> M.times(r: Relation<D, R>) = transf
     }
 }
 
+fun <D, R> dmerge(mappings: Set<Mapping<D, R>>) = as_Mapping(mappings.flatten())
 
 // TODO - generate for consistency
 

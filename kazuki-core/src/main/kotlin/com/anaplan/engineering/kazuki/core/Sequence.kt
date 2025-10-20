@@ -116,6 +116,10 @@ fun <T> Sequence<T>.filter(retainType: Boolean, fn: (T) -> Boolean) =
         as_Seq(this.kotlinFilter(fn))
     }
 
+fun <T, S : Sequence<T>> S.replace(from: T, to: T) = transformSequence {
+    it.elements.map { if (it == from) to else it }
+}
+
 fun <T> Sequence<T>.indexOf(s: Sequence<T>) =
     if (!(s subseq this)) {
         throw PreconditionFailure("Sequence $s is not contained in $this")
