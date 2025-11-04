@@ -3,7 +3,7 @@ package com.anaplan.engineering.kazuki.ksp.type
 import com.anaplan.engineering.kazuki.core.ComparableProperty
 import com.anaplan.engineering.kazuki.core.ComparableTypeLimit
 import com.anaplan.engineering.kazuki.ksp.getClassDeclaration
-import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeParameters
+import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeArguments
 import com.anaplan.engineering.kazuki.ksp.superModules
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAnnotationPresent
@@ -42,8 +42,8 @@ internal fun TypeSpec.Builder.addComparableWith(
         val interfaceTypeArguments = comparableTypeLimit.typeParameters.map { it.toTypeVariableName() }
         comparableTypeLimit.toClassName().parameterizedBy(interfaceTypeArguments)
     } else {
-        val params = classDcl.resolveAncestorTypeParameters(comparableTypeLimit.qualifiedName!!.asString())
-        comparableTypeLimit.toClassName().parameterizedBy(params.typeNames)
+        val params = classDcl.resolveAncestorTypeArguments(comparableTypeLimit.qualifiedName!!.asString())
+        comparableTypeLimit.toClassName().parameterizedBy(params.typeArguments)
     }
     addProperty(
         PropertySpec.builder(comparableWithPropertyName, comparableWithTypeName, KModifier.OVERRIDE)

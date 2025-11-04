@@ -5,7 +5,7 @@ import com.anaplan.engineering.kazuki.core.internal.__KSet1
 import com.anaplan.engineering.kazuki.core.internal.transformSet
 import kotlin.collections.filter as kotlinFilter
 
-interface Set1<T> : Set<T> {
+interface Set1<out T> : Set<T> {
 
     @Invariant
     fun atLeastOneElement() = card > 0uL

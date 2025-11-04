@@ -1,13 +1,11 @@
 package com.anaplan.engineering.kazuki.core
 
 import com.anaplan.engineering.kazuki.core.internal.__KRelation
-import com.anaplan.engineering.kazuki.core.internal.__KSet
 import com.anaplan.engineering.kazuki.core.internal.transformSet
-import java.util.Collections.addAll
 import kotlin.collections.filter as kotlinFilter
 
 
-interface Relation<D, R> : Set<Tuple2<D, R>> {
+interface Relation<out D, out R> : Set<Tuple2<D, R>> {
 
     val dom: Set<D>
 

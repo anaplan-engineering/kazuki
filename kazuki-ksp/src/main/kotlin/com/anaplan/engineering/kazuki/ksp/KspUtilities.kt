@@ -6,17 +6,9 @@ package com.anaplan.engineering.kazuki.ksp
 import com.anaplan.engineering.kazuki.core.Module
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAnnotationPresent
-import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSDeclaration
-import com.google.devtools.ksp.symbol.KSTypeAlias
-import com.google.devtools.ksp.symbol.KSTypeArgument
-import com.google.devtools.ksp.symbol.KSTypeParameter
-import com.google.devtools.ksp.symbol.KSTypeReference
+import com.google.devtools.ksp.symbol.*
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeVariableName
-import com.squareup.kotlinpoet.ksp.toTypeName
-import com.squareup.kotlinpoet.ksp.toTypeParameterResolver
-import com.squareup.kotlinpoet.ksp.toTypeVariableName
 
 // TODO -- extract KSP utilities to separate project and test independently!
 
@@ -70,7 +62,6 @@ internal fun KSTypeReference.getSuperTypePathTo(qualifiedClassName: String): Lis
 }
 
 
-
 internal val KSClassDeclaration.superModules
     get() = allSuperTypes.filter {
         it.resolve().declaration.isAnnotationPresent(
@@ -90,80 +81,31 @@ internal val KSClassDeclaration.qualifiedModuleName
 internal fun KSClassDeclaration.resolveTypeNameOfAncestorGenericParameter(
     ancestorQualifiedClassName: String,
     paramIndex: Int
-) = resolveAncestorTypeParameters(ancestorQualifiedClassName).getTypeName(paramIndex)
+) = resolveAncestorTypeArguments(ancestorQualifiedClassName).getTypeName(paramIndex)
 
-class AncestorTypeParameters(
+class AncestorTypeArguments(
     private val typeParameters: List<KSTypeParameter>,
-    private val typeDeclarations: List<KSDeclaration>,
-    private val indexToTypeName: Map<Int, TypeName>
+    val typeArguments: List<TypeName>
 ) {
-    private val nameToTypeName by lazy {
-        typeParameters.mapIndexed { i, p ->
-            p.name.asString() to indexToTypeName[i]
-        }.toMap()
+    fun getTypeName(index: Int) = typeArguments[index]
+
+    fun getTypeName(typeParam: KSTypeParameter) = typeArguments[typeParameters.indexOf(typeParam)]
+
+    val resolvedTypeParameters by lazy {
+        require(typeParameters.size == typeArguments.size)
+        (0..<typeParameters.size).associate {
+            typeParameters[it] to typeArguments[it]
+        }
     }
 
-    val typeNames by lazy { typeParameters.indices.map { getTypeName(it) } }
-
-    fun getTypeName(index: Int) = indexToTypeName[index]!!
-
-    fun getTypeName(name: String) = nameToTypeName[name]!!
-
-    fun getTypeDeclaration(index: Int) = typeDeclarations[index]
-
-    override fun toString() = nameToTypeName.toString()
-
-    fun getTypeName(typeParam: KSTypeParameter) = indexToTypeName[typeParameters.indexOf(typeParam)]!!
-
+    override fun toString() = typeArguments.toString()
 }
 
-internal fun KSClassDeclaration.resolveAncestorTypeParameters(
+
+internal fun KSClassDeclaration.resolveAncestorTypeArguments(
     ancestorQualifiedClassName: String,
-): AncestorTypeParameters {
-    var childClassDcl = this
-    var path = getSuperTypePathTo(ancestorQualifiedClassName)!!
-    var argList: List<Any> = childClassDcl.typeParameters
-
-    while (path.isNotEmpty()) {
-        val parentType = path.first()
-        val childTypeParams = childClassDcl.typeParameters
-        val parentTypeArgs = parentType.element!!.typeArguments
-
-        argList = parentTypeArgs.map { ta ->
-            val declaration = ta.type!!.resolve().declaration
-            if (declaration is KSTypeParameter) {
-                argList[childTypeParams.indexOf(declaration)]
-            } else {
-                ta
-            }
-        }
-
-        path = path.drop(1)
-        childClassDcl = getClassDeclaration(parentType)
-    }
-
-    val childTypeParameters = childClassDcl.typeParameters
-    if (childTypeParameters.size != argList.size) {
-        throw IllegalStateException("Unexpected mismatch in resolved and unresolved type parameters of $ancestorQualifiedClassName")
-    }
-    val indexToTypeName = argList.mapIndexed { i, arg ->
-        val typeParameterResolver = typeParameters.toTypeParameterResolver()
-        val typeName = if (arg is KSTypeParameter) {
-            arg.toTypeVariableName(typeParameterResolver)
-        } else if (arg is KSTypeArgument) {
-            arg.toTypeName(typeParameterResolver)
-        } else {
-            throw IllegalStateException("Unable to identify parameter $i of ancestor $ancestorQualifiedClassName")
-        }
-        i to typeName
-    }.toMap()
-
-    return AncestorTypeParameters(
-        childTypeParameters,
-        argList.map { it as? KSTypeParameter ?: (it as KSTypeArgument).type!!.resolve().declaration },
-        indexToTypeName
-    )
-}
+    logger: KazukiSymbolProcessor.KazukiLogger? = null,
+) = AncestorTypeArgumentResolver(logger).resolveTypeArguments(this, ancestorQualifiedClassName)
 
 internal fun findUnusedGenericName(usedTypeVariableNames: List<TypeVariableName>): String {
     val candidates = ('A'..'Z').map { "_$it" }
