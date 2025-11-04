@@ -6,6 +6,7 @@ import com.anaplan.engineering.kazuki.core.ComparableProperty
 import com.anaplan.engineering.kazuki.core.PreconditionFailure
 import com.anaplan.engineering.kazuki.core.PrettyPrintable
 import com.anaplan.engineering.kazuki.core.internal._Record
+import com.anaplan.engineering.kazuki.ksp.InbuiltNames
 import com.anaplan.engineering.kazuki.ksp.InbuiltNames.coreInternalPackage
 import com.anaplan.engineering.kazuki.ksp.InbuiltNames.corePackage
 import com.anaplan.engineering.kazuki.ksp.findUnusedGenericName
@@ -462,7 +463,7 @@ internal fun TypeSpec.Builder.addRecordType(
         }
 
         addFunction(
-            FunSpec.builder("set").apply {
+            FunSpec.builder(InbuiltNames.transform).apply {
                 val t =
                     TypeVariableName(findUnusedGenericName(interfaceTypeArguments), bounds = listOf(interfaceTypeName))
                 addTypeVariables(interfaceTypeArguments + t)

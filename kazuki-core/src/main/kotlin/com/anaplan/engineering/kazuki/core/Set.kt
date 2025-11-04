@@ -43,6 +43,8 @@ fun Set<*>.pretty() = this.prettyOrDefault()
 
 fun <T, S : Set<T>> S.filter(fn: (T) -> Boolean): S = transformSet { it.elements.kotlinFilter(fn) }
 
+fun <T, S : Set<T>> S.transform(fn: (T) -> T): S = transformSet { it.elements.map(fn) }
+
 fun <T> Set<T>.filter(retainType: Boolean, fn: (T) -> Boolean): Set<T> =
     if (retainType) {
         this.filter(fn)
