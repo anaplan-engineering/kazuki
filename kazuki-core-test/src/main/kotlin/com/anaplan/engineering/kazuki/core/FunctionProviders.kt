@@ -1,25 +1,25 @@
 package com.anaplan.engineering.kazuki.core
 
-import com.anaplan.engineering.kazuki.core.A_Module.set
-import com.anaplan.engineering.kazuki.core.C_Module.set
+import com.anaplan.engineering.kazuki.core.A_Module.transform
+import com.anaplan.engineering.kazuki.core.C_Module.transform
 import com.anaplan.engineering.kazuki.core.E_Module.as_E
 import com.anaplan.engineering.kazuki.core.E_Module.is_E
-import com.anaplan.engineering.kazuki.core.E_Module.set
-import com.anaplan.engineering.kazuki.core.GA_Module.set
-import com.anaplan.engineering.kazuki.core.GC1_Module.set
-import com.anaplan.engineering.kazuki.core.GC2_Module.set
+import com.anaplan.engineering.kazuki.core.E_Module.transform
+import com.anaplan.engineering.kazuki.core.GA_Module.transform
+import com.anaplan.engineering.kazuki.core.GC1_Module.transform
+import com.anaplan.engineering.kazuki.core.GC2_Module.transform
 import com.anaplan.engineering.kazuki.core.GE1_Module.as_GE1
 import com.anaplan.engineering.kazuki.core.GE1_Module.is_GE1
-import com.anaplan.engineering.kazuki.core.GE1_Module.set
+import com.anaplan.engineering.kazuki.core.GE1_Module.transform
 import com.anaplan.engineering.kazuki.core.GE2_Module.as_GE2
 import com.anaplan.engineering.kazuki.core.GE2_Module.is_GE2
-import com.anaplan.engineering.kazuki.core.GE2_Module.set
+import com.anaplan.engineering.kazuki.core.GE2_Module.transform
 import com.anaplan.engineering.kazuki.core.GE3_Module.as_GE3
 import com.anaplan.engineering.kazuki.core.GE3_Module.is_GE3
-import com.anaplan.engineering.kazuki.core.GE3_Module.set
+import com.anaplan.engineering.kazuki.core.GE3_Module.transform
 import com.anaplan.engineering.kazuki.core.GE4_Module.as_GE4
 import com.anaplan.engineering.kazuki.core.GE4_Module.is_GE4
-import com.anaplan.engineering.kazuki.core.GE4_Module.set
+import com.anaplan.engineering.kazuki.core.GE4_Module.transform
 
 
 @Module
@@ -33,7 +33,7 @@ interface A {
 open class AFunctions(val a: A) {
 
     open val increment = function(
-        command = { a.set(a = a.a + 1) },
+        command = { a.transform(a = a.a + 1) },
         post = { result -> result.a - 1 == a.a }
     )
 
@@ -57,7 +57,7 @@ interface C : A {
 open class CFunctions(val c: C) : AFunctions(c) {
 
     open val decrement = function(
-        command = { c.set(c = c.c - 1) },
+        command = { c.transform(c = c.c - 1) },
         post = { result -> result.a == c.a && result.c + 1 == c.c }
     )
 
@@ -85,7 +85,7 @@ interface E : D {
 open class EFunctions(val e: E) : CFunctions(e) {
 
     override val decrement = function<C>(
-        command = { e.set(c = e.c - 1, e = e.e - 1) },
+        command = { e.transform(c = e.c - 1, e = e.e - 1) },
         post = { result ->
             is_E(result)
                     && as_E(result).a == e.a
@@ -108,7 +108,7 @@ interface GA<P> {
 
 open class GAFunctions<P>(val ga: GA<P>) {
     open val increment = function(
-        command = { p: P -> ga.set(map = ga.map * mk_(p, ga.map[p] + 1)) },
+        command = { p: P -> ga.transform(map = ga.map * mk_(p, ga.map[p] + 1)) },
         pre = { p -> p in ga.map.dom },
         post = { p, result -> result.map[p] == ga.map[p] + 1 }
     )
@@ -141,7 +141,7 @@ interface GC1<P> : GA<P> {
 open class GC1Functions<P>(val c: GC1<P>) : GAFunctions<P>(c) {
 
     open val decrement = function(
-        command = { c.set(c = c.c - 1) },
+        command = { c.transform(c = c.c - 1) },
         post = { result -> result.map == c.map && result.c + 1 == c.c }
     )
 
@@ -158,7 +158,7 @@ interface GC2 : GA<String> {
 open class GC2Functions(val c: GC2) : GAFunctions<String>(c) {
 
     open val decrement = function(
-        command = { c.set(c = c.c - 1) },
+        command = { c.transform(c = c.c - 1) },
         post = { result -> result.map == c.map && result.c + 1 == c.c }
     )
 
@@ -208,7 +208,7 @@ interface GE1<P> : GD1<P> {
 open class GE1Functions<P>(val e: GE1<P>) : GC1Functions<P>(e) {
 
     override val decrement = function<GC1<P>>(
-        command = { e.set(c = e.c - 1, e = e.e - 1) },
+        command = { e.transform(c = e.c - 1, e = e.e - 1) },
         post = { result ->
             is_GE1<P>(result)
                     && as_GE1<P>(result).map == e.map
@@ -231,7 +231,7 @@ interface GE2 : GD1<String> {
 open class GE2Functions(val e: GE2) : GC1Functions<String>(e) {
 
     override val decrement = function<GC1<String>>(
-        command = { e.set(c = e.c - 1, e = e.e - 1) },
+        command = { e.transform(c = e.c - 1, e = e.e - 1) },
         post = { result ->
             is_GE2(result)
                     && as_GE2(result).map == e.map
@@ -254,7 +254,7 @@ interface GE3 : GD2 {
 open class GE3Functions(val e: GE3) : GC1Functions<String>(e) {
 
     override val decrement = function<GC1<String>>(
-        command = { e.set(c = e.c - 1, e = e.e - 1) },
+        command = { e.transform(c = e.c - 1, e = e.e - 1) },
         post = { result ->
             is_GE3(result)
                     && as_GE3(result).map == e.map
@@ -277,7 +277,7 @@ interface GE4 : GD3 {
 open class GE4Functions(val e: GE4) : GC2Functions(e) {
 
     override val decrement = function<GC2>(
-        command = { e.set(c = e.c - 1, e = e.e - 1) },
+        command = { e.transform(c = e.c - 1, e = e.e - 1) },
         post = { result ->
             is_GE4(result)
                     && as_GE4(result).map == e.map

@@ -23,7 +23,7 @@ import com.anaplan.engineering.kazuki.core.RecordExtensionAlternate_Module.mk_Re
 import com.anaplan.engineering.kazuki.core.RecordExtension_Module.component1
 import com.anaplan.engineering.kazuki.core.RecordExtension_Module.component2
 import com.anaplan.engineering.kazuki.core.RecordExtension_Module.mk_RecordExtension
-import com.anaplan.engineering.kazuki.core.RecordExtension_Module.set
+import com.anaplan.engineering.kazuki.core.RecordExtension_Module.transform
 import com.anaplan.engineering.kazuki.core.RecordInvOnlyExtension_Module.as_RecordInvOnlyExtension
 import com.anaplan.engineering.kazuki.core.RecordInvOnlyExtension_Module.is_RecordInvOnlyExtension
 import com.anaplan.engineering.kazuki.core.RecordInvOnlyExtension_Module.mk_RecordInvOnlyExtension
@@ -166,10 +166,10 @@ class TestRecordExtension {
 
     @Test
     fun set() {
-        assertEquals(mk_RecordExtension(4, "3"), mk_RecordExtension(2, "3").set(a = 4))
-        assertEquals(mk_RecordExtension(2, "hello"), mk_RecordExtension(2, "3").set(b = "hello"))
-        assertEquals(mk_RecordExtension(4, "2"), mk_RecordExtension(2, "3").set(a = 4, b = "2"))
-        assertEquals(mk_RecordExtension(2, "3"), mk_RecordExtension(2, "3").set())
+        assertEquals(mk_RecordExtension(4, "3"), mk_RecordExtension(2, "3").transform(a = 4))
+        assertEquals(mk_RecordExtension(2, "hello"), mk_RecordExtension(2, "3").transform(b = "hello"))
+        assertEquals(mk_RecordExtension(4, "2"), mk_RecordExtension(2, "3").transform(a = 4, b = "2"))
+        assertEquals(mk_RecordExtension(2, "3"), mk_RecordExtension(2, "3").transform())
     }
 
     // Note that for deconstruction, must:
