@@ -63,7 +63,7 @@ fun FileSpec.Builder.addNAryTuple(nary: Int) {
     val typeNames = (1..nary).map { TypeVariableName("T$it") }
 
     addType(TypeSpec.interfaceBuilder(interfaceName).apply {
-        addTypeVariables(typeNames)
+        addTypeVariables((1..nary).map { TypeVariableName("T$it", variance = KModifier.OUT) })
         addSuperinterface(TupleInterfaceName)
         (1..nary).forEach {
             addProperty(PropertySpec.builder("_$it", TypeVariableName("T$it")).build())

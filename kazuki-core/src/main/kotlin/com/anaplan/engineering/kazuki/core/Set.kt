@@ -5,7 +5,7 @@ import com.anaplan.engineering.kazuki.core.internal.__KSet1
 import com.anaplan.engineering.kazuki.core.internal.transformSet
 import kotlin.collections.filter as kotlinFilter
 
-interface Set1<T> : Set<T> {
+interface Set1<out T> : Set<T> {
 
     @Invariant
     fun atLeastOneElement() = card > 0uL
@@ -42,6 +42,8 @@ fun <T> as_Set1(elems: Array<T>): Set1<T> =
 fun Set<*>.pretty() = this.prettyOrDefault()
 
 fun <T, S : Set<T>> S.filter(fn: (T) -> Boolean): S = transformSet { it.elements.kotlinFilter(fn) }
+
+fun <T, S : Set<T>> S.transform(fn: (T) -> T): S = transformSet { it.elements.map(fn) }
 
 fun <T> Set<T>.filter(retainType: Boolean, fn: (T) -> Boolean): Set<T> =
     if (retainType) {

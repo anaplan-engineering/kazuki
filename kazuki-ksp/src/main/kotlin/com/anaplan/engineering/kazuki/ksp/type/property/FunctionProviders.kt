@@ -2,8 +2,7 @@ package com.anaplan.engineering.kazuki.ksp.type.property
 
 import com.anaplan.engineering.kazuki.core.FunctionProvider
 import com.anaplan.engineering.kazuki.ksp.getClassDeclaration
-import com.anaplan.engineering.kazuki.ksp.lazy
-import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeParameters
+import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeArguments
 import com.anaplan.engineering.kazuki.ksp.superModules
 import com.anaplan.engineering.kazuki.ksp.type.TypeGenerationContext
 import com.google.devtools.ksp.KSTypeNotPresentException
@@ -43,7 +42,7 @@ internal fun getFunctionProviderProperties(
         val superFunctionProviderProperties = superProperties.filter { it.isAnnotationPresent(FunctionProvider::class) }
 
         val ancestorTypeParameters =
-            classDcl.resolveAncestorTypeParameters(superClassDcl.qualifiedName!!.asString())
+            classDcl.resolveAncestorTypeArguments(superClassDcl.qualifiedName!!.asString())
         typeGenerationContext.logger.debug("Type parameters: $ancestorTypeParameters")
         superFunctionProviderProperties.map {
             // TODO -- there are likely more complex instances here and we could do with a generic utility to resolve more generally

@@ -6,16 +6,12 @@ import com.anaplan.engineering.kazuki.core.internal._KazukiObject
 import com.anaplan.engineering.kazuki.ksp.InvalidInternalStateType
 import com.anaplan.engineering.kazuki.ksp.InbuiltNames
 import com.anaplan.engineering.kazuki.ksp.hasSuperType
-import com.anaplan.engineering.kazuki.ksp.isModule
 import com.anaplan.engineering.kazuki.ksp.lazy
-import com.anaplan.engineering.kazuki.ksp.qualifiedModuleName
-import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeParameters
-import com.anaplan.engineering.kazuki.ksp.resolveTypeNameOfAncestorGenericParameter
+import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeArguments
 import com.anaplan.engineering.kazuki.ksp.type.property.PropertyProcessor
 import com.anaplan.engineering.kazuki.ksp.type.property.addFunctionProviders
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
@@ -63,8 +59,7 @@ private fun TypeSpec.Builder.addSequenceType(
     }
     val properties = PropertyProcessor(interfaceClassDcl, typeGenerationContext).process()
     val superInterface = if (requiresNonEmpty) Sequence1::class else Sequence::class
-    val ancestorTypeParameters = interfaceClassDcl.resolveAncestorTypeParameters(superInterface.qualifiedName!!)
-    val elementTypeDcl = ancestorTypeParameters.getTypeDeclaration(0)
+    val ancestorTypeParameters = interfaceClassDcl.resolveAncestorTypeArguments(superInterface.qualifiedName!!)
     val elementTypeName = ancestorTypeParameters.getTypeName(0)
     val elementsPropertyName = "elements"
 
@@ -149,23 +144,7 @@ private fun TypeSpec.Builder.addSequenceType(
                     addModifiers(KModifier.OVERRIDE)
                     returns(String::class)
                     beginControlFlow("val elementText = $elementsPropertyName.joinToString(%S)", ", ")
-                    if (elementTypeDcl is KSTypeParameter) {
-                        beginControlFlow("if (it is %T)", PrettyPrintable::class)
-                        addStatement("it.pretty()")
-                        nextControlFlow("else")
-                        addStatement("it.toString()")
-                        endControlFlow()
-                    } else if (elementTypeDcl is KSClassDeclaration &&
-                        (elementTypeDcl.isModule || elementTypeDcl.hasSuperType(PrettyPrintable::class.qualifiedName!!))
-                    ) {
-                        if (elementTypeDcl.isModule) {
-                            addStatement("${elementTypeDcl.qualifiedModuleName}.$StaticPrettyFunctionName(it)")
-                        } else {
-                            addStatement("it.pretty()")
-                        }
-                    } else {
-                        addStatement("it.toString()")
-                    }
+                    addStatement("it.${InbuiltNames.prettyOrDefault}()")
                     endControlFlow()
                     addStatement("return %P", "<\$elementText>")
                 }.build()

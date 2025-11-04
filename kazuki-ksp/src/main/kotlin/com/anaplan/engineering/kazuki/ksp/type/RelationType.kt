@@ -11,7 +11,6 @@ import com.anaplan.engineering.kazuki.ksp.type.property.PropertyProcessor
 import com.anaplan.engineering.kazuki.ksp.type.property.addFunctionProviders
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
@@ -63,9 +62,7 @@ private fun TypeSpec.Builder.addRelationType(
 //    val superInterface = if (requiresNonEmpty) Relation1::class else Relation::class
     val superInterface = Relation::class
 
-    val ancestorTypeParameters = interfaceClassDcl.resolveAncestorTypeParameters(superInterface.qualifiedName!!)
-    val domainTypeDcl = ancestorTypeParameters.getTypeDeclaration(0)
-    val rangeTypeDcl = ancestorTypeParameters.getTypeDeclaration(1)
+    val ancestorTypeParameters = interfaceClassDcl.resolveAncestorTypeArguments(superInterface.qualifiedName!!)
     val domainTypeName = ancestorTypeParameters.getTypeName(0)
     val rangeTypeName = ancestorTypeParameters.getTypeName(1)
     val tupleType = Tuple2::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName)
@@ -149,42 +146,8 @@ private fun TypeSpec.Builder.addRelationType(
                     addModifiers(KModifier.OVERRIDE)
                     returns(String::class)
                     beginControlFlow("val elementText = $elementsPropertyName.joinToString(%S)", ", ")
-                    if (domainTypeDcl is KSTypeParameter) {
-                        addStatement("val _1 = it._1") // Required for smart cast
-                        beginControlFlow("val d = if (_1 is %T)", PrettyPrintable::class)
-                        addStatement("_1.pretty()")
-                        nextControlFlow("else")
-                        addStatement("_1.toString()")
-                        endControlFlow()
-                    } else if (domainTypeDcl is KSClassDeclaration &&
-                        (domainTypeDcl.isModule || domainTypeDcl.hasSuperType(PrettyPrintable::class.qualifiedName!!))
-                    ) {
-                        if (domainTypeDcl.isModule) {
-                            addStatement("val d = ${domainTypeDcl.qualifiedModuleName}.$StaticPrettyFunctionName(it._1)")
-                        } else {
-                            addStatement("val d = it._1.pretty()")
-                        }
-                    } else {
-                        addStatement("val d = it._1.toString()")
-                    }
-                    if (rangeTypeDcl is KSTypeParameter) {
-                        addStatement("val _2 = it._2") // Required for smart cast
-                        beginControlFlow("val r = if (_2 is %T)", PrettyPrintable::class)
-                        addStatement("_2.pretty()")
-                        nextControlFlow("else")
-                        addStatement("_2.toString()")
-                        endControlFlow()
-                    } else if (rangeTypeDcl is KSClassDeclaration &&
-                        (rangeTypeDcl.isModule || rangeTypeDcl.hasSuperType(PrettyPrintable::class.qualifiedName!!))
-                    ) {
-                        if (rangeTypeDcl.isModule) {
-                            addStatement("val r = ${rangeTypeDcl.qualifiedModuleName}.$StaticPrettyFunctionName(it._2)")
-                        } else {
-                            addStatement("val r = it._2.pretty()")
-                        }
-                    } else {
-                        addStatement("val r = it._2.toString()")
-                    }
+                    addStatement("val d = it._1.${InbuiltNames.prettyOrDefault}()")
+                    addStatement("val r = it._2.${InbuiltNames.prettyOrDefault}()")
                     val separator = "↦"
                     addStatement("%P", "\$d $separator \$r")
                     endControlFlow()

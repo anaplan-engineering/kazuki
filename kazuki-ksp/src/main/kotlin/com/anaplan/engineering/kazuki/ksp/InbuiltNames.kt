@@ -6,6 +6,10 @@ internal object InbuiltNames {
     internal const val corePackage = "com.anaplan.engineering.kazuki.core"
     internal const val coreInternalPackage = "com.anaplan.engineering.kazuki.core.internal"
 
+    internal const val prettyOrDefault = "prettyOrDefault"
+
+    internal const val transform = "transform"
+
     internal val mkSet = MemberName(corePackage, "mk_Set")
     internal val mkSet1 = MemberName(corePackage, "mk_Set1")
     internal val asSet = MemberName(corePackage, "as_Set")

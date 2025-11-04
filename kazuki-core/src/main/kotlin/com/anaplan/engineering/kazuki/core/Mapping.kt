@@ -2,7 +2,7 @@ package com.anaplan.engineering.kazuki.core
 
 import com.anaplan.engineering.kazuki.core.internal.*
 
-interface Mapping<D, R> : Relation<D, R> {
+interface Mapping<D, out R> : Relation<D, R> {
 
     operator fun get(d: D): R
 
@@ -17,7 +17,7 @@ interface InjectiveMapping<D, R> : Mapping<D, R> {
 
 interface InjectiveMapping1<D, R> : InjectiveMapping<D, R>, Mapping1<D, R>
 
-interface Mapping1<D, R> : Mapping<D, R>,  Set1<Tuple2<D, R>>  {
+interface Mapping1<D, out R> : Mapping<D, R>, Set1<Tuple2<D, R>>  {
     val card: nat1
 
     override val dom: Set1<D>

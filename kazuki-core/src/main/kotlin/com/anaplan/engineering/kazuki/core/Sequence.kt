@@ -109,6 +109,8 @@ fun <T, S : Sequence<T>> S.insert(s: S, i: nat1) =
 
 fun <T, S : Sequence<T>> S.filter(fn: (T) -> Boolean) = transformSequence { it.elements.kotlinFilter(fn) }
 
+fun <T, S : Sequence<T>> S.transform(fn: (T) -> T) = transformSequence { it.elements.map(fn) }
+
 fun <T> Sequence<T>.filter(retainType: Boolean, fn: (T) -> Boolean) =
     if (retainType) {
         this.filter(fn)

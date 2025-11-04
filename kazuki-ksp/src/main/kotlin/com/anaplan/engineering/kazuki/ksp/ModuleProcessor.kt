@@ -118,6 +118,7 @@ internal class ModuleProcessor(
                 .map { it.simpleName.asString() }.toList()
         FileSpec.builder(clazz.packageName.asString(), moduleClassName)
             .addImport(clazzName, imports)
+            .addImport(InbuiltNames.corePackage, InbuiltNames.prettyOrDefault)
             .addType(moduleTypeSpec).build()
             .writeTo(codeGenerator, Dependencies(true, clazz.containingFile!!))
     }
