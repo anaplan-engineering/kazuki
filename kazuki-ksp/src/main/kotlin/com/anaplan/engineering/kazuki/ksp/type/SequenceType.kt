@@ -8,6 +8,7 @@ import com.anaplan.engineering.kazuki.ksp.InbuiltNames
 import com.anaplan.engineering.kazuki.ksp.hasSuperType
 import com.anaplan.engineering.kazuki.ksp.lazy
 import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeArguments
+import com.anaplan.engineering.kazuki.ksp.stripVariance
 import com.anaplan.engineering.kazuki.ksp.type.property.PropertyProcessor
 import com.anaplan.engineering.kazuki.ksp.type.property.addFunctionProviders
 import com.google.devtools.ksp.KspExperimental
@@ -46,7 +47,7 @@ private fun TypeSpec.Builder.addSequenceType(
     requiresNonEmpty: Boolean
 ) {
     val interfaceName = interfaceClassDcl.simpleName.asString()
-    val interfaceTypeArguments = interfaceClassDcl.typeParameters.map { it.toTypeVariableName() }
+    val interfaceTypeArguments = interfaceClassDcl.typeParameters.map { it.toTypeVariableName().stripVariance() }
     val interfaceTypeName = if (interfaceTypeArguments.isEmpty()) {
         interfaceClassDcl.toClassName()
     } else {

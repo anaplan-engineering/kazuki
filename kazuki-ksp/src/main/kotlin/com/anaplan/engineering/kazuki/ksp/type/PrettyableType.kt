@@ -2,6 +2,7 @@ package com.anaplan.engineering.kazuki.ksp.type
 
 import com.anaplan.engineering.kazuki.core.PrettyPrintable
 import com.anaplan.engineering.kazuki.core.internal._KazukiObject
+import com.anaplan.engineering.kazuki.ksp.stripVariance
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.TypeName
@@ -11,6 +12,7 @@ import kotlin.collections.isNotEmpty
 
 val StaticPrettyFunctionName = "_pretty"
 
+
 internal fun TypeSpec.Builder.addStaticPrettyFunction(
     interfaceTypeName: TypeName,
     interfaceTypeArguments: List<TypeVariableName>,
@@ -18,7 +20,7 @@ internal fun TypeSpec.Builder.addStaticPrettyFunction(
     addFunction(
         FunSpec.builder(StaticPrettyFunctionName).apply {
             if (interfaceTypeArguments.isNotEmpty()) {
-                addTypeVariables(interfaceTypeArguments)
+                addTypeVariables(interfaceTypeArguments.map { it.stripVariance() })
             }
             val parameterName = "obj"
             addParameter(parameterName, interfaceTypeName.copy(nullable = true))
