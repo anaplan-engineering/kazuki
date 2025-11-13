@@ -28,7 +28,7 @@ interface Date : PrettyPrintable {
 }
 
 class DateProperties(private val date: Date) {
-    val formatted by lazy {
+    val formatted by property {
         String.format(
             "%04d-%02d-%02d",
             date.year.safeToInt(),
@@ -37,13 +37,13 @@ class DateProperties(private val date: Date) {
         )
     }
 
-    val dayOfWeek by lazy {
+    val dayOfWeek by property {
         DayOfWeek.entries[((durationSinceFirstDate.properties.days - 365u) % 7u).safeToInt()]
     }
 
-    val dtgAtStartOfDay by lazy { mk_Dtg(date, FirstTime) }
+    val dtgAtStartOfDay by property { mk_Dtg(date, FirstTime) }
 
-    val durationSinceFirstDate by lazy {
+    val durationSinceFirstDate by property {
         DurationUtilities.fromDays(ChronoUnit.DAYS.between(FirstDate.toLocalDate(), date.toLocalDate()).toNat())
     }
 }

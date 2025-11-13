@@ -6,6 +6,7 @@ import com.anaplan.engineering.kazuki.core.Module
 import com.anaplan.engineering.kazuki.core.bool
 import com.anaplan.engineering.kazuki.core.function
 import com.anaplan.engineering.kazuki.core.iff
+import com.anaplan.engineering.kazuki.core.property
 import com.anaplan.engineering.kazuki.toolkit.iso8601.DtgUtilities.durationBetween
 import com.anaplan.engineering.kazuki.toolkit.iso8601.DtgUtilities.isEarlierThanOrEqual
 
@@ -30,11 +31,11 @@ interface Interval {
 }
 
 open class IntervalProperties(private val interval: Interval) {
-    val formatted by lazy {
+    val formatted by property {
         interval.begins.properties.formatted + "/" + interval.ends.properties.formatted
     }
 
-    val duration by lazy { durationBetween(interval.begins, interval.ends) }
+    val duration by property { durationBetween(interval.begins, interval.ends) }
 }
 
 open class IntervalFunctions(private val interval: Interval) {

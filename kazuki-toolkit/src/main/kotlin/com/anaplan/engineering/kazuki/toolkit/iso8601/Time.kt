@@ -25,11 +25,11 @@ interface Time: PrettyPrintable {
 }
 
 class TimeProperties(private val time: Time) {
-    val durationSinceFirstTime by lazy {
+    val durationSinceFirstTime by property {
         mk_Duration(ChronoUnit.MILLIS.between(FirstTime.toLocalTime(), time.toLocalTime()).toNat())
     }
 
-    val formatted by lazy {
+    val formatted by property {
         val milliseconds = if (time.millisecond == 0uL) "" else String.format(".%03d", time.millisecond.safeToInt())
         String.format(
             "%02d:%02d:%02d%s",
@@ -68,12 +68,12 @@ interface TimeInZone {
 
 class TimeInZoneProperties(private val timeInZone: TimeInZone) {
 
-    val formatted by lazy {
+    val formatted by property {
         timeInZone.time.properties.formatted +
                 if (timeInZone.offset.offsetDuration != NoDuration) timeInZone.offset.properties.formatted else "Z"
     }
 
-    val normalisedDurationSinceFirstTime by lazy { normalisedTime.time.properties.durationSinceFirstTime }
+    val normalisedDurationSinceFirstTime by property { normalisedTime.time.properties.durationSinceFirstTime }
 
     private val normaliseTimeInZonePlus: (Duration, Duration) -> NormalisedTime = function(
         command = { utcTimeDuration, offsetDuration ->
@@ -107,7 +107,7 @@ class TimeInZoneProperties(private val timeInZone: TimeInZone) {
         }
     )
 
-    val normalisedTime by lazy {
+    val normalisedTime by property {
         val utcTimeDuration = timeInZone.time.properties.durationSinceFirstTime
         val offsetDuration = timeInZone.offset.offsetDuration
         val directionOfOffset = timeInZone.offset.offsetDirection
@@ -148,7 +148,7 @@ interface Offset {
 
 class OffsetProperties(private val offset: Offset) {
 
-    val formatted by lazy {
+    val formatted by property {
         val hourMinute = offset.offsetDuration.properties.timeAfterFirstTime
         val sign = when (offset.offsetDirection) {
             OffsetDirection.Plus -> "+"; OffsetDirection.Minus -> "-"; OffsetDirection.None -> ""

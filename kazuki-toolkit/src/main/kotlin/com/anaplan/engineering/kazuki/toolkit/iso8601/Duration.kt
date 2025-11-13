@@ -26,12 +26,12 @@ interface Duration : Comparable<Duration> {
 
 class DurationProperties(private val duration: Duration) {
 
-    val seconds by lazy { duration.milliseconds / MillisPerSecond }
-    val minutes by lazy { seconds / SecondsPerMinute }
-    val hours by lazy { minutes / MinutesPerHour }
-    val days by lazy { hours / HoursPerDay }
+    val seconds by property { duration.milliseconds / MillisPerSecond }
+    val minutes by property { seconds / SecondsPerMinute }
+    val hours by property { minutes / MinutesPerHour }
+    val days by property { hours / HoursPerDay }
 
-    val formatted by lazy {
+    val formatted by property {
         val numDays = days
         val timeOfDay = modDays.properties.timeAfterFirstTime
         val date = formatItem(numDays, 'D')
@@ -52,21 +52,21 @@ class DurationProperties(private val duration: Duration) {
         command = { seconds, milliseconds -> String.format("%d.%03dS", seconds.safeToInt(), milliseconds.safeToInt()) }
     )
 
-    val modSeconds by lazy { mk_Duration(duration.milliseconds % OneSecondDuration.milliseconds) }
+    val modSeconds by property { mk_Duration(duration.milliseconds % OneSecondDuration.milliseconds) }
 
-    val modMinutes by lazy { mk_Duration(duration.milliseconds % OneMinuteDuration.milliseconds) }
+    val modMinutes by property { mk_Duration(duration.milliseconds % OneMinuteDuration.milliseconds) }
 
-    val modHours by lazy { mk_Duration(duration.milliseconds % OneHourDuration.milliseconds) }
+    val modHours by property { mk_Duration(duration.milliseconds % OneHourDuration.milliseconds) }
 
-    val modDays by lazy { mk_Duration(duration.milliseconds % OneDayDuration.milliseconds) }
+    val modDays by property { mk_Duration(duration.milliseconds % OneDayDuration.milliseconds) }
 
-    val timeAfterFirstTime by lazy { duration.functions.addToTime(FirstTime) }
+    val timeAfterFirstTime by property { duration.functions.addToTime(FirstTime) }
 
-    val dateAfterFirstDate by lazy { duration.functions.addToDate(FirstDate) }
+    val dateAfterFirstDate by property { duration.functions.addToDate(FirstDate) }
 
-    val dtgAfterFirstDtg by lazy { duration.functions.addToDtg(FirstDtg) }
+    val dtgAfterFirstDtg by property { duration.functions.addToDtg(FirstDtg) }
 
-    val yearsAfterFirstYear by lazy { duration.functions.yearCountFromYear(FirstYear) }
+    val yearsAfterFirstYear by property { duration.functions.yearCountFromYear(FirstYear) }
 }
 
 class DurationFunctions(private val duration: Duration) {

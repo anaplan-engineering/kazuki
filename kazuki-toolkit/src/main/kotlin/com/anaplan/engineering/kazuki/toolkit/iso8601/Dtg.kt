@@ -26,13 +26,13 @@ interface Dtg : PrettyPrintable {
 
 class DtgProperties(private val dtg: Dtg) {
 
-    val durationSinceFirstDtg by lazy {
+    val durationSinceFirstDtg by property {
         dtg.date.properties.durationSinceFirstDate.functions.add(dtg.time.properties.durationSinceFirstTime)
     }
 
-    val instant by lazy { mk_Interval(dtg, dtg.functions.addDuration(OneMillisecondDuration)) }
+    val instant by property { mk_Interval(dtg, dtg.functions.addDuration(OneMillisecondDuration)) }
 
-    val formatted by lazy { dtg.date.properties.formatted + "T" + dtg.time.properties.formatted }
+    val formatted by property { dtg.date.properties.formatted + "T" + dtg.time.properties.formatted }
 }
 
 class DtgFunctions(private val dtg: Dtg) {
