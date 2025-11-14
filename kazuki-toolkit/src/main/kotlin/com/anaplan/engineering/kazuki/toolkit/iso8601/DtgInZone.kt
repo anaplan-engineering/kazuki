@@ -4,6 +4,7 @@ import com.anaplan.engineering.kazuki.core.FunctionProvider
 import com.anaplan.engineering.kazuki.core.Invariant
 import com.anaplan.engineering.kazuki.core.Module
 import com.anaplan.engineering.kazuki.core.PrettyPrintable
+import com.anaplan.engineering.kazuki.core.property
 import com.anaplan.engineering.kazuki.toolkit.iso8601.Dtg_Module.mk_Dtg
 
 
@@ -30,7 +31,7 @@ interface DtgInZone : PrettyPrintable {
 
 class DtgInZoneProperties(private val dtgInZone: DtgInZone) {
 
-    val normalised by lazy {
+    val normalised by property {
         val normalisedTime = dtgInZone.time.properties.normalisedTime
         val baseDtg = mk_Dtg(dtgInZone.date, normalisedTime.time)
         when (normalisedTime.plusOrMinusADay) {
@@ -40,5 +41,5 @@ class DtgInZoneProperties(private val dtgInZone: DtgInZone) {
         }
     }
 
-    val formatted by lazy { dtgInZone.date.properties.formatted + "T" + dtgInZone.time.properties.formatted }
+    val formatted by property { dtgInZone.date.properties.formatted + "T" + dtgInZone.time.properties.formatted }
 }

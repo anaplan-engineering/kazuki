@@ -45,7 +45,7 @@ private fun TypeSpec.Builder.addRelationType(
     requiresNonEmpty: Boolean
 ) {
     val interfaceName = interfaceClassDcl.simpleName.asString()
-    val interfaceTypeArguments = interfaceClassDcl.typeParameters.map { it.toTypeVariableName() }
+    val interfaceTypeArguments = interfaceClassDcl.typeParameters.map { it.toTypeVariableName().stripVariance() }
     val interfaceTypeName = if (interfaceTypeArguments.isEmpty()) {
         interfaceClassDcl.toClassName()
     } else {
