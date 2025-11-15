@@ -8,14 +8,15 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:2.0.16'
 }
 
-compileKotlin {
-    dependsOn generateFunctions
-    dependsOn generateTuples
-}
 
 // TODO - figure out how to do this from the plugin ?!
 sourceSets {
-    main.kotlin.srcDirs "$buildDir/generated/kazuki/main/kotlin"
+    main {
+        kotlin {
+            srcDir(generateTuples)
+            srcDir(generateFunctions)
+        }
+    }
 }
 
 publishing {

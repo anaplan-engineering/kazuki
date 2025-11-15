@@ -8,7 +8,7 @@ import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.JavaPluginExtension
 import java.io.File
 
-open class KazukiGenerationPluginExtension @javax.inject.Inject constructor(objectFactory: ObjectFactory) {
+open class KazukiGenerationPluginExtension @javax.inject.Inject constructor(@Suppress("unused") objectFactory: ObjectFactory) {
     var generatedSrc: String = "generatedSrc"
 }
 
@@ -31,8 +31,8 @@ class KazukiGenerationPlugin : Plugin<Project> {
         // TODO -- get this working!?
         project.afterEvaluate {
             val sourceSets = it.extensions.getByType(JavaPluginExtension::class.java).sourceSets
-            sourceSets.getByName("main").java.srcDirs.add(File(project.buildDir, "generated/kazuki/main/kotlin"))
-            sourceSets.getByName("test").java.srcDirs.add(File(project.buildDir, "generated/kazuki/test/kotlin"))
+            sourceSets.getByName("main").java.srcDirs.add(project.layout.buildDirectory.dir("generated/kazuki/main/kotlin").get().asFile)
+            sourceSets.getByName("test").java.srcDirs.add(project.layout.buildDirectory.dir("generated/kazuki/test/kotlin").get().asFile)
         }
         project.extensions.create("kazuki", KazukiGenerationPluginExtension::class.java, project.objects)
         project.createKazukiTask("generateFunctions", FunctionGeneratorTask::class.java)
@@ -44,13 +44,7 @@ class KazukiGenerationPlugin : Plugin<Project> {
 internal const val kazukiTaskGroup = "kazuki"
 
 internal fun Project.createKazukiTask(name: String, type: Class<out Task>) =
-    tasks.create(
-        mapOf<String, Any>(
-            "name" to name,
-            "type" to type,
-            "group" to kazukiTaskGroup
-        )
-    )
+    tasks.register(name, type).configure { group = kazukiTaskGroup }
 
-internal fun Project.generationSrcDir() = File(buildDir, "generated/kazuki/main/kotlin")
-internal fun Project.generationTestSrcDir() = File(buildDir, "generated/kazuki/test/kotlin")
+internal fun Project.generationSrcDir() = layout.buildDirectory.dir("generated/kazuki/main/kotlin").get().asFile
+internal fun Project.generationTestSrcDir() = layout.buildDirectory.dir("generated/kazuki/test/kotlin").get().asFile
