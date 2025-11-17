@@ -1,11 +1,11 @@
 plugins {
     id 'kazuki.kotlin-conventions'
-    id 'com.google.devtools.ksp' version("2.0.21-1.0.27")
+    alias(libs.plugins.ksp)
 }
 
 dependencies {
     api project(":kazuki-core")
     ksp project(":kazuki-ksp")
-    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+    testImplementation libs.kotlin.test
 }
 
