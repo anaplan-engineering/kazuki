@@ -1,6 +1,6 @@
 plugins {
     id 'kazuki.kotlin-conventions-junit4'
-    id 'com.google.devtools.ksp' version("1.9.10-1.0.13")
+    id 'com.google.devtools.ksp' version("2.0.21-1.0.27")
     id 'com.anaplan.engineering.kazuki-generation'
 }
 
@@ -20,6 +20,7 @@ sourceSets {
 
 ksp {
     arg("com.anaplan.engineering.kazuki.compile.debug.level", "INFO")
+    useKsp2 = false
 }
 
 test {

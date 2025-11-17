@@ -1,7 +1,7 @@
 plugins {
     id 'kazuki.kotlin-conventions-junit4'
     id 'kazuki.jar-publishing-conventions'
-    id 'com.google.devtools.ksp' version("1.9.10-1.0.13")
+    id 'com.google.devtools.ksp' version("2.0.21-1.0.27")
 }
 
 dependencies {
@@ -13,6 +13,10 @@ tasks.named('compileKotlin', org.jetbrains.kotlin.gradle.tasks.KotlinCompilation
     compilerOptions {
         freeCompilerArgs.add("-Xjvm-default=all")
     }
+}
+
+ksp {
+    useKsp2 = false
 }
 
 publishing {

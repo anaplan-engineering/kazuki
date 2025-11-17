@@ -1,14 +1,6 @@
 package com.anaplan.engineering.kazuki.tictactoe
 
 import com.anaplan.engineering.kazuki.core.*
-import com.anaplan.engineering.kazuki.tictactoe.XO.hasTurn
-import com.anaplan.engineering.kazuki.tictactoe.XO.hasWon
-import com.anaplan.engineering.kazuki.tictactoe.XO.isDraw
-import com.anaplan.engineering.kazuki.tictactoe.XO.isWon
-import com.anaplan.engineering.kazuki.tictactoe.XO.moveCountLeft
-import com.anaplan.engineering.kazuki.tictactoe.XO.moveCountSoFar
-import com.anaplan.engineering.kazuki.tictactoe.XO.movesForPlayer
-import com.anaplan.engineering.kazuki.tictactoe.XO.movesSoFar
 import com.anaplan.engineering.kazuki.tictactoe.XO_Module.mk_Game
 import com.anaplan.engineering.kazuki.tictactoe.XO_Module.mk_Position
 
