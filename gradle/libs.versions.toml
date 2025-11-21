@@ -1,3 +1,9 @@
+# Tentative naming convention for libraries, subject to improvement:
+# - As a general rule, match the artifact name.
+# - Use camel case to avoid subgroup accessors where it’s clear that the `-` in the artifact name
+#   stands for a space instead of a “specialisation”:
+# -- for example: kotlin-gradlePlugin <-> kotlin-gradle-plugin.
+
 [versions]
 kotlin = "2.0.21"
 ksp = "2.0.21-1.0.27"
@@ -6,7 +12,7 @@ kotlinPoet = "2.2.0" # supports up to Kotlin 2.1.21 and KSP 2.1.21-2.0.1
 [libraries]
 kotlin-bom = { group = "org.jetbrains.kotlin", name = "kotlin-bom", version.ref = "kotlin" }
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect" }
-kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit" }
+kotlin-test-junit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit" }
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version = "2.0.17" }
