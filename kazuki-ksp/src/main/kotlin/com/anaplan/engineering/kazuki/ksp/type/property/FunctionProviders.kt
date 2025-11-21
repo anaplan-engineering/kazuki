@@ -46,7 +46,7 @@ internal fun getFunctionProviderProperties(
         superFunctionProviderProperties.map {
             // TODO -- there are likely more complex instances here and we could do with a generic utility to resolve more generally
             val providerType = it.type.resolve()
-            val providerClassName = providerType.toClassNameUnsafe()
+            val providerClassName = providerType.toClassNameStrict()
             val resolvedProviderTypeArgs = providerType.arguments.map { typeArg ->
                 val typeArgType = typeArg.type!!.resolve().declaration
                 if (typeArgType is KSTypeParameter) {
