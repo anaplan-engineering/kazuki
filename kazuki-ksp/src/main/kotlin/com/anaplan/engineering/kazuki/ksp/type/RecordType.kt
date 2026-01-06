@@ -12,6 +12,7 @@ import com.anaplan.engineering.kazuki.ksp.InbuiltNames.corePackage
 import com.anaplan.engineering.kazuki.ksp.findUnusedGenericName
 import com.anaplan.engineering.kazuki.ksp.hasSuperType
 import com.anaplan.engineering.kazuki.ksp.isModule
+import com.anaplan.engineering.kazuki.ksp.lazy
 import com.anaplan.engineering.kazuki.ksp.moduleName
 import com.anaplan.engineering.kazuki.ksp.qualifiedModuleName
 import com.anaplan.engineering.kazuki.ksp.superModules
@@ -127,10 +128,23 @@ internal fun TypeSpec.Builder.addRecordType(
             PropertySpec.builder(enforceInvariantParameterName, Boolean::class, KModifier.PRIVATE).initializer(
                 enforceInvariantParameterName
             ).build()
+
         )
+
         addFunctionProviders(properties.functionProviders, makeable, typeGenerationContext)
 
         val comparableWith = addComparableWith(interfaceClassDcl, tupleClassName, typeGenerationContext)
+
+        val hashPropertyName = "hash"
+        addProperty(
+            PropertySpec.builder(hashPropertyName, Int::class, KModifier.PRIVATE).lazy(
+                if (comparableWith.property == null) {
+                    "${corePackage}.mk_(${tupleComponents.joinToString(", ") { "_${it.index}" }}).hashCode()"
+                } else {
+                    "${comparableWith.property.simpleName.getShortName()}.hashCode()"
+                }
+            ).build()
+        )
 
         // N.B. it·is·important to have properties before init block
         addInvariantFrom(interfaceClassDcl, typeGenerationContext)
@@ -234,11 +248,7 @@ internal fun TypeSpec.Builder.addRecordType(
         addFunction(
             FunSpec.builder("hashCode").addModifiers(KModifier.OVERRIDE)
                 .returns(Int::class).apply {
-                    if (comparableWith.property == null) {
-                        addStatement("return ${corePackage}.mk_(${tupleComponents.joinToString(", ") { "_${it.index}" }}).hashCode()")
-                    } else {
-                        addStatement("return %N.hashCode()", comparableWith.property.simpleName.getShortName())
-                    }
+                    addStatement("return %N", hashPropertyName)
                 }.build()
         )
 

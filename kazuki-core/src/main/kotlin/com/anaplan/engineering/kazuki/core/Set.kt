@@ -12,31 +12,31 @@ interface Set1<out T> : Set<T> {
 
 }
 
-fun <T> mk_Set(vararg elems: T): Set<T> = __KSet(elems.toSet())
+fun <T> mk_Set(vararg elems: T): Set<T> = __KSet(elems.toCollection(HashSet()))
 
-fun <T> as_Set(elems: Iterable<T>): Set<T> = __KSet(LinkedHashSet<T>(elems.count()).apply { addAll(elems) })
+fun <T> as_Set(elems: Iterable<T>): Set<T> = __KSet(HashSet<T>(elems.count()).apply { addAll(elems) })
 
-fun <T> as_Set(elems: Array<T>): Set<T> = __KSet(elems.toSet())
+fun <T> as_Set(elems: Array<T>): Set<T> = __KSet(elems.toCollection(HashSet()))
 
 fun <T> mk_Set1(vararg elems: T): Set1<T> =
     if (elems.isEmpty()) {
         throw PreconditionFailure("Cannot create set1 without elements")
     } else {
-        __KSet1(elems.toSet())
+        __KSet1(elems.toCollection(HashSet()))
     }
 
 fun <T> as_Set1(elems: Iterable<T>): Set1<T> =
     if (elems.count() == 0) {
         throw PreconditionFailure("Cannot convert to set1 without elements")
     } else {
-        __KSet1(LinkedHashSet<T>(elems.count()).apply { addAll(elems) })
+        __KSet1(HashSet<T>(elems.count()).apply { addAll(elems) })
     }
 
 fun <T> as_Set1(elems: Array<T>): Set1<T> =
     if (elems.isEmpty()) {
         throw PreconditionFailure("Cannot convert to set1 without elements")
     } else {
-        __KSet1(elems.toSet())
+        __KSet1(elems.toCollection(HashSet()))
     }
 
 fun Set<*>.pretty() = this.prettyOrDefault()
@@ -93,3 +93,17 @@ fun <T, S : Set<T>> S.diff(s: Set<T>): S =
 fun <T, S : Set<T>> S.diff(t: T): S =
     transformSet { it.elements.toMutableSet().apply { remove(t) } }
 
+fun <T> cartesianProduct(iterables: Sequence<Iterable<T>>): Set<Sequence<T>> {
+
+    fun combineNext(current: List<List<T>>, iters: List<Iterable<T>>): List<List<T>> =
+        if (iters.isEmpty()) {
+            current
+        } else {
+            combineNext(
+                iters.first().flatMap { i -> current.map { c -> c + i } },
+                iters.drop(1)
+            )
+        }
+
+    return as_Set(combineNext(iterables.first().map { listOf(it) }, iterables.drop(1uL).toList()).map { as_Seq(it) })
+}

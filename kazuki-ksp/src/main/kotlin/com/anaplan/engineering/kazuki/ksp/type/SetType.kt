@@ -4,11 +4,7 @@ import com.anaplan.engineering.kazuki.core.PrettyPrintable
 import com.anaplan.engineering.kazuki.core.Set1
 import com.anaplan.engineering.kazuki.core.internal._KSet
 import com.anaplan.engineering.kazuki.core.internal._KazukiObject
-import com.anaplan.engineering.kazuki.ksp.InbuiltNames
-import com.anaplan.engineering.kazuki.ksp.InvalidInternalStateType
-import com.anaplan.engineering.kazuki.ksp.hasSuperType
-import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeArguments
-import com.anaplan.engineering.kazuki.ksp.stripVariance
+import com.anaplan.engineering.kazuki.ksp.*
 import com.anaplan.engineering.kazuki.ksp.type.property.PropertyProcessor
 import com.anaplan.engineering.kazuki.ksp.type.property.addFunctionProviders
 import com.google.devtools.ksp.KspExperimental
@@ -93,6 +89,18 @@ private fun TypeSpec.Builder.addSetType(
         val comparableWith = addComparableWith(interfaceClassDcl, Set::class.asClassName(), typeGenerationContext)
         addFunctionProviders(properties.functionProviders, true, typeGenerationContext)
 
+        val hashPropertyName = "hash"
+        val delegatedHashObjectName = if (comparableWith.property == null) {
+            elementsPropertyName
+        } else {
+            comparableWith.property.simpleName.getShortName()
+        }
+        addProperty(
+            PropertySpec.builder(hashPropertyName, Int::class, KModifier.PRIVATE)
+                .lazy("%N.hashCode()", delegatedHashObjectName)
+                .build()
+        )
+
         addInitializerBlock(CodeBlock.builder().apply {
             beginControlFlow(
                 "assert (%N !is %T)",
@@ -145,12 +153,7 @@ private fun TypeSpec.Builder.addSetType(
         addFunction(
             FunSpec.builder("hashCode").addModifiers(KModifier.OVERRIDE)
                 .returns(Int::class).apply {
-                    val hashPropertyName = if (comparableWith.property == null) {
-                        elementsPropertyName
-                    } else {
-                        comparableWith.property.simpleName.getShortName()
-                    }
-                    addStatement("return %N.hashCode()", hashPropertyName)
+                    addStatement("return %N", hashPropertyName)
                 }.build()
         )
         val equalsParameterName = "other"
@@ -257,7 +260,8 @@ private fun TypeSpec.Builder.addSetType(
                 beginControlFlow("if (%N is %T)", elementsPropertyName, erasedInterfaceTypeName)
                 addStatement("return %N as %T", elementsPropertyName, interfaceTypeName)
                 nextControlFlow("else")
-                addStatement("return %N(%T(%N.size).apply·{ addAll(%N) })",
+                addStatement(
+                    "return %N(%T(%N.size).apply·{ addAll(%N) })",
                     "mk_$interfaceName",
                     HashSet::class.asClassName().parameterizedBy(elementTypeName),
                     elementsPropertyName,

@@ -5,6 +5,7 @@ import com.anaplan.engineering.kazuki.core.internal._KSequence
 import com.anaplan.engineering.kazuki.core.internal._KazukiObject
 import com.anaplan.engineering.kazuki.ksp.InvalidInternalStateType
 import com.anaplan.engineering.kazuki.ksp.InbuiltNames
+import com.anaplan.engineering.kazuki.ksp.InbuiltNames.corePackage
 import com.anaplan.engineering.kazuki.ksp.hasSuperType
 import com.anaplan.engineering.kazuki.ksp.lazy
 import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeArguments
@@ -117,6 +118,18 @@ private fun TypeSpec.Builder.addSequenceType(
         val comparableWith = addComparableWith(interfaceClassDcl, Sequence::class.asClassName(), typeGenerationContext)
         addFunctionProviders(properties.functionProviders, true, typeGenerationContext)
 
+        val hashPropertyName = "hash"
+        val delegatedHashObjectName = if (comparableWith.property == null) {
+            elementsPropertyName
+        } else {
+            comparableWith.property.simpleName.getShortName()
+        }
+        addProperty(
+            PropertySpec.builder(hashPropertyName, Int::class, KModifier.PRIVATE)
+                .lazy("%N.hashCode()", delegatedHashObjectName)
+                .build()
+        )
+
         // N.B. it is important to have properties before init block
         // TODO -- should we get this from super interface -- Sequence1.atLeastOneElement()
         val additionalInvariantParts = if (requiresNonEmpty) {
@@ -226,12 +239,7 @@ private fun TypeSpec.Builder.addSequenceType(
         addFunction(
             FunSpec.builder("hashCode").addModifiers(KModifier.OVERRIDE)
                 .returns(Int::class).apply {
-                    val hashPropertyName = if (comparableWith.property == null) {
-                        elementsPropertyName
-                    } else {
-                        comparableWith.property.simpleName.getShortName()
-                    }
-                    addStatement("return %N.hashCode()", hashPropertyName)
+                    addStatement("return %N", hashPropertyName)
                 }.build()
         )
         val equalsParameterName = "other"
