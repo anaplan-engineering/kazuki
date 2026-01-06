@@ -20,4 +20,4 @@ fun <I1, I2, OD, OR> mapping(
     p2: Iterable<I2>,
     filter: (I1, I2) -> Boolean,
     selector: (I1, I2) -> Tuple2<OD, OR>
-) = as_Mapping((cross(p1, p2)).filter(tupleAdapter(filter)).map(tupleAdapter(selector)))
+) = as_Mapping((cartesianProduct(p1, p2)).filter(tupleAdapter(filter)).map(tupleAdapter(selector)))

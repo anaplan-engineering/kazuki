@@ -118,6 +118,18 @@ private fun TypeSpec.Builder.addRelationType(
         val comparableWith = addComparableWith(interfaceClassDcl, Relation::class.asClassName(), typeGenerationContext)
         addFunctionProviders(properties.functionProviders, true, typeGenerationContext)
 
+        val hashPropertyName = "hash"
+        val delegatedHashObjectName = if (comparableWith.property == null) {
+            elementsPropertyName
+        } else {
+            comparableWith.property.simpleName.getShortName()
+        }
+        addProperty(
+            PropertySpec.builder(hashPropertyName, Int::class, KModifier.PRIVATE)
+                .lazy("%N.hashCode()", delegatedHashObjectName)
+                .build()
+        )
+
         addInitializerBlock(CodeBlock.builder().apply {
             beginControlFlow(
                 "assert (%N !is %T)",
@@ -173,12 +185,7 @@ private fun TypeSpec.Builder.addRelationType(
         addFunction(
             FunSpec.builder("hashCode").addModifiers(KModifier.OVERRIDE)
                 .returns(Int::class).apply {
-                    val hashPropertyName = if (comparableWith.property == null) {
-                        elementsPropertyName
-                    } else {
-                        comparableWith.property.simpleName.getShortName()
-                    }
-                    addStatement("return %N.hashCode()", hashPropertyName)
+                    addStatement("return %N", hashPropertyName)
                 }.build()
         )
         val equalsParameterName = "other"

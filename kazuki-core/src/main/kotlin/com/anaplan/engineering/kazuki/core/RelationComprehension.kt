@@ -20,4 +20,4 @@ fun <I1, I2, OD, OR> relation(
     p2: Iterable<I2>,
     filter: (I1, I2) -> Boolean,
     selector: (I1, I2) -> Tuple2<OD, OR>
-) = as_Relation((cross(p1, p2)).filter(tupleAdapter(filter)).map(tupleAdapter(selector)))
+) = as_Relation((cartesianProduct(p1, p2)).filter(tupleAdapter(filter)).map(tupleAdapter(selector)))

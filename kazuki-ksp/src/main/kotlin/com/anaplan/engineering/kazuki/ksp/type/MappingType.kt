@@ -166,6 +166,18 @@ private fun TypeSpec.Builder.addMappingType(
         val comparableWith = addComparableWith(interfaceClassDcl, Relation::class.asClassName(), typeGenerationContext)
         addFunctionProviders(properties.functionProviders, true, typeGenerationContext)
 
+        val hashPropertyName = "hash"
+        val delegatedHashObjectName = if (comparableWith.property == null) {
+            baseSetPropertyName
+        } else {
+            comparableWith.property.simpleName.getShortName()
+        }
+        addProperty(
+            PropertySpec.builder(hashPropertyName, Int::class, KModifier.PRIVATE)
+                .lazy("%N.hashCode()", delegatedHashObjectName)
+                .build()
+        )
+
         addInitializerBlock(CodeBlock.builder().apply {
             beginControlFlow(
                 "assert (%N !is %T)",
@@ -270,14 +282,10 @@ private fun TypeSpec.Builder.addMappingType(
                 .addStatement("return \"%N\$%N\"", interfaceName, baseMapPropertyName).build()
         )
         addFunction(
-            FunSpec.builder("hashCode").addModifiers(KModifier.OVERRIDE).returns(Int::class).apply {
-                val hashPropertyName = if (comparableWith.property == null) {
-                    baseSetPropertyName
-                } else {
-                    comparableWith.property.simpleName.getShortName()
-                }
-                addStatement("return %N.hashCode()", hashPropertyName)
-            }.build()
+            FunSpec.builder("hashCode").addModifiers(KModifier.OVERRIDE)
+                .returns(Int::class).apply {
+                    addStatement("return %N", hashPropertyName)
+                }.build()
         )
         addFunction(
             FunSpec.builder("isEmpty").addModifiers(KModifier.OVERRIDE).returns(Boolean::class)
