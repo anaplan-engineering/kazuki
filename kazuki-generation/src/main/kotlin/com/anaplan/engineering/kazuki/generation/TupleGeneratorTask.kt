@@ -2,11 +2,13 @@ package com.anaplan.engineering.kazuki.generation
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.TypeVariableName
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import java.io.File
+import kotlin.collections.plus
 import kotlin.reflect.KClass
 
 @CacheableTask
@@ -74,14 +76,54 @@ fun FileSpec.Builder.addNAryTuple(nary: Int) {
         }
     }.build())
 
+    val interfaceTypeName = ClassName(RootPackageName, interfaceName).parameterizedBy(typeNames)
+
     addFunction(FunSpec.builder("mk_").apply {
         addTypeVariables(typeNames)
         (1..nary).forEach {
             addParameter("_$it", TypeVariableName("T$it"))
         }
         addCode("return $InternalPackageName.$className(${(1..nary).joinToString(", ") { "_$it" }})")
-        returns(ClassName(RootPackageName, interfaceName).parameterizedBy(typeNames))
+        returns(interfaceTypeName)
     }.build())
+
+    addFunction(
+        FunSpec.builder("transform").apply {
+            val t = TypeVariableName("T")
+            addTypeVariables(typeNames + t.copy(bounds = listOf(interfaceTypeName)))
+            receiver(t)
+            (1..nary).forEach {
+                addParameter(ParameterSpec.builder("_$it", TypeVariableName("T$it")).apply {
+                    defaultValue("this._$it")
+                }.build())
+            }
+            returns(t)
+            addAnnotation(uncheckedCastAnnotation())
+            addCode(CodeBlock.builder().apply {
+                val constructableClassName = ClassName(
+                    InternalPackageName,
+                    "_Constructable${nary}"
+                )
+                val constructableTypeName =
+                    constructableClassName.parameterizedBy(typeNames + t)
+                val erasedConstructableTypeName =
+                    constructableClassName.parameterizedBy(typeNames.map { STAR } + STAR)
+
+                beginControlFlow(
+                    "${RootPackageName}.pre(%P)",
+                    "Cannot set on instance of $interfaceName created outside Kazuki [\${this::class}]"
+                )
+                addStatement("this·is·%T", erasedConstructableTypeName)
+                endControlFlow()
+
+                addStatement(
+                    "return (this·as·%T).construct(${(1..nary).joinToString(", ") { "_$it" }})",
+                    constructableTypeName,
+                )
+            }.build())
+        }.build()
+    )
+
 }
 
 
@@ -170,3 +212,7 @@ fun FileSpec.Builder.addNaryConstructableInternal(nary: Int) {
         }.build())
     }.build())
 }
+
+internal fun uncheckedCastAnnotation() = AnnotationSpec.builder(Suppress::class).apply {
+    addMember("names = arrayOf(%S)", "UNCHECKED_CAST")
+}.build()

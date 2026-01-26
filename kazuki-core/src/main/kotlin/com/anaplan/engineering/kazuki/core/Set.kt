@@ -1,8 +1,6 @@
 package com.anaplan.engineering.kazuki.core
 
-import com.anaplan.engineering.kazuki.core.internal.__KSet
-import com.anaplan.engineering.kazuki.core.internal.__KSet1
-import com.anaplan.engineering.kazuki.core.internal.transformSet
+import com.anaplan.engineering.kazuki.core.internal.*
 import kotlin.collections.filter as kotlinFilter
 
 interface Set1<out T> : Set<T> {
@@ -42,6 +40,9 @@ fun <T> as_Set1(elems: Array<T>): Set1<T> =
 fun Set<*>.pretty() = this.prettyOrDefault()
 
 fun <T, S : Set<T>> S.filter(fn: (T) -> Boolean): S = transformSet { it.elements.kotlinFilter(fn) }
+
+inline fun <reified T : Any, U, S : Set<U>> S.filterIs_(): Set<T> =
+    as_Set(this.filterNotNull().kotlinFilter { is_<T>(it) }.map { as_<T>(it) })
 
 fun <T, S : Set<T>> S.transform(fn: (T) -> T): S = transformSet { it.elements.map(fn) }
 

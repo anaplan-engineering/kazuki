@@ -522,14 +522,14 @@ class TestComparisons {
         assertEquals(false, is_IntRecord3(i2))
         assertEquals(true, is_IntRecord3(i3))
         assertEquals(true, is_IntRecord3(i4))
-        assertEquals(false, is_IntRecord3(i5))
+        assertEquals(true, is_IntRecord3(i5))
 
         assertEquals(false, is_IntRecord4(mk_(8, "a")))
         assertEquals(false, is_IntRecord4(i1))
         assertEquals(false, is_IntRecord4(i2))
         assertEquals(true, is_IntRecord4(i3))
         assertEquals(true, is_IntRecord4(i4))
-        assertEquals(false, is_IntRecord4(i5))
+        assertEquals(true, is_IntRecord4(i5))
 
         assertEquals(false, is_IntRecord5(mk_(8, "a")))
         assertEquals(false, is_IntRecord5(i1))

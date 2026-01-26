@@ -38,6 +38,21 @@ interface RecordExtensionWithFixed : Record {
 }
 
 @Module
+interface RecordExtensionWithDerived : Record {
+    override val a get() = b.length
+    val b: String
+
+    @Invariant
+    fun lengthIsCorrect() = a == b.length
+}
+
+@Module
+interface RecordExtensionExtensionWithDerived : RecordExtension {
+    override val b get() = "_$c"
+    val c: Int
+}
+
+@Module
 interface RecordExtensionAlternate : Record {
     val b: Int
 
@@ -88,29 +103,29 @@ interface RecordDblExtension : RecordExtension, Tuple3<Int, String, Double> {
     val c: Double
 }
 
-interface Animal
-open class Cat : Animal
-class MaineCoon : Cat()
-
-@Module
-interface AnimalRecord {
-    val me: Animal
-}
-
-@Module
-interface CatRecord : AnimalRecord {
-    override val me: Cat
-}
-
-@Module
-interface MaineCoonRecord : CatRecord {
-    override val me: MaineCoon
-}
-
-@Module
-interface MoggyRecord : CatRecord {
-
-}
+//interface Animal
+//open class Cat : Animal
+//class MaineCoon : Cat()
+//
+//@Module
+//interface AnimalRecord {
+//    val me: Animal
+//}
+//
+//@Module
+//interface CatRecord : AnimalRecord {
+//    override val me: Cat
+//}
+//
+//@Module
+//interface MaineCoonRecord : CatRecord {
+//    override val me: MaineCoon
+//}
+//
+//@Module
+//interface MoggyRecord : CatRecord {
+//
+//}
 
 @Module(makeable = false)
 interface UnmakeableRecord {

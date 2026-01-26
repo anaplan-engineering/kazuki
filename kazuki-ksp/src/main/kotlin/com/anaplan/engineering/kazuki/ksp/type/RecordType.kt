@@ -90,37 +90,6 @@ internal fun TypeSpec.Builder.addRecordType(
             )
         }
 
-        (1..allTupleComponents.size).forEach { conNary ->
-            addFunction(FunSpec.builder(constructFunctionName).apply {
-                addModifiers(KModifier.OVERRIDE)
-                (1..conNary).forEach {
-                    val tc = allTupleComponents[it - 1]
-                    addParameter("t${tc.index}", tc.typeName)
-                }
-                returns(interfaceTypeName)
-
-                if (makeable) {
-                    beginControlFlow("${InbuiltNames.pre}(%S)", "Cannot construct $interfaceName")
-                    val tupleParts = allTupleComponents.joinToString(", ") {
-                        val index = it.index
-                        if (index <= conNary) "t$index" else "_$index"
-                    }
-                    addStatement("is_$interfaceName$implTypeArgs(${InbuiltNames.mkTuple}($tupleParts))")
-                    endControlFlow()
-                    val params =
-                        (1..conNary)
-                            .filter { !allTupleComponents[it - 1].fixed }
-                            .map { "t${allTupleComponents[it - 1].index}" } +
-                                (conNary + 1..allTupleComponents.size)
-                                    .filter { !allTupleComponents[it - 1].fixed }
-                                    .map { "_$it" }
-                    addStatement("return %N(${params.joinToString(", ")})", implClassName)
-                } else {
-                    addStatement("throw UnsupportedOperationException()")
-                }
-            }.build())
-        }
-
         addProperty(
             PropertySpec.builder(enforceInvariantParameterName, Boolean::class, KModifier.PRIVATE).initializer(
                 enforceInvariantParameterName
@@ -156,7 +125,58 @@ internal fun TypeSpec.Builder.addRecordType(
         }
 
         // N.B. all members must be set before init block
-        addInvariantFrom(interfaceClassDcl, typeGenerationContext)
+        val hasInvariantClauses = addInvariantFrom(interfaceClassDcl, typeGenerationContext)
+
+        (1..allTupleComponents.size).forEach { conNary ->
+            addFunction(FunSpec.builder(constructFunctionName).apply {
+                addModifiers(KModifier.OVERRIDE)
+                (1..conNary).forEach {
+                    val tc = allTupleComponents[it - 1]
+                    addParameter("t${tc.index}", tc.typeName)
+                }
+                returns(interfaceTypeName)
+                if (makeable) {
+                    val fixedTupleComponents = allTupleComponents.take(conNary).filter { it.fixed }
+                    val params =
+                        (1..conNary)
+                            .filter { !allTupleComponents[it - 1].fixed }
+                            .map { "t${allTupleComponents[it - 1].index}" } +
+                                (conNary + 1..allTupleComponents.size)
+                                    .filter { !allTupleComponents[it - 1].fixed }
+                                    .map { "_$it" }
+                    if (hasInvariantClauses || fixedTupleComponents.isNotEmpty()) {
+                        val candidateValName = "candidate"
+                        addStatement(
+                            "val $candidateValName = %N$implTypeArgs(${params.joinToString(", ")}, false)",
+                            implClassName,
+                        )
+                        val failedClausesValName = "failedClauses"
+                        if (fixedTupleComponents.isEmpty()) {
+                            addStatement("val $failedClausesValName = $candidateValName.$failedInvariantClausesVariableName")
+                        } else {
+                            val clauses = fixedTupleComponents.joinToString(", ") {
+                                "${_InvariantClause::class.qualifiedName}(\"${interfaceName}\",·\"${it.name}·==·\${this._${it.index}.prettyOrDefault()}\",·{ t${it.index}·==·this._${it.index} })"
+                            }
+                            val fixedValueClausesValName = "fixedValueClauses"
+                            addStatement("val $fixedValueClausesValName = listOf($clauses)")
+                            val includedInvariantClauses =
+                                if (hasInvariantClauses) "$candidateValName.$failedInvariantClausesVariableName + " else ""
+                            addStatement("val $failedClausesValName = $includedInvariantClauses$fixedValueClausesValName.filter·{ !it.holds }")
+                        }
+                        beginControlFlow(
+                            "${InbuiltNames.pre}(%P)",
+                            "Cannot construct $interfaceName, would fail \${$failedClausesValName.joinToString(\" and \") { it.clauseName }}"
+                        )
+                        addStatement("$failedClausesValName.isEmpty()")
+                        endControlFlow()
+                    }
+                    addStatement("return %N(${params.joinToString(", ")})", implClassName)
+                } else {
+                    addStatement("throw UnsupportedOperationException()")
+                }
+            }.build())
+        }
+
 
         addFunction(
             FunSpec.builder("toString").apply {
@@ -187,7 +207,7 @@ internal fun TypeSpec.Builder.addRecordType(
 
         if (!interfaceClassDcl.hasSuperType(PrettyPrintable::class.qualifiedName!!)) {
             addFunction(
-                FunSpec.builder("pretty").apply {
+                FunSpec.builder(PrettyFunctionName).apply {
                     addModifiers(KModifier.OVERRIDE)
                     returns(String::class)
                     addCode(CodeBlock.builder().apply {
@@ -316,7 +336,7 @@ internal fun TypeSpec.Builder.addRecordType(
     }.build()
     addType(implTypeSpec)
 
-    addFunction(FunSpec.builder("as_Tuple").apply {
+    addFunction(FunSpec.builder(asTupleFunctionName).apply {
         if (interfaceTypeArguments.isNotEmpty()) {
             addTypeVariables(interfaceTypeArguments)
         }
@@ -336,6 +356,11 @@ internal fun TypeSpec.Builder.addRecordType(
         }.build())
     }.build()).build()
 
+    val erasedInterfaceTypeName = if (interfaceTypeArguments.isEmpty()) {
+        interfaceClassDcl.toClassName()
+    } else {
+        interfaceClassDcl.toClassName().parameterizedBy(interfaceTypeArguments.map { STAR })
+    }
     addFunction(
         FunSpec.builder("is_$interfaceName").apply {
             if (interfaceTypeArguments.isNotEmpty()) {
@@ -345,11 +370,19 @@ internal fun TypeSpec.Builder.addRecordType(
             addAnnotation(uncheckedCastAnnotation())
             returns(Boolean::class)
             addCode(CodeBlock.builder().apply {
+                beginControlFlow(
+                    "if (%N·is·%T)",
+                    otherParameterName,
+                    erasedInterfaceTypeName
+                )
+                addStatement("return true")
+                endControlFlow()
+
                 val erasedInternalTupleType = internalTupleClassName.parameterizedBy(
                     allTupleComponents.map { STAR } + STAR
                 )
                 beginControlFlow(
-                    "if (%N !is %T)",
+                    "if (%N·!is·%T)",
                     otherParameterName,
                     erasedInternalTupleType
                 )
@@ -405,11 +438,6 @@ internal fun TypeSpec.Builder.addRecordType(
         }.build()
     )
 
-    val erasedInterfaceTypeName = if (interfaceTypeArguments.isEmpty()) {
-        interfaceClassDcl.toClassName()
-    } else {
-        interfaceClassDcl.toClassName().parameterizedBy(interfaceTypeArguments.map { STAR })
-    }
     addStaticPrettyFunction(interfaceTypeName, interfaceTypeArguments)
     addFunction(
         FunSpec.builder("pretty").apply {
@@ -424,9 +452,8 @@ internal fun TypeSpec.Builder.addRecordType(
     )
 
     if (makeable) {
-        // TODO -- optimization -- if already this type just return it
         addFunction(
-            FunSpec.builder("as_$interfaceName").apply {
+            FunSpec.builder("fromTuple").apply {
                 // TODO -- precondition on fixed
                 if (interfaceTypeArguments.isNotEmpty()) {
                     addTypeVariables(interfaceTypeArguments)
@@ -468,8 +495,35 @@ internal fun TypeSpec.Builder.addRecordType(
                         "\$$otherParameterName is not a $interfaceName"
                     )
                     nextControlFlow("else")
-                    addStatement("return as_$interfaceName($otherParameterName as %T)", tupleType)
+                    addStatement("return fromTuple($otherParameterName as %T)", tupleType)
                     endControlFlow()
+                }.build())
+            }.build()
+        )
+
+        addFunction(
+            FunSpec.builder("to_$interfaceName").apply {
+                if (interfaceTypeArguments.isNotEmpty()) {
+                    addTypeVariables(interfaceTypeArguments)
+                }
+                addParameter(otherParameterName, Any::class.asClassName())
+                returns(interfaceTypeName)
+                addAnnotation(uncheckedCastAnnotation())
+                addCode(CodeBlock.builder().apply {
+                    val typeArgs = if (interfaceTypeArguments.isEmpty()) {
+                        ""
+                    } else {
+                        "<${interfaceTypeArguments.joinToString { "$it" }}>"
+                    }
+                    beginControlFlow(
+                        "${InbuiltNames.pre}(%P)",
+                        "\$$otherParameterName.${PrettyFunctionName}() is not a $interfaceName"
+                    )
+                    addStatement(
+                        "is_$interfaceName$typeArgs($otherParameterName)",
+                    )
+                    endControlFlow()
+                    addStatement("return fromTuple($otherParameterName as %T)", tupleType)
                 }.build())
             }.build()
         )
@@ -489,7 +543,6 @@ internal fun TypeSpec.Builder.addRecordType(
         }
 
         addFunction(
-            // TODO -- don't allow set of fixed
             FunSpec.builder(InbuiltNames.transform).apply {
                 val t =
                     TypeVariableName(findUnusedGenericName(interfaceTypeArguments), bounds = listOf(interfaceTypeName))
@@ -512,20 +565,18 @@ internal fun TypeSpec.Builder.addRecordType(
                     val erasedConstructableTypeName =
                         constructableClassName.parameterizedBy(allTupleComponents.map { STAR } + STAR)
 
+                    beginControlFlow(
+                        "${InbuiltNames.pre}(%P)",
+                        "Cannot set on instance of $interfaceName created outside Kazuki [\${this::class}]"
+                    )
+                    addStatement("this·is·%T", erasedConstructableTypeName)
+                    endControlFlow()
 
-                    beginControlFlow("if (this·is·%T)", erasedConstructableTypeName)
                     addStatement(
-                        "return (this·as·%T).construct(${allTupleComponents.joinToString { "%N" }})",
+                        "return (this·as·%T).$constructFunctionName(${allTupleComponents.joinToString { "%N" }})",
                         constructableTypeName,
                         *allTupleComponents.map { it.name }.toTypedArray()
                     )
-                    nextControlFlow("else")
-                    addStatement(
-                        "throw %T(%S)",
-                        PreconditionFailure::class.asClassName(),
-                        "Cannot set on instance of $interfaceName created outside Kazuki"
-                    )
-                    endControlFlow()
                 }.build())
             }.build()
         )
@@ -550,3 +601,4 @@ internal fun TypeSpec.Builder.addRecordType(
 
 private const val otherParameterName = "other"
 private const val constructFunctionName = "construct"
+private const val asTupleFunctionName = "as_Tuple"
