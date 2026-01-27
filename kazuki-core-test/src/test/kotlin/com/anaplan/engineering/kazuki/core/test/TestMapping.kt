@@ -1,10 +1,15 @@
 package com.anaplan.engineering.kazuki.core.test
 
 import com.anaplan.engineering.kazuki.core.*
+import com.anaplan.engineering.kazuki.core.InjectiveMapping1Extension_Module.as_InjectiveMapping1Extension
 import com.anaplan.engineering.kazuki.core.InjectiveMapping1Extension_Module.mk_InjectiveMapping1Extension
+import com.anaplan.engineering.kazuki.core.InjectiveMappingExtension_Module.as_InjectiveMappingExtension
 import com.anaplan.engineering.kazuki.core.InjectiveMappingExtension_Module.mk_InjectiveMappingExtension
+import com.anaplan.engineering.kazuki.core.Mapping1Extension_Module.as_Mapping1Extension
 import com.anaplan.engineering.kazuki.core.Mapping1Extension_Module.mk_Mapping1Extension
+import com.anaplan.engineering.kazuki.core.MappingExtensionExtension_Module.as_MappingExtensionExtension
 import com.anaplan.engineering.kazuki.core.MappingExtensionExtension_Module.mk_MappingExtensionExtension
+import com.anaplan.engineering.kazuki.core.MappingExtension_Module.as_MappingExtension
 import com.anaplan.engineering.kazuki.core.MappingExtension_Module.mk_MappingExtension
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -18,7 +23,8 @@ import kotlin.test.assertEquals
 class TestMapping(
     private val allowsEmpty: Boolean,
     private val injective: Boolean,
-    private val creator: (Collection<Tuple2<Int, Int>>) -> Mapping<Int, Int>
+    private val creator: (Collection<Tuple2<Int, Int>>) -> Mapping<Int, Int>,
+    private val convertor: (Collection<Tuple2<Int, Int>>) -> Mapping<Int, Int>
 ) {
 
     // TODO confirm invariant vs precondition failures
@@ -28,25 +34,74 @@ class TestMapping(
         @Parameterized.Parameters
         fun creators(): Collection<Array<Any?>> =
             listOf(
-                arrayOf(true, false, { m: Collection<Tuple2<Int, Int>> -> mk_Mapping(*m.toTypedArray()) }),
-                arrayOf(false, false, { m: Collection<Tuple2<Int, Int>> -> mk_Mapping1(*m.toTypedArray()) }),
-                arrayOf(true, true, { m: Collection<Tuple2<Int, Int>> -> mk_InjectiveMapping(*m.toTypedArray()) }),
-                arrayOf(false, true, { m: Collection<Tuple2<Int, Int>> -> mk_InjectiveMapping1(*m.toTypedArray()) }),
-                arrayOf(true, false, { m: Collection<Tuple2<Int, Int>> -> mk_MappingExtension(*m.toTypedArray()) }),
-                arrayOf(true, false, { m: Collection<Tuple2<Int, Int>> -> mk_MappingExtensionExtension(*m.toTypedArray()) }),
-                arrayOf(false, false, { m: Collection<Tuple2<Int, Int>> -> mk_Mapping1Extension(*m.toTypedArray()) }),
+                arrayOf(
+                    true,
+                    false,
+                    { m: Collection<Tuple2<Int, Int>> -> mk_Mapping(*m.toTypedArray()) },
+                    { m: Collection<Tuple2<Int, Int>> -> as_Mapping(m) },
+                ),
+                arrayOf(false, false,
+                    { m: Collection<Tuple2<Int, Int>> -> mk_Mapping1(*m.toTypedArray()) },
+                    { m: Collection<Tuple2<Int, Int>> -> as_Mapping1(m) },
+                    ),
+                arrayOf(true, true,
+                    { m: Collection<Tuple2<Int, Int>> -> mk_InjectiveMapping(*m.toTypedArray()) },
+                    { m: Collection<Tuple2<Int, Int>> -> as_InjectiveMapping(m) },
+                    ),
+                arrayOf(false, true,
+                    { m: Collection<Tuple2<Int, Int>> -> mk_InjectiveMapping1(*m.toTypedArray()) },
+                    { m: Collection<Tuple2<Int, Int>> -> as_InjectiveMapping1(m) },
+                ),
+                arrayOf(true, false,
+                    { m: Collection<Tuple2<Int, Int>> -> mk_MappingExtension(*m.toTypedArray()) },
+                    { m: Collection<Tuple2<Int, Int>> -> as_MappingExtension(m) },
+                ),
+                arrayOf(
+                    true,
+                    false,
+                    { m: Collection<Tuple2<Int, Int>> -> mk_MappingExtensionExtension(*m.toTypedArray()) },
+                    { m: Collection<Tuple2<Int, Int>> -> as_MappingExtensionExtension(m) },
+                ),
+                arrayOf(false, false,
+                    { m: Collection<Tuple2<Int, Int>> -> mk_Mapping1Extension(*m.toTypedArray()) },
+                    { m: Collection<Tuple2<Int, Int>> -> as_Mapping1Extension(m) },
+                    ),
                 arrayOf(
                     true,
                     true,
-                    { m: Collection<Tuple2<Int, Int>> -> mk_InjectiveMappingExtension(*m.toTypedArray()) }),
+                    { m: Collection<Tuple2<Int, Int>> -> mk_InjectiveMappingExtension(*m.toTypedArray()) },
+                    { m: Collection<Tuple2<Int, Int>> -> as_InjectiveMappingExtension(m) },
+                ),
                 arrayOf(
                     false,
                     true,
-                    { m: Collection<Tuple2<Int, Int>> -> mk_InjectiveMapping1Extension(*m.toTypedArray()) }),
+                    { m: Collection<Tuple2<Int, Int>> -> mk_InjectiveMapping1Extension(*m.toTypedArray()) },
+                    { m: Collection<Tuple2<Int, Int>> -> as_InjectiveMapping1Extension(m) },
+                ),
             )
     }
 
     private fun create(vararg m: Tuple2<Int, Int>) = creator.invoke(m.toList())
+
+    private fun convert(vararg m: Tuple2<Int, Int>) = convertor.invoke(m.toList())
+
+    @Test
+    fun creation() {
+        if (!allowsEmpty) {
+            causesPreconditionFailure { create() }
+        }
+        causesPreconditionFailure { create(mk_(1, 2), mk_(1, 3)) }
+        assertEquals(1uL, create(mk_(2, 2), mk_(2, 2)).card)
+    }
+
+    @Test
+    fun conversion() {
+        if (!allowsEmpty) {
+            causesPreconditionFailure { convert() }
+        }
+        causesPreconditionFailure { convert(mk_(1, 2), mk_(1, 3)) }
+        assertEquals(1uL, convert(mk_(2, 2), mk_(2, 2)).card)
+    }
 
     @Test
     fun card() {
@@ -57,8 +112,6 @@ class TestMapping(
             assertEquals(2u, create(mk_(1, 1), mk_(2, 1)).card)
         }
         assertEquals(1u, create(mk_(1, 1)).card)
-        // TODO - should be disallowed?
-        assertEquals(1u, create(mk_(1, 1), mk_(1, 2)).card)
     }
 
     @Test

@@ -345,13 +345,43 @@ private fun TypeSpec.Builder.addMappingType(
     addStaticPrettyFunction(interfaceTypeName, interfaceTypeArguments)
     val mapletsParameterName = "maplets"
     addFunction(
-        FunSpec.builder("mk_$interfaceName").apply {
+        FunSpec.builder("as_$interfaceName").apply {
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments)
             }
-            addParameter(baseMapPropertyName, mapType)
+            addParameter(
+                mapletsParameterName, Iterable::class.asClassName().parameterizedBy(
+                    tupleType
+                )
+            )
             returns(interfaceTypeName)
-            addStatement("return %N(%N)", implTypeSpec, baseMapPropertyName)
+            beginControlFlow(
+                "val %N = %T().apply",
+                baseMapPropertyName,
+                LinkedHashMap::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName),
+            )
+            beginControlFlow("%N.forEach", mapletsParameterName)
+            addStatement("(d, r) -> ")
+            beginControlFlow(
+                "${InbuiltNames.pre}(%P)",
+                "\${d.prettyOrDefault()} cannot map to \${get(d).prettyOrDefault()} and \${r.prettyOrDefault()}"
+            )
+            addStatement("if (containsKey(d)) get(d) == r else true")
+            endControlFlow()
+            addStatement("put(d, r)")
+            endControlFlow()
+            endControlFlow()
+            if (requiresNonEmpty) {
+                beginControlFlow("${InbuiltNames.pre}(%S)", "Cannot create empty $interfaceName")
+                addStatement("%N.isNotEmpty()", baseMapPropertyName)
+                endControlFlow()
+            }
+            if (injective) {
+                beginControlFlow("${InbuiltNames.pre}(%S)", "$interfaceName map may not have duplicates in range")
+                addStatement("%N.keys.size == %N.values.toSet().size", baseMapPropertyName, baseMapPropertyName)
+                endControlFlow()
+            }
+            addStatement("return %N(%N)", implClassName, baseMapPropertyName)
         }.build()
     )
     addFunction(
@@ -363,31 +393,7 @@ private fun TypeSpec.Builder.addMappingType(
                 mapletsParameterName, tupleType, KModifier.VARARG
             )
             returns(interfaceTypeName)
-            addStatement(
-                "return %N(%T().apply·{ %N.forEach{ put(it._1, it._2) } })",
-                implClassName,
-                LinkedHashMap::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName),
-                mapletsParameterName
-            )
-        }.build()
-    )
-    addFunction(
-        FunSpec.builder("mk_$interfaceName").apply {
-            if (interfaceTypeArguments.isNotEmpty()) {
-                addTypeVariables(interfaceTypeArguments)
-            }
-            addParameter(
-                mapletsParameterName, Iterable::class.asClassName().parameterizedBy(
-                    tupleType
-                )
-            )
-            returns(interfaceTypeName)
-            addStatement(
-                "return %N(%T().apply·{ %N.forEach{ put(it._1, it._2) } })",
-                implClassName,
-                LinkedHashMap::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName),
-                mapletsParameterName
-            )
+            addStatement("return as_$interfaceName(%N.toList())", mapletsParameterName)
         }.build()
     )
     // TDOO - check for duplicate domains
@@ -433,16 +439,6 @@ private fun TypeSpec.Builder.addMappingType(
                 mapletsParameterName,
                 validityFunctionName
             )
-        }.build()
-    )
-    addFunction(
-        FunSpec.builder("as_$interfaceName").apply {
-            if (interfaceTypeArguments.isNotEmpty()) {
-                addTypeVariables(interfaceTypeArguments)
-            }
-            addParameter(baseMapPropertyName, superMappingTypeName)
-            returns(interfaceTypeName)
-            addStatement("return mk_%N(%N)", interfaceName, baseMapPropertyName)
         }.build()
     )
 }

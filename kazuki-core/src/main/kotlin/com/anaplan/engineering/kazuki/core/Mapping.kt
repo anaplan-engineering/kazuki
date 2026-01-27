@@ -17,7 +17,7 @@ interface InjectiveMapping<D, R> : Mapping<D, R> {
 
 interface InjectiveMapping1<D, R> : InjectiveMapping<D, R>, Mapping1<D, R>
 
-interface Mapping1<D, out R> : Mapping<D, R>, Set1<Tuple2<D, R>>  {
+interface Mapping1<D, out R> : Mapping<D, R>, Set1<Tuple2<D, R>> {
     val card: nat1
 
     override val dom: Set1<D>
@@ -27,63 +27,58 @@ interface Mapping1<D, out R> : Mapping<D, R>, Set1<Tuple2<D, R>>  {
 }
 
 fun <D, R> as_Mapping(maplets: Iterable<Tuple2<D, R>>): Mapping<D, R> =
-    __KMapping(LinkedHashMap<D, R>().apply {
-        maplets.forEach { put(it._1, it._2) }
-    })
+    __KMapping(createBaseMap(maplets))
 
-fun <D, R> as_Mapping(maplets: Array<Tuple2<D, R>>): Mapping<D, R> =
-    __KMapping(LinkedHashMap<D, R>().apply {
-        maplets.forEach { put(it._1, it._2) }
-    })
+fun <D, R> as_Mapping(maplets: Array<Tuple2<D, R>>): Mapping<D, R> = as_Mapping(maplets.toList())
 
-fun <D, R> mk_Mapping(vararg maplets: Tuple2<D, R>): Mapping<D, R> =
-    __KMapping(LinkedHashMap<D, R>().apply {
-        maplets.forEach { put(it._1, it._2) }
-    })
+fun <D, R> mk_Mapping(vararg maplets: Tuple2<D, R>): Mapping<D, R> = as_Mapping(maplets.toList())
 
-fun <D, R> as_InjectiveMapping(maplets: Iterable<Tuple2<D, R>>): InjectiveMapping<D, R> =
-    __KInjectiveMapping(LinkedHashMap<D, R>().apply {
-        maplets.forEach { put(it._1, it._2) }
-    })
-
-fun <D, R> as_InjectiveMapping1(maplets: Iterable<Tuple2<D, R>>): InjectiveMapping1<D, R> =
-    __KInjectiveMapping1(LinkedHashMap<D, R>().apply {
-        maplets.forEach { put(it._1, it._2) }
-    })
+fun <D, R> as_InjectiveMapping(maplets: Iterable<Tuple2<D, R>>): InjectiveMapping<D, R> {
+    val baseMap = createBaseMap(maplets)
+    pre("Injective map may not have duplicates in range") { baseMap.keys.size == baseMap.values.toSet().size }
+    return __KInjectiveMapping(baseMap)
+}
 
 fun <D, R> as_InjectiveMapping(maplets: Array<Tuple2<D, R>>): InjectiveMapping<D, R> =
-    __KInjectiveMapping(LinkedHashMap<D, R>().apply {
-        maplets.forEach { put(it._1, it._2) }
-    })
-
-fun <D, R> as_InjectiveMapping1(maplets: Array<Tuple2<D, R>>): InjectiveMapping1<D, R> =
-    __KInjectiveMapping1(LinkedHashMap<D, R>().apply {
-        maplets.forEach { put(it._1, it._2) }
-    })
+    as_InjectiveMapping(maplets.toList())
 
 fun <D, R> mk_InjectiveMapping(vararg maplets: Tuple2<D, R>): InjectiveMapping<D, R> =
-    __KInjectiveMapping(LinkedHashMap<D, R>().apply {
-        maplets.forEach { put(it._1, it._2) }
-    })
+    as_InjectiveMapping(maplets.toList())
+
+fun <D, R> as_InjectiveMapping1(maplets: Iterable<Tuple2<D, R>>): InjectiveMapping1<D, R> {
+    val baseMap = createBaseMap(maplets)
+    pre("Cannot create empty InjectiveMapping1") { baseMap.isNotEmpty() }
+    pre("Injective map may not have duplicates in range") { baseMap.keys.size == baseMap.values.toSet().size }
+    return __KInjectiveMapping1(baseMap)
+}
+
+fun <D, R> as_InjectiveMapping1(maplets: Array<Tuple2<D, R>>): InjectiveMapping1<D, R> =
+    as_InjectiveMapping1(maplets.toList())
 
 fun <D, R> mk_InjectiveMapping1(vararg maplets: Tuple2<D, R>): InjectiveMapping1<D, R> =
-    __KInjectiveMapping1(LinkedHashMap<D, R>().apply {
-        maplets.forEach { put(it._1, it._2) }
-    })
+    as_InjectiveMapping1(maplets.toList())
 
 fun <D, R> is_Mapping(maplets: Iterable<Tuple2<D, R>>) = as_Relation(maplets).let { it.dom.card == it.card }
 
 fun <D, R> is_Mapping(vararg maplets: Tuple2<D, R>) = mk_Relation(*maplets).let { it.dom.card == it.card }
 
-fun <D, R> as_Mapping1(maplets: Iterable<Tuple2<D, R>>): Mapping1<D, R> =
-    __KMapping1(LinkedHashMap<D, R>().apply {
-        maplets.forEach { put(it._1, it._2) }
-    })
+fun <D, R> as_Mapping1(maplets: Iterable<Tuple2<D, R>>): Mapping1<D, R> {
+    val baseMap = createBaseMap(maplets)
+    pre("Cannot create empty Mapping1") { baseMap.isNotEmpty() }
+    return __KMapping1(baseMap)
+}
 
-fun <D, R> mk_Mapping1(vararg maplets: Tuple2<D, R>): Mapping1<D, R> =
-    __KMapping1(LinkedHashMap<D, R>().apply {
-        maplets.forEach { put(it._1, it._2) }
-    })
+fun <D, R> mk_Mapping1(vararg maplets: Tuple2<D, R>) = as_Mapping1(maplets.toList())
+
+private fun <D, R> createBaseMap(maplets: Iterable<Tuple2<D, R>>): LinkedHashMap<D, R> =
+    LinkedHashMap<D, R>().apply {
+        maplets.forEach { (d, r) ->
+            pre("${d.prettyOrDefault()} cannot map to ${get(d).prettyOrDefault()} and ${r.prettyOrDefault()}") {
+                containsKey(d) implies { get(d) == r }
+            }
+            put(d, r)
+        }
+    }
 
 infix fun <D, R, M : Mapping<D, R>> M.munion(r: Relation<D, R>) = this + r
 
