@@ -39,19 +39,19 @@ class TestFunctionProviders {
     fun inheritNothingOverridden() {
         assertEquals(mk_B(4), mk_B(3).functions.increment())
 
-        causesInvariantFailure {
+        causesPreconditionFailure {
             mk_B(4).functions.increment()
         }
 
         assertEquals(mk_GB1(mk_Mapping(mk_(p, 2))), mk_GB1(mk_Mapping(mk_(p, 1))).functions.increment(p))
 
-        causesInvariantFailure {
+        causesPreconditionFailure {
             mk_GB1(mk_Mapping(mk_(p, 4))).functions.increment(p)
         }
 
         assertEquals(mk_GB2(mk_Mapping(mk_(p, 2))), mk_GB2(mk_Mapping(mk_(p, 1))).functions.increment(p))
 
-        causesInvariantFailure {
+        causesPreconditionFailure {
             mk_GB2(mk_Mapping(mk_(p, 4))).functions.increment(p)
         }
     }

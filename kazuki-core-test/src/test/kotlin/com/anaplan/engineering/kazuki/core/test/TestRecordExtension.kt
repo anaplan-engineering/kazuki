@@ -20,6 +20,11 @@ import com.anaplan.engineering.kazuki.core.OtherGenericRecord_Module.mk_OtherGen
 import com.anaplan.engineering.kazuki.core.OtherRecord_Module.mk_OtherRecord
 import com.anaplan.engineering.kazuki.core.RecordDblExtension_Module.mk_RecordDblExtension
 import com.anaplan.engineering.kazuki.core.RecordExtensionAlternate_Module.mk_RecordExtensionAlternate
+import com.anaplan.engineering.kazuki.core.RecordExtensionWithFixed_Module.as_RecordExtensionWithFixed
+import com.anaplan.engineering.kazuki.core.RecordExtensionWithFixed_Module.component1
+import com.anaplan.engineering.kazuki.core.RecordExtensionWithFixed_Module.component2
+import com.anaplan.engineering.kazuki.core.RecordExtensionWithFixed_Module.is_RecordExtensionWithFixed
+import com.anaplan.engineering.kazuki.core.RecordExtensionWithFixed_Module.mk_RecordExtensionWithFixed
 import com.anaplan.engineering.kazuki.core.RecordExtension_Module.component1
 import com.anaplan.engineering.kazuki.core.RecordExtension_Module.component2
 import com.anaplan.engineering.kazuki.core.RecordExtension_Module.mk_RecordExtension
@@ -119,7 +124,6 @@ class TestRecordExtension {
         assertNotEquals(mk_GenericRecordInvOnlyExtension(3).hashCode(), mk_GenericRecordInvOnlyExtension(2).hashCode())
     }
 
-    // TODO should is/as admit anon tuple?
     @Test
     fun is_() {
         assertEquals(true, is_Record(mk_Record(2)))
@@ -143,9 +147,11 @@ class TestRecordExtension {
         assertEquals(true, is_GenericRecordInvOnlyExtension(mk_GenericRecordInvOnlyExtension(2)))
         assertEquals(false, is_GenericRecordInvOnlyExtension(mk_GenericRecordExtension(2, mk_Set(3))))
         assertEquals(false, is_GenericRecordInvOnlyExtension(mk_OtherGenericRecord(2)))
+
+        assertEquals(true, is_RecordExtensionWithFixed(mk_(3, "6")))
+        assertEquals(false, is_RecordExtensionWithFixed(mk_(4, "6")))
     }
 
-    // TODO should is/as admit anon tuple?
     @Test
     fun as_() {
         assertEquals(mk_Record(2), as_Record(mk_Record(2)))
@@ -162,10 +168,18 @@ class TestRecordExtension {
             mk_GenericRecordInvOnlyExtension(2),
             as_GenericRecordInvOnlyExtension(mk_GenericRecordInvOnlyExtension(2))
         )
+
+        assertEquals(
+            mk_RecordExtensionWithFixed("6"),
+            as_RecordExtensionWithFixed(mk_RecordExtension(3, "6"))
+        )
+        causesPreconditionFailure {
+            as_RecordExtensionWithFixed(mk_(4, "6"))
+        }
     }
 
     @Test
-    fun set() {
+    fun transform() {
         assertEquals(mk_RecordExtension(4, "3"), mk_RecordExtension(2, "3").transform(a = 4))
         assertEquals(mk_RecordExtension(2, "hello"), mk_RecordExtension(2, "3").transform(b = "hello"))
         assertEquals(mk_RecordExtension(4, "2"), mk_RecordExtension(2, "3").transform(a = 4, b = "2"))
@@ -189,6 +203,10 @@ class TestRecordExtension {
         assertEquals(2, e)
         assertEquals("3", f)
         assertEquals(4.0, g)
+
+        val (h, i) = mk_RecordExtensionWithFixed("6")
+        assertEquals(3, h)
+        assertEquals("6", i)
     }
 
     @Test

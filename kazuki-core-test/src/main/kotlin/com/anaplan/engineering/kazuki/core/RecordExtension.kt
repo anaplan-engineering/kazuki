@@ -32,6 +32,12 @@ interface RecordExtension : Record {
 }
 
 @Module
+interface RecordExtensionWithFixed : Record {
+    override val a get() = 3
+    val b: String
+}
+
+@Module
 interface RecordExtensionAlternate : Record {
     val b: Int
 

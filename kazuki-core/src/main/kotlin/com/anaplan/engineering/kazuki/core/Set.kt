@@ -58,6 +58,8 @@ fun <T> Set1<T>.fold1(fn: (T, T) -> T): T = toList().let { list ->
 
 infix fun <T> Set<T>.subset(other: Set<T>) = other.containsAll(this)
 
+infix fun <T> Set<T>.psubset(other: Set<T>) = other != this && other.containsAll(this)
+
 infix fun <T, U> Iterable<T>.x(other: Iterable<U>) = as_Set(flatMap { t -> other.map { u -> mk_(t, u) } })
 
 infix fun <T, S : Set<T>> S.inter(other: Set<T>) = transformSet { it.elements.kotlinFilter { it in other } }

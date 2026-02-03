@@ -15,5 +15,10 @@ interface RecordWithDerivedProperty<T> {
     @Invariant
     fun goodMembersAllMembers() = goodMembers subset members.elems
 
-    val firstGoodMember get() = members.firstOrNull { it in goodMembers }
+    @FunctionProvider(DerivedProperties::class)
+    val properties: DerivedProperties<T>
+
+    class DerivedProperties<T>(record: RecordWithDerivedProperty<T>) {
+        val firstGoodMember by property { record.members.firstOrNull { it in record.goodMembers } }
+    }
 }
