@@ -1,11 +1,11 @@
 package com.anaplan.engineering.kazuki.ksp.type.property
 
-import com.anaplan.engineering.kazuki.core.FunctionProvider
-import com.anaplan.engineering.kazuki.core.internal._Record
-import com.anaplan.engineering.kazuki.ksp.allSuperTypes
+import com.anaplan.engineering.kazuki.core.*
+import com.anaplan.engineering.kazuki.core.internal.*
 import com.anaplan.engineering.kazuki.ksp.getClassDeclaration
 import com.anaplan.engineering.kazuki.ksp.superModules
 import com.anaplan.engineering.kazuki.ksp.type.TypeGenerationContext
+import com.anaplan.engineering.kazuki.ksp.type.getComparableProperty
 import com.google.devtools.ksp.*
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
@@ -30,8 +30,9 @@ internal class PropertyProcessor(
             typeGenerationContext.errors.add("Module $classDcl may not have mutable properties: $mutableProperties")
         }
 
+        val comparableProperty = getComparableProperty(classDcl, typeGenerationContext)
         val functionProviderProperties = getFunctionProviderProperties(classDcl, typeGenerationContext)
-        val recordProperties = (properties - functionProviderProperties.map { it.property }).toList()
+        val recordProperties = (properties - comparableProperty - functionProviderProperties.map { it.property }.toSet()).filterNotNull()
 
         val allInterfaceProperties = classDcl.getAllProperties().toList()
         val propertyBuilders = classDcl.superModules.reversed().map { type ->
@@ -50,7 +51,9 @@ internal class PropertyProcessor(
             }
             val superFunctionProviderProperties =
                 superProperties.filter { it.isAnnotationPresent(FunctionProvider::class) }
-            val superRecordProperties = (superProperties - superFunctionProviderProperties).toList()
+            val superFunctionComparableProperties =
+                superProperties.filter { it.isAnnotationPresent(ComparableProperty::class) }
+            val superRecordProperties = (superProperties - superFunctionProviderProperties - superFunctionComparableProperties).toList()
             superRecordProperties.map { superProperty -> allInterfaceProperties.find { interfaceProperty -> superProperty.simpleName == interfaceProperty.simpleName }!! }
                 .associate { property ->
                     property.type.resolve()
@@ -74,13 +77,12 @@ internal class PropertyProcessor(
         val resolvedPropertyBuilders = propertyBuilders.fold(mapOf<String, PropertyBuilder>()) { acc, it ->
             acc + it
         }.map { (_, v) -> v }
-        val tupleComponents = resolvedPropertyBuilders.filter { !it.isDynamic }. mapIndexed { i, b -> b.buildTuple(i + 1) }
+        val tupleComponents = resolvedPropertyBuilders.mapIndexed { i, b -> b.buildTuple(i + 1) }
         if (!allowFields && tupleComponents.isNotEmpty()) {
             val propertyNames = tupleComponents.joinToString(", ") { it.name }
             typeGenerationContext.errors.add("Type $classDcl may not have fields: $propertyNames")
         }
-        val dynamicPropertyNames = resolvedPropertyBuilders.filter { it.isDynamic }.map { it.name }
-        return Properties(functionProviderProperties, tupleComponents, dynamicPropertyNames)
+        return Properties(functionProviderProperties, tupleComponents)
     }
 
     private data class PropertyBuilder(
@@ -89,21 +91,20 @@ internal class PropertyProcessor(
         val typeReference: KSTypeReference,
         val typeName: TypeName
     ) {
-        fun buildTuple(index: Int) =
-            if (isDynamic) throw IllegalStateException() else TupleComponent(index, name, typeReference, typeName)
+        fun buildTuple(index: Int) = TupleComponent(index, name, typeReference, typeName, isDynamic)
     }
 }
 
 internal data class Properties(
     val functionProviders: Collection<FunctionProviderProperty>,
     val tupleComponents: List<TupleComponent>,
-    val dynamicPropertyNames: List<String>
 )
 
 data class TupleComponent(
     val index: Int,
     val name: String,
     val typeReference: KSTypeReference,
-    val typeName: TypeName
+    val typeName: TypeName,
+    val fixed: Boolean,
 )
 

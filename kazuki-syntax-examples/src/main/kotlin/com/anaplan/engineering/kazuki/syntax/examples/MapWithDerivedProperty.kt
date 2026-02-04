@@ -1,7 +1,9 @@
 package com.anaplan.engineering.kazuki.syntax.examples
 
+import com.anaplan.engineering.kazuki.core.FunctionProvider
 import com.anaplan.engineering.kazuki.core.Mapping
 import com.anaplan.engineering.kazuki.core.Module
+import com.anaplan.engineering.kazuki.core.property
 import com.anaplan.engineering.kazuki.core.set
 
 /**
@@ -17,5 +19,11 @@ interface Name {
 
 @Module
 interface MapWithDerivedProperty : Mapping<Name, Int> {
-    val firstNames get() = set(dom) { it.first }
+
+    @FunctionProvider(DerivedProperties::class)
+    val properties: DerivedProperties
+
+    class DerivedProperties(mapWithDerivedProperty: MapWithDerivedProperty) {
+        val firstNames by property { set(mapWithDerivedProperty.dom) { it.first } }
+    }
 }

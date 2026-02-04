@@ -7,7 +7,6 @@ interface CaselessString : Sequence<Char> {
     // TODO -- implement comparable operators if object is comparable
     @ComparableProperty
     val uppercase get() = seq(this) { it.uppercase() }
-
 }
 
 @Module
