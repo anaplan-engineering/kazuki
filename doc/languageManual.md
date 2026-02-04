@@ -37,7 +37,7 @@ Given set type `S` with elements typed `E`
 | `s1 union s2`      | `s1 + s2`      | Union          | `s1 union s2`                 | `(S, Set<E>) -> S`      
 | `s1 inter s2`      | -              | Intersection   | `s1 inter s2`                 | `(S, Set<E>) -> S`      
 | `s1 diff s2`       | `s1 - s2`      | Difference     | `s1 \ s2`                     | `(S, Set<E>) -> S`      
-| `s1 / s2`          | -              | Difference*    | `s1 inter s2`                 | `(S, Set<E>) -> Set<E>` 
+| `s1 / s2`          | -              | Difference*    | `s1 \ s2`                     | `(S, Set<E>) -> Set<E>` 
 | `s1 subset s2`     | -              | Subset         | `s1 subset s2`                | `(Set<E>, S) -> bool`   
 | `s1 psubset s2`    | -              | Proper subset  | `s1 psubset s2`               | `(Set<E>, S) -> bool`   
 | `s1 == s2`         | -              | Equality       | `s1 = s2`                     | `(Set<E>, S) -> bool`   

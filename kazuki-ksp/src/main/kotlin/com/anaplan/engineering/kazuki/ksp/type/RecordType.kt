@@ -65,7 +65,7 @@ internal fun TypeSpec.Builder.addRecordType(
         if (interfaceTypeArguments.isNotEmpty()) {
             addTypeVariables(interfaceTypeArguments)
         }
-        addModifiers(KModifier.PRIVATE) // , KModifier.DATA)
+        addModifiers(KModifier.PRIVATE)
         addAnnotation(AnnotationSpec.builder(_Record::class).apply {
             addMember(allTupleComponents.joinToString(", ") { "\"" + it.name + "\"" })
         }.build())
@@ -85,16 +85,6 @@ internal fun TypeSpec.Builder.addRecordType(
                     tc.name,
                     tc.typeName,
                     KModifier.OVERRIDE,
-                ).initializer(tc.name)
-                    .build()
-            )
-        }
-        allTupleComponents.forEach { tc ->
-            addProperty(
-                PropertySpec.builder(
-                    "_${tc.index}",
-                    tc.typeName,
-                    KModifier.OVERRIDE
                 ).initializer(tc.name)
                     .build()
             )
@@ -153,7 +143,19 @@ internal fun TypeSpec.Builder.addRecordType(
             ).build()
         )
 
-        // N.B. it·is·important to have properties before init block
+        // N.B. all other members must be set before tuple accessors
+        allTupleComponents.forEach { tc ->
+            addProperty(
+                PropertySpec.builder(
+                    "_${tc.index}",
+                    tc.typeName,
+                    KModifier.OVERRIDE
+                ).initializer(tc.name)
+                    .build()
+            )
+        }
+
+        // N.B. all members must be set before init block
         addInvariantFrom(interfaceClassDcl, typeGenerationContext)
 
         addFunction(
