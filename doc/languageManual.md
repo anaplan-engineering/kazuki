@@ -25,6 +25,7 @@ Set enumeration:
 Set comprehension:
 
 * `set(1..3) { it * it }`
+* `set1(1..3) { it * it }`
 
 ### Operators
 
@@ -70,15 +71,16 @@ interface SequenceType: Sequence<E> {}
 
 ### Construction
 
-Set enumeration:
+Sequence enumeration:
 
 * `mk_Seq<E>(a, ...)`
 * `mk_Seq1<E>(a, ...)`
 * `mk_SeqType(a, ...`
 
-Set comprehension:
+Sequence comprehension:
 
-* `set(1..3) { it * it }`
+* `seq(1..3) { it * it }`
+* `seq1(1..3) { it * it }`
 
 ### Operators
 
