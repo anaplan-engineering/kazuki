@@ -79,6 +79,7 @@ private fun TypeSpec.Builder.addRelationType(
         addSuperinterface(interfaceTypeName)
         addSuperinterface(_KRelation::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName, interfaceTypeName))
         addSuperinterface(Set::class.asClassName().parameterizedBy(tupleType), CodeBlock.of(elementsPropertyName))
+        addSuperinterface(InbuiltNames.ConstructableInterfaceClassName)
         addSuperclassConstructorParameter(elementsPropertyName)
         primaryConstructor(
             FunSpec.constructorBuilder()

@@ -4,6 +4,10 @@ import com.anaplan.engineering.kazuki.core.*
 import com.anaplan.engineering.kazuki.gameoflife.Conway_Module.as_Population
 import com.anaplan.engineering.kazuki.gameoflife.Conway_Module.mk_Point
 
+/**
+ * A Kazuki specification inspired by https://github.com/overturetool/overturetool.github.io/blob/master/download/examples/VDMSL/ConwayGameLifeSL/index.md,
+ * which was originally developed by Nick Battle, Peter Gorm Larsen and Claus Ballegaard Nielsen.
+ */
 @Module
 object Conway {
 

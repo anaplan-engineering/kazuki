@@ -1,7 +1,7 @@
 # Game of Life
 
 An example specification of Conway's Game of Life in Kazuki, based on
-a [VDM version](https://github.com/overturetool/overturetool.github.io/blob/master/download/examples/VDMSL/ConwayGameLifeSL/index.md)
+a [VDM version](https://www.overturetool.org/download/examples/VDMSL/ConwayGameLifeSL/index.html)
 by Nick Battle, Peter Gorm Larsen and Claus Ballegaard Nielsen.
 
 Conway's Game of Life is a theoretical system embedded into a two-dimensional square grid.

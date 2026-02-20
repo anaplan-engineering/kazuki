@@ -57,7 +57,7 @@ internal fun TypeSpec.Builder.addInvariantFrom(
     }
     return if (invariantClauses.isEmpty()) {
         addFunction(FunSpec.builder(validityFunctionName).apply {
-            addModifiers(KModifier.INTERNAL)
+            addModifiers(KModifier.OVERRIDE)
             returns(Boolean::class)
             addStatement("return true")
         }.build())
@@ -93,7 +93,7 @@ internal fun TypeSpec.Builder.addInvariantFrom(
             endControlFlow()
         }.build())
         addFunction(FunSpec.builder(validityFunctionName).apply {
-            addModifiers(KModifier.INTERNAL)
+            addModifiers(KModifier.OVERRIDE)
             returns(Boolean::class)
             addStatement("return $invariantClausesPropertyName.all·{ it.holds }")
         }.build())

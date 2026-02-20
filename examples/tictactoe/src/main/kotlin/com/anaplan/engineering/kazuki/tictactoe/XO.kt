@@ -12,6 +12,10 @@ import com.anaplan.engineering.kazuki.tictactoe.XO.movesSoFar
 import com.anaplan.engineering.kazuki.tictactoe.XO_Module.mk_Game
 import com.anaplan.engineering.kazuki.tictactoe.XO_Module.mk_Position
 
+/**
+ * A Kazuki specification inspired by https://github.com/overturetool/overturetool.github.io/blob/master/download/examples/VDMSL/Tic-tac-toeSL/index.md,
+ * which was originally developed by Nick Battle.
+ */
 @Module
 object XO {
 

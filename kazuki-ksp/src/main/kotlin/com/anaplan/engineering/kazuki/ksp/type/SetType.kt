@@ -72,6 +72,7 @@ private fun TypeSpec.Builder.addSetType(
         addSuperinterface(interfaceTypeName)
         addSuperinterface(_KSet::class.asClassName().parameterizedBy(elementTypeName, interfaceTypeName))
         addSuperinterface(superSetTypeName, CodeBlock.of(elementsPropertyName))
+        addSuperinterface(InbuiltNames.ConstructableInterfaceClassName)
         addSuperclassConstructorParameter(elementsPropertyName)
         primaryConstructor(
             FunSpec.constructorBuilder()

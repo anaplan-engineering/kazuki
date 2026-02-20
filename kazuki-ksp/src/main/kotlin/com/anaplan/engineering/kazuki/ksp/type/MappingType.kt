@@ -100,7 +100,8 @@ private fun TypeSpec.Builder.addMappingType(
         addSuperinterfaces(
             listOf(
                 mappingClass.asClassName().parameterizedBy(domainTypeName, rangeTypeName, interfaceTypeName),
-                _KSet::class.asClassName().parameterizedBy(tupleType, interfaceTypeName)
+                _KSet::class.asClassName().parameterizedBy(tupleType, interfaceTypeName),
+                InbuiltNames.ConstructableInterfaceClassName
             )
         )
         addSuperclassConstructorParameter(baseMapPropertyName)

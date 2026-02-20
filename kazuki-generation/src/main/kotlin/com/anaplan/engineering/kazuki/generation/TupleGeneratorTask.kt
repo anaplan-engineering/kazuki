@@ -2,20 +2,18 @@ package com.anaplan.engineering.kazuki.generation
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.TypeVariableName
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import java.io.File
-import kotlin.collections.plus
 import kotlin.reflect.KClass
 
 @CacheableTask
 abstract class TupleGeneratorTask : DefaultTask() {
 
     companion object {
-        private const val MaxNary = 10
+        private const val MaxNary = 20
     }
 
     val generationSrcDir: File
@@ -36,6 +34,7 @@ abstract class TupleGeneratorTask : DefaultTask() {
         FileSpec.builder(InternalPackageName, FileName)
             .addFileComment("This file is generated -- do not edit!")
             .apply {
+                addConstructableInternal()
                 (1..MaxNary).forEach {
                     addNaryConstructableInternal(it)
                     addNAryTupleInternal(it)
@@ -54,6 +53,7 @@ private fun internalDataClassName(nary: Int) = "_${internalInterfaceName(nary)}"
 private fun constructableInterfaceName(nary: Int) = "_Constructable$nary"
 
 private const val constructFunctionName = "construct"
+private const val isValidFunctionName = "isValid"
 
 // No obvious way to share with core
 private const val comparableWithPropertyName = "comparableWith"
@@ -117,7 +117,7 @@ fun FileSpec.Builder.addNAryTuple(nary: Int) {
                 endControlFlow()
 
                 addStatement(
-                    "return (this·as·%T).construct(${(1..nary).joinToString(", ") { "_$it" }})",
+                    "return (this·as·%T).construct(${(1..nary).joinToString(", ") { "_$it" }}, true)",
                     constructableTypeName,
                 )
             }.build())
@@ -159,10 +159,8 @@ fun FileSpec.Builder.addNAryTupleInternal(nary: Int) {
         addModifiers(KModifier.DATA, KModifier.INTERNAL)
         addTypeVariables(typeNames)
         addSuperinterface(
-            ClassName(
-                InternalPackageName,
-                internalInterfaceName
-            ).parameterizedBy(typeNames + publicInterfaceClassName.parameterizedBy(typeNames))
+            ClassName(InternalPackageName, internalInterfaceName)
+                .parameterizedBy(typeNames + publicInterfaceClassName.parameterizedBy(typeNames))
         )
         primaryConstructor(constructor)
         (1..nary).forEach {
@@ -175,9 +173,10 @@ fun FileSpec.Builder.addNAryTupleInternal(nary: Int) {
             addFunction(FunSpec.builder(constructFunctionName).apply {
                 addModifiers(KModifier.OVERRIDE)
                 (1..conNary).forEach { addParameter("t$it", TypeVariableName("T$it")) }
+                addParameter("enforceInvariant", Boolean::class.asTypeName())
                 val constructedType = ClassName(InternalPackageName, className).parameterizedBy(typeNames)
                 returns(constructedType)
-                val params = (1..conNary).map { "t$it" } + (conNary + 1 .. nary).map { "_$it" }
+                val params = (1..conNary).map { "t$it" } + (conNary + 1..nary).map { "_$it" }
                 addStatement("return %T(${params.joinToString(",")})", constructedType)
             }.build())
         }
@@ -188,7 +187,10 @@ fun FileSpec.Builder.addNAryTupleInternal(nary: Int) {
         addFunction(FunSpec.builder(PrettyFunctionName).apply {
             addModifiers(KModifier.OVERRIDE)
             returns(String::class)
-            addStatement("return %P", "(${(1..nary).joinToString(", ") { "$it=\${$PrettyOrDefaultFunctionName(_$it)}" }})")
+            addStatement(
+                "return %P",
+                "(${(1..nary).joinToString(", ") { "$it=\${$PrettyOrDefaultFunctionName(_$it)}" }})"
+            )
         }.build())
         addFunction(FunSpec.builder("toString").apply {
             addModifiers(KModifier.OVERRIDE)
@@ -199,17 +201,33 @@ fun FileSpec.Builder.addNAryTupleInternal(nary: Int) {
 
 }
 
+private val ConstructableInterfaceName = "_Constructable"
+private val ConstructableInterfaceClassName = ClassName(InternalPackageName, ConstructableInterfaceName)
+
 fun FileSpec.Builder.addNaryConstructableInternal(nary: Int) {
-    val constructableInterfaceName = constructableInterfaceName(nary)
+    val naryConstructableInterfaceName = constructableInterfaceName(nary)
     val typeNames = (1..nary).map { TypeVariableName("T$it") } + TypeVariableName("T")
 
-    addType(TypeSpec.interfaceBuilder(constructableInterfaceName).apply {
+    addType(TypeSpec.interfaceBuilder(naryConstructableInterfaceName).apply {
         addTypeVariables(typeNames)
+        addSuperinterface(ConstructableInterfaceClassName)
         addFunction(FunSpec.builder(constructFunctionName).apply {
             addModifiers(KModifier.ABSTRACT)
             (1..nary).forEach { addParameter("t$it", TypeVariableName("T$it")) }
+            addParameter("enforceInvariant", Boolean::class.asTypeName())
             returns(TypeVariableName("T"))
         }.build())
+    }.build())
+}
+
+fun FileSpec.Builder.addConstructableInternal() {
+    val booleanTypeName = Boolean::class.asTypeName()
+    addType(TypeSpec.interfaceBuilder(ConstructableInterfaceName).apply {
+        addFunction(FunSpec.builder(isValidFunctionName).apply {
+            addStatement("return true")
+            returns(booleanTypeName)
+        }.build())
+
     }.build())
 }
 

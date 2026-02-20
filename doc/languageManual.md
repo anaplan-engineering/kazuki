@@ -1,3 +1,9 @@
+# Kazuki language manual
+
+## Commands vs conditions
+
+Make clear he
+
 ## Set types
 
 ### Typing
@@ -108,3 +114,14 @@ TODO:
 * 
 * dunion, dinter, power
 * fold, filter etc..
+
+## The language of commands
+
+### Type conversion
+
+* E.g. `as_, to_` 
+
+### Mutability
+
+* `transform`
+* `conditionalTransform`
