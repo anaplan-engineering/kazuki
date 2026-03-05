@@ -109,6 +109,19 @@ fun <T, S : Sequence<T>> S.insert(s: S, i: nat1) =
 
 fun <T, S : Sequence<T>> S.filter(fn: (T) -> Boolean) = transformSequence { it.elements.kotlinFilter(fn) }
 
+inline fun <reified T : Any> Sequence<*>.filterIs_(): Sequence<T> =
+    as_Seq(this.filterNotNull().kotlinFilter { is_<T>(it) }.map { as_<T>(it) })
+
+inline fun <reified T : Any> Sequence<Any>.as_SeqOf(): Sequence<T> {
+    pre { forall(this) { is_<T>(it) } }
+    return as_Seq(this.map { as_<T>(it) })
+}
+
+inline fun <reified T : Any> Sequence1<Any>.as_Seq1Of(): Sequence1<T> {
+    pre { forall(this) { is_<T>(it) } }
+    return as_Seq1(this.map { as_<T>(it) })
+}
+
 fun <T, S : Sequence<T>> S.transform(fn: (T) -> T) = transformSequence { it.elements.map(fn) }
 
 fun <T> Sequence<T>.filter(retainType: Boolean, fn: (T) -> Boolean) =

@@ -10,7 +10,8 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.TypeVariableName
 import kotlin.collections.isNotEmpty
 
-val StaticPrettyFunctionName = "_pretty"
+const val StaticPrettyFunctionName = "_pretty"
+const val PrettyFunctionName = "pretty"
 
 
 internal fun TypeSpec.Builder.addStaticPrettyFunction(

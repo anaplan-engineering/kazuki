@@ -8,7 +8,6 @@ import com.anaplan.engineering.kazuki.core.Record_Module.mk_Record
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-@ExperimentalIsAs
 /**
  * Some very basic tests, but semantics v.likely to change
  */
@@ -34,8 +33,7 @@ class TestTypeUtilities {
     fun is_record() {
         assertEquals(true, is_<Record>(mk_Record(2)))
         assertEquals(true, is_<Record>(mk_RecordInvOnlyExtension(2)))
-        // TODO -- is this correct?
-        assertEquals(false, is_<Record>(mk_RecordExtension(2, "3")))
+        assertEquals(true, is_<Record>(mk_RecordExtension(2, "3")))
         assertEquals(false, is_<Record>(mk_OtherRecord(2)))
     }
 }

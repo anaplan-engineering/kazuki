@@ -97,7 +97,6 @@ class TestSet(
         assertEquals(create(1, 2, 3, 4), create(1, 2, 3) union create(2, 4))
         assertEquals(create(1, 2, 3, 4), create(1, 2, 3) union create(2, 4, 3, 1))
         assertEquals(create(1, 2, 3), create(1, 2, 3) union mk_Set())
-
     }
 
     @Test

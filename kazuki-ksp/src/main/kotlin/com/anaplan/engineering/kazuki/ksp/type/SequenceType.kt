@@ -77,6 +77,7 @@ private fun TypeSpec.Builder.addSequenceType(
         addSuperinterface(interfaceTypeName)
         addSuperinterface(_KSequence::class.asClassName().parameterizedBy(elementTypeName, interfaceTypeName))
         addSuperinterface(collectionTypeName, CodeBlock.of(elementsPropertyName))
+        addSuperinterface(InbuiltNames.ConstructableInterfaceClassName)
         addSuperclassConstructorParameter(elementsPropertyName)
         primaryConstructor(
             FunSpec.constructorBuilder()

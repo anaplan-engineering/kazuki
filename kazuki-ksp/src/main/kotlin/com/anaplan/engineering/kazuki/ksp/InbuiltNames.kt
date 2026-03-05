@@ -1,5 +1,6 @@
 package com.anaplan.engineering.kazuki.ksp
 
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName
 
 internal object InbuiltNames {
@@ -9,6 +10,7 @@ internal object InbuiltNames {
     internal const val prettyOrDefault = "prettyOrDefault"
 
     internal const val transform = "transform"
+    internal const val conditionalTransform = "conditionalTransform"
 
     internal val mkTuple = MemberName(corePackage, "mk_")
     internal val mkSet = MemberName(corePackage, "mk_Set")
@@ -26,6 +28,8 @@ internal object InbuiltNames {
     internal val toNat1 = MemberName(corePackage, "toNat1")
     internal val toInteger = MemberName(corePackage, "toInteger")
     internal val safeToInt = MemberName(corePackage, "safeToInt")
+
+    internal val ConstructableInterfaceClassName = ClassName(coreInternalPackage, "_Constructable")
 
 
 }

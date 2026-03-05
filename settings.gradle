@@ -5,8 +5,9 @@ include(
         "kazuki-syntax-examples",
         "kazuki-toolkit",
         "kazuki-toolkit-examples",
-        "tictactoe",
-        "gameoflife"
+        "examples:abstractpacemaker",
+        "examples:gameoflife",
+        "examples:tictactoe",
 )
 includeBuild("kazuki-generation")
 includeBuild("build-conventions")

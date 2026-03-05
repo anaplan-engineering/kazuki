@@ -2,8 +2,8 @@ package com.anaplan.engineering.kazuki.ksp.type
 
 import com.anaplan.engineering.kazuki.core.Invariant
 import com.anaplan.engineering.kazuki.core.InvariantFailure
-import com.anaplan.engineering.kazuki.core.Tuple0.pretty
 import com.anaplan.engineering.kazuki.core.internal._InvariantClause
+import com.anaplan.engineering.kazuki.ksp.lazy
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -15,8 +15,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 internal const val validityFunctionName = "isValid"
 internal const val invariantClausesPropertyName = "invariantClauses"
 internal const val enforceInvariantParameterName = "enforceInvariant"
-
-private const val failedClausesVariableName = "failedClauses"
+internal const val failedInvariantClausesVariableName = "failedInvariantClauses"
 
 internal sealed interface InvariantClause {
     val name: String
@@ -45,7 +44,7 @@ internal fun TypeSpec.Builder.addInvariantFrom(
     interfaceClassDcl: KSClassDeclaration,
     typeGenerationContext: TypeGenerationContext,
     additionalInvariantParts: List<InvariantClause> = emptyList(),
-) {
+): Boolean {
     val invariantClauses = mutableListOf<InvariantClause>().apply {
         interfaceClassDcl.getAllFunctions()
             .filter { it.isAnnotationPresent(Invariant::class) }
@@ -56,12 +55,13 @@ internal fun TypeSpec.Builder.addInvariantFrom(
             .forEach { add(InvariantPrimitiveProperty(it.second!!, it.first)) }
         addAll(additionalInvariantParts)
     }
-    if (invariantClauses.isEmpty()) {
+    return if (invariantClauses.isEmpty()) {
         addFunction(FunSpec.builder(validityFunctionName).apply {
-            addModifiers(KModifier.INTERNAL)
+            addModifiers(KModifier.OVERRIDE)
             returns(Boolean::class)
             addStatement("return true")
         }.build())
+        false
     } else {
         val moduleName = interfaceClassDcl.simpleName.asString()
         addProperty(
@@ -75,18 +75,28 @@ internal fun TypeSpec.Builder.addInvariantFrom(
                 initializer("listOf($clauses)")
             }.build()
         )
+        addProperty(
+            PropertySpec.builder(
+                failedInvariantClausesVariableName,
+                List::class.parameterizedBy(_InvariantClause::class)
+            ).apply {
+                addModifiers(KModifier.PRIVATE)
+                lazy("$invariantClausesPropertyName.filter·{ !it.holds }")
+            }.build()
+        )
         addInitializerBlock(CodeBlock.builder().apply {
             beginControlFlow("if ($enforceInvariantParameterName)")
-            beginControlFlow("if ($invariantClausesPropertyName.any·{ !it.holds })")
-            addStatement("val $failedClausesVariableName = $invariantClausesPropertyName.filter·{ !it.holds }.joinToString(\"·and·\")·{ it.clauseName }")
-            addStatement("throw %T(%P)", InvariantFailure::class, "$moduleName invariant failed for \${pretty()} in: \$$failedClausesVariableName")
+            beginControlFlow("if ($failedInvariantClausesVariableName.isNotEmpty())")
+            addStatement("val msg = $failedInvariantClausesVariableName.joinToString(\"·and·\")·{ it.clauseName }")
+            addStatement("throw %T(%P)", InvariantFailure::class, "$moduleName invariant failed for \${pretty()} in: \$msg")
             endControlFlow()
             endControlFlow()
         }.build())
         addFunction(FunSpec.builder(validityFunctionName).apply {
-            addModifiers(KModifier.INTERNAL)
+            addModifiers(KModifier.OVERRIDE)
             returns(Boolean::class)
             addStatement("return $invariantClausesPropertyName.all·{ it.holds }")
         }.build())
+        true
     }
 }

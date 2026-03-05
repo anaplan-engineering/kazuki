@@ -3,7 +3,6 @@ package com.anaplan.engineering.kazuki.core.test
 import com.anaplan.engineering.kazuki.core.*
 import com.anaplan.engineering.kazuki.core.AliasedGenericUnmakeableRecordExt_InvOnly_Module.mk_AliasedGenericUnmakeableRecordExt_InvOnly
 import com.anaplan.engineering.kazuki.core.AliasedGenericUnmakeableRecordExt_WithField_Module.mk_AliasedGenericUnmakeableRecordExt_WithField
-import com.anaplan.engineering.kazuki.core.CatRecord_Module.mk_CatRecord
 import com.anaplan.engineering.kazuki.core.GenericRecordExtension_Module.component1
 import com.anaplan.engineering.kazuki.core.GenericRecordExtension_Module.component2
 import com.anaplan.engineering.kazuki.core.GenericRecordExtension_Module.mk_GenericRecordExtension
@@ -14,12 +13,14 @@ import com.anaplan.engineering.kazuki.core.GenericRecord_Module.as_GenericRecord
 import com.anaplan.engineering.kazuki.core.GenericRecord_Module.is_GenericRecord
 import com.anaplan.engineering.kazuki.core.GenericRecord_Module.mk_GenericRecord
 import com.anaplan.engineering.kazuki.core.GenericUnmakeableExtReusedGeneric_Module.mk_GenericUnmakeableExtReusedGeneric
-import com.anaplan.engineering.kazuki.core.MaineCoonRecord_Module.mk_MaineCoonRecord
-import com.anaplan.engineering.kazuki.core.MoggyRecord_Module.mk_MoggyRecord
 import com.anaplan.engineering.kazuki.core.OtherGenericRecord_Module.mk_OtherGenericRecord
 import com.anaplan.engineering.kazuki.core.OtherRecord_Module.mk_OtherRecord
 import com.anaplan.engineering.kazuki.core.RecordDblExtension_Module.mk_RecordDblExtension
 import com.anaplan.engineering.kazuki.core.RecordExtensionAlternate_Module.mk_RecordExtensionAlternate
+import com.anaplan.engineering.kazuki.core.RecordExtensionExtensionWithDerived_Module.mk_RecordExtensionExtensionWithDerived
+import com.anaplan.engineering.kazuki.core.RecordExtensionExtensionWithDerived_Module.transform
+import com.anaplan.engineering.kazuki.core.RecordExtensionWithDerived_Module.mk_RecordExtensionWithDerived
+import com.anaplan.engineering.kazuki.core.RecordExtensionWithDerived_Module.transform
 import com.anaplan.engineering.kazuki.core.RecordExtensionWithFixed_Module.as_RecordExtensionWithFixed
 import com.anaplan.engineering.kazuki.core.RecordExtensionWithFixed_Module.component1
 import com.anaplan.engineering.kazuki.core.RecordExtensionWithFixed_Module.component2
@@ -44,6 +45,7 @@ import com.anaplan.engineering.kazuki.core.UnmakeableInvOnlyAllFieldsC_Module.mk
 import com.anaplan.engineering.kazuki.core.UnmakeableInvOnlyAllFields_Module.mk_UnmakeableInvOnlyAllFields
 import com.anaplan.engineering.kazuki.core.UnmakeableInvOnlyWithDynamicC_Module.mk_UnmakeableInvOnlyWithDynamicC
 import com.anaplan.engineering.kazuki.core.UnmakeableInvOnlyWithDynamic_Module.mk_UnmakeableInvOnlyWithDynamic
+import com.anaplan.engineering.kazuki.core.animals.Species
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -55,13 +57,6 @@ class TestRecordExtension {
         val record = mk_RecordExtension(3, "a")
         assertEquals(record.a, 3)
         assertEquals(record.b, "a")
-
-        // Ensuring override are handled correctly
-        val cat = Cat()
-        assertEquals(cat, mk_CatRecord(cat).me)
-        assertEquals(cat, mk_MoggyRecord(cat).me)
-        val maineCoon = MaineCoon()
-        assertEquals(maineCoon, mk_MaineCoonRecord(maineCoon).me)
     }
 
     @Test
@@ -128,7 +123,7 @@ class TestRecordExtension {
     fun is_() {
         assertEquals(true, is_Record(mk_Record(2)))
         assertEquals(true, is_Record(mk_RecordInvOnlyExtension(2)))
-        assertEquals(false, is_Record(mk_RecordExtension(2, "3")))
+        assertEquals(true, is_Record(mk_RecordExtension(2, "3")))
         assertEquals(false, is_Record(mk_OtherRecord(2)))
 
         assertEquals(true, is_RecordInvOnlyExtension(mk_Record(2)))
@@ -139,7 +134,7 @@ class TestRecordExtension {
 
         assertEquals(true, is_GenericRecord<Int>(mk_GenericRecord(2)))
         assertEquals(true, is_GenericRecord<Int>(mk_GenericRecordInvOnlyExtension(2)))
-        assertEquals(false, is_GenericRecord<Int>(mk_GenericRecordExtension(2, mk_Set(3))))
+        assertEquals(true, is_GenericRecord<Int>(mk_GenericRecordExtension(2, mk_Set(3))))
         assertEquals(false, is_GenericRecord<Int>(mk_OtherGenericRecord(2)))
 
         assertEquals(true, is_GenericRecordInvOnlyExtension(mk_GenericRecord(2)))
@@ -184,6 +179,9 @@ class TestRecordExtension {
         assertEquals(mk_RecordExtension(2, "hello"), mk_RecordExtension(2, "3").transform(b = "hello"))
         assertEquals(mk_RecordExtension(4, "2"), mk_RecordExtension(2, "3").transform(a = 4, b = "2"))
         assertEquals(mk_RecordExtension(2, "3"), mk_RecordExtension(2, "3").transform())
+
+        assertEquals(4, mk_RecordExtensionWithDerived("abc").transform(b = "abcd").a)
+        assertEquals("_6", mk_RecordExtensionExtensionWithDerived(3, 4).transform(c = 6).b)
     }
 
     // Note that for deconstruction, must:
