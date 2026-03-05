@@ -30,7 +30,6 @@ inline fun <reified T : Any> as_(a: Any): T =
         val cast = if (fn == null) {
             a
         } else {
-            println(fn)
             fn.call(moduleClass.objectInstance, a)
         }
         pre { cast is T }

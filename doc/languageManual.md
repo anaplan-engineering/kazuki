@@ -2,7 +2,9 @@
 
 ## Commands vs conditions
 
-Make clear he
+Make clear the difference between the language of the conditions and the language of the commands.
+That is: the language of the conditions is the specification, the language of the commands is for animation.
+Constructs like transform should be reserved for commands.
 
 ## Set types
 
@@ -81,7 +83,7 @@ Sequence enumeration:
 
 * `mk_Seq<E>(a, ...)`
 * `mk_Seq1<E>(a, ...)`
-* `mk_SeqType(a, ...`
+* `mk_SeqType(a, ...)`
 
 Sequence comprehension:
 

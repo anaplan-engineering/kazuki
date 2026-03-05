@@ -57,13 +57,6 @@ class TestRecordExtension {
         val record = mk_RecordExtension(3, "a")
         assertEquals(record.a, 3)
         assertEquals(record.b, "a")
-
-//        // Ensuring override are handled correctly
-//        val cat = Species.Cat()
-//        assertEquals(cat, mk_CatRecord(cat).me)
-//        assertEquals(cat, mk_MoggyRecord(cat).me)
-//        val maineCoon = MaineCoon()
-//        assertEquals(maineCoon, mk_MaineCoonRecord(maineCoon).me)
     }
 
     @Test
