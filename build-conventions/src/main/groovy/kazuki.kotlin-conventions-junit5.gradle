@@ -1,0 +1,12 @@
+plugins {
+    id 'kazuki.kotlin-conventions'
+}
+
+dependencies {
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit5'
+}
+
+test {
+    useJUnitPlatform()
+}

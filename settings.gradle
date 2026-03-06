@@ -11,3 +11,4 @@ include(
 )
 includeBuild("kazuki-generation")
 includeBuild("build-conventions")
+include 'alarm'
