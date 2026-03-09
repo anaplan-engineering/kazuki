@@ -88,19 +88,31 @@ internal class ModuleProcessor(
 
         val seq1Types = types[KazukiType.Sequence1Type] ?: emptyList()
         val seqTypes = types[KazukiType.SequenceType] ?: emptyList()
+        val relation1Types = types[KazukiType.Relation1Type] ?: emptyList()
+        val relationTypes = types[KazukiType.RelationType] ?: emptyList()
         val set1Types = types[KazukiType.Set1Type] ?: emptyList()
         val setTypes = types[KazukiType.SetType] ?: emptyList()
         val quoteTypes = types[KazukiType.QuoteType] ?: emptyList()
         val recordTypes = types[KazukiType.RecordType] ?: emptyList()
+        val injectiveMappingType = types[KazukiType.InjectiveMappingType] ?: emptyList()
+        val injectiveMapping1Type = types[KazukiType.InjectiveMapping1Type] ?: emptyList()
+        val mappingType = types[KazukiType.MappingType] ?: emptyList()
+        val mapping1Type = types[KazukiType.Mapping1Type] ?: emptyList()
 
         val moduleClassName = "${clazz.simpleName.asString()}_Module"
         val moduleTypeSpec = TypeSpec.objectBuilder(moduleClassName).apply {
             seq1Types.forEach { addSeq1Type(it, true, typeGenerationContext) }
             seqTypes.forEach { addSeqType(it, true, typeGenerationContext) }
+            relation1Types.forEach { addRelation1Type(it, true, typeGenerationContext) }
+            relationTypes.forEach { addRelationType(it, true, typeGenerationContext) }
             setTypes.forEach { addSetType(it, true, typeGenerationContext) }
             set1Types.forEach { addSet1Type(it, true, typeGenerationContext) }
             quoteTypes.forEach { processQuoteType(it, true, typeGenerationContext) }
             recordTypes.forEach { addRecordType(it, true, typeGenerationContext) }
+            injectiveMappingType.forEach { addInjectiveMappingType(it, true, typeGenerationContext) }
+            injectiveMapping1Type.forEach { addInjectiveMapping1Type(it, true, typeGenerationContext) }
+            mappingType.forEach { addMappingType(it, true, typeGenerationContext) }
+            mapping1Type.forEach { addMapping1Type(it, true, typeGenerationContext) }
         }.build()
 
         writeModule(clazz, moduleClassName, moduleTypeSpec)

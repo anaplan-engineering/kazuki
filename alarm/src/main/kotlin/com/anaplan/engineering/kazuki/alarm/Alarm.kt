@@ -65,34 +65,42 @@ object Alarm {
         val quali: Qualification
     }
 
-    val numberOfExperts: (Period, Plant) -> nat = function(
+    val numberOfExperts = function(
         command = { period: Period, plant: Plant ->
             plant.schedule[period].card
         },
-        pre = {period: Period, plant: Plant ->
+        pre = {period, plant ->
             period in plant.schedule.dom
         }
     )
 
-    val expertIsOnDuty: (Expert, Plant) -> Set<Period> = function(
+    val expertIsOnDuty = function(
         command = { expert: Expert, plant: Plant ->
             plant.schedule.dom.filter { period -> expert in plant.schedule[period] }
         }
     )
 
-    val expertToPage: (AlarmI, Period, Plant) -> Expert = function(
+    val expertToPage = function(
         command = { alarm: AlarmI, period: Period, plant: Plant ->
             (plant.schedule[period]. filter {expert -> alarm.quali in expert.quali}).first()
         },
         pre = { alarm, period, plant ->
-            period in plant.schedule.dom && alarm in plant.alarms
+            expertToPagePre(alarm, period, plant)
         },
         post = { alarm, period, plant, result ->
-            result in plant.schedule[period] && alarm.quali in result.quali
+            expertToPagePost(alarm, period, plant, result)
         }
     )
 
-    val QualificationOK: (Set<Expert>, Qualification) -> bool = function(
+    // Exposed for testing purposes
+    val expertToPagePre = { alarm: AlarmI, period: Period, plant: Plant ->
+        period in plant.schedule.dom && alarm in plant.alarms
+    }
+    val expertToPagePost = { alarm: AlarmI, period: Period, plant: Plant, result: Expert ->
+        result in plant.schedule[period] && alarm.quali in result.quali
+    }
+
+    val QualificationOK = function(
         command = { experts: Set<Expert>, reqQuali : Qualification ->
             exists(experts) { ex -> reqQuali in ex.quali }
         }
