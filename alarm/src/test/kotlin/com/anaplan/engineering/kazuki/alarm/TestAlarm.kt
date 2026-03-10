@@ -57,6 +57,8 @@ class TestAlarm {
 
     val plant1 = mk_Plant(sch, mk_Set(alarm1, alarm2, alarm3))
 
+    // Tests amended from VDMSL as it was unclear what they were meant to be testing
+
     @TestFactory
     fun test1(): Collection<DynamicTest> = set(alarms, periods, experts, { a, p, _ -> expertToPagePre(a, p, plant1) }) { a, p, e ->
         dynamicTest("Conditions run for ${a.quali} alarm: '${a.alarmText}' period: ${p.period} for expert ${e.expertId.expertId} with qualifications ${e.quali}") {
