@@ -30,7 +30,7 @@ object AlarmModule {
         fun expertIdentifiersUniqueInSet() =
             forall(rng) { exs ->
                 forall(exs, exs) {  ex1, ex2 ->
-                    (ex1 != ex2).implies(ex1.expertId != ex2.expertId)
+                    (ex1 != ex2) implies (ex1.expertId != ex2.expertId)
                 }
             }
     }
@@ -38,7 +38,6 @@ object AlarmModule {
     interface Expert {
         val expertId: ExpertId
         val qualifications: Set1<Qualification>
-
     }
 
     enum class Qualification {
