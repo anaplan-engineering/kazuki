@@ -191,7 +191,7 @@ private fun TypeSpec.Builder.addMappingType(
 
         // N.B. it is important to have properties before init block
         val additionalInvariantParts = if (requiresNonEmpty) {
-            listOf(FreeformInvariant("nonEmpty", "{ card > 0uL }"))
+            listOf(FreeformInvariant("nonEmpty", "{ card·>·0uL }"))
         } else {
             emptyList()
         }
