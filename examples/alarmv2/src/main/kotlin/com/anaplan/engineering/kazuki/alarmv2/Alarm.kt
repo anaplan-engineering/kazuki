@@ -7,3 +7,6 @@ interface Alarm {
     val text: Sequence<Char>
     val qualification: Qualification
 }
+
+internal fun String.toAlarmText() = as_Seq(toList())
+
