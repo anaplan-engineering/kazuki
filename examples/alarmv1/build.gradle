@@ -1,0 +1,9 @@
+plugins {
+    id 'kazuki.kotlin-conventions-junit5'
+    id 'com.google.devtools.ksp' version("1.9.10-1.0.13")
+}
+
+dependencies {
+    api project(":kazuki-core")
+    ksp project(":kazuki-ksp")
+}

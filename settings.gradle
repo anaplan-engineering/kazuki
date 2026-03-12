@@ -8,6 +8,7 @@ include(
         "examples:abstractpacemaker",
         "examples:gameoflife",
         "examples:tictactoe",
+        "examples:alarmv1"
 )
 includeBuild("kazuki-generation")
 includeBuild("build-conventions")
