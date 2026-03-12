@@ -12,5 +12,3 @@ include(
 )
 includeBuild("kazuki-generation")
 includeBuild("build-conventions")
-include 'examples:alarmv2'
-include 'examples:alarmv1'

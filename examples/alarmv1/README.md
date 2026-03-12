@@ -1,6 +1,6 @@
 # Alarm
 
-A translation of the Alarm example from the VDM-SL book [1]
+A translation of the Alarm example from the VDM-SL book [1].
 
 The example is inspired by a subcomponent of a large alarm system developed
 by IFAD A/S. It is modelling the management of alarms for an industrial
