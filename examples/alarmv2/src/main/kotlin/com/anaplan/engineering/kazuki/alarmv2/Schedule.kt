@@ -14,3 +14,5 @@ interface Schedule : Mapping<Period, Set1<Expert>> {
             }
         }
 }
+
+internal fun String.toPeriod() = as_Seq(toList())
