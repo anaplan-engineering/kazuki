@@ -1,7 +1,6 @@
 package com.anaplan.engineering.kazuki.alarmv2
 
 import com.anaplan.engineering.kazuki.core.*
-import com.anaplan.engineering.kazuki.core.integer
 
 typealias ExpertId = nat
 
