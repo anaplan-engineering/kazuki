@@ -1,6 +1,7 @@
 package com.anaplan.engineering.kazuki.alarmv2
 
 import com.anaplan.engineering.kazuki.core.*
+import kotlin.text.get
 
 @Module
 interface Plant {
@@ -11,19 +12,13 @@ interface Plant {
     fun expertForAlarmAlwaysAvailable() =
         forall(alarms) { alarm ->
             forall(schedule.dom) { period ->
-                qualificationOK(schedule[period], alarm.qualification)
+                exists(schedule[period]) { expert -> alarm.qualification in expert.qualifications }
             }
         }
 
     @FunctionProvider(PlantFunctions::class)
     val functions: PlantFunctions
 }
-
-val qualificationOK = function (
-    command = { experts: Set<Expert>, reqQualification: Qualification ->
-        exists(experts) { expert -> reqQualification in expert.qualifications }
-    }
-)
 
 class PlantFunctions(plant: Plant) {
     val numberOfExperts = function (

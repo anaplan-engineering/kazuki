@@ -19,14 +19,14 @@ class TestAlarm {
     val period5: Period = "Wednesday day".toPeriod()
     val periods = mk_Set(period1, period2, period3, period4, period5)
 
-    val expertId1: ExpertId = 134
-    val expertId2: ExpertId = 145
-    val expertId3: ExpertId = 154
-    val expertId4: ExpertId = 165
-    val expertId5: ExpertId = 169
-    val expertId6: ExpertId = 174
-    val expertId7: ExpertId = 181
-    val expertId8: ExpertId = 190
+    val expertId1: ExpertId = 134uL
+    val expertId2: ExpertId = 145uL
+    val expertId3: ExpertId = 154uL
+    val expertId4: ExpertId = 165uL
+    val expertId5: ExpertId = 169uL
+    val expertId6: ExpertId = 174uL
+    val expertId7: ExpertId = 181uL
+    val expertId8: ExpertId = 190uL
 
     val expert1 = mk_Expert(expertId1, mk_Set1(Qualification.Elec))
     val expert2 = mk_Expert(expertId2, mk_Set1(Qualification.Mech, Qualification.Chem))

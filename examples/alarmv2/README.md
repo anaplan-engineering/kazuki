@@ -2,8 +2,7 @@
 
 A translation of the Alarm example from the VDM-SL book [1].
 
-This is a second implementation of the example, aimed to be more similar
-to the Anaplan KSpecification.
+This is the second implementation of the example, in an object-oriented style.
 
 The example is inspired by a subcomponent of a large alarm system developed
 by IFAD A/S. It is modelling the management of alarms for an industrial

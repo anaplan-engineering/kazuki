@@ -9,7 +9,7 @@ include(
         "examples:gameoflife",
         "examples:tictactoe",
         "examples:alarmv1",
-        "examples:alarmv2"
+        "examples:alarmv2",
 )
 includeBuild("kazuki-generation")
 includeBuild("build-conventions")
