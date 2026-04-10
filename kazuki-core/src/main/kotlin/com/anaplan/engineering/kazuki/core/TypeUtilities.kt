@@ -1,9 +1,12 @@
 package com.anaplan.engineering.kazuki.core
 
 import kotlin.reflect.KClass
+import kotlin.reflect.full.allSuperclasses
 
 inline fun <reified T : Any> is_(a: Any?) =
     if (a == null) {
+        false
+    } else if (Collection::class in T::class.allSuperclasses && a !is Collection<*>) {
         false
     } else {
         val moduleName = "${T::class.qualifiedName}_Module"

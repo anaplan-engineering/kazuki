@@ -211,16 +211,6 @@ private fun TypeSpec.Builder.addSetType(
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments)
             }
-            addParameter(elementsPropertyName, superSetTypeName)
-            returns(interfaceTypeName)
-            addStatement("return %N(%N)", implTypeSpec, elementsPropertyName)
-        }.build()
-    )
-    addFunction(
-        FunSpec.builder("mk_$interfaceName").apply {
-            if (interfaceTypeArguments.isNotEmpty()) {
-                addTypeVariables(interfaceTypeArguments)
-            }
             addParameter(elementsPropertyName, elementTypeName, KModifier.VARARG)
             returns(interfaceTypeName)
             addStatement("return %N(%N.toSet())", implTypeSpec, elementsPropertyName)
@@ -263,7 +253,7 @@ private fun TypeSpec.Builder.addSetType(
                 nextControlFlow("else")
                 addStatement(
                     "return %N(%T(%N.size).apply·{ addAll(%N) })",
-                    "mk_$interfaceName",
+                    implTypeSpec,
                     HashSet::class.asClassName().parameterizedBy(elementTypeName),
                     elementsPropertyName,
                     elementsPropertyName
