@@ -6,11 +6,14 @@ import com.anaplan.engineering.kazuki.ksp.KazukiSymbolProcessor.KazukiLogger
 import com.anaplan.engineering.kazuki.ksp.type.PrimitiveTypeProcessor
 import com.anaplan.engineering.kazuki.ksp.type.TypeGenerationContext
 import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.getVisibility
 import com.google.devtools.ksp.processing.*
+import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSNode
+import com.google.devtools.ksp.symbol.Visibility
 import com.google.devtools.ksp.validate
 
 @OptIn(KspExperimental::class)
@@ -22,7 +25,7 @@ class KazukiSymbolProcessor(private val environment: SymbolProcessorEnvironment)
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val allModules =
             resolver.getSymbolsWithAnnotation(Module::class.qualifiedName.orEmpty())
-                .filterIsInstance<KSClassDeclaration>().groupBy { it.validate() }
+                .filterIsInstance<KSClassDeclaration>().groupBy { it.canGenerateModule() }
 
         val typeGenerationContext = TypeGenerationContext(processingState, resolver)
         val primitiveTypeProcessor = PrimitiveTypeProcessor(typeGenerationContext, environment.codeGenerator)
@@ -39,6 +42,25 @@ class KazukiSymbolProcessor(private val environment: SymbolProcessorEnvironment)
         }
         return allModules[false] ?: emptyList()
     }
+
+    private fun KSClassDeclaration.canGenerateModule(): Boolean =
+        if (classKind == ClassKind.OBJECT) {
+            // Matches how ModuleProcessor.processModuleObject() handles type declarations in module objects
+            declarations
+                .filterIsInstance<KSClassDeclaration>()
+                .filter { it.getVisibility() == Visibility.PUBLIC }
+                .all { it.hasValidModuleInputs() }
+        } else {
+            hasValidModuleInputs()
+        }
+
+    private fun KSClassDeclaration.hasValidModuleInputs(): Boolean =
+        validate { parent, node ->
+            // The validation of nested declarations is stricter in KSP 2 than in KSP 1.
+            // Inner classes can reference a module's own generated functions,
+            // so only validate declarations that Kazuki needs to actually generate the module.
+            !(parent == this && node is KSClassDeclaration)
+        }
 
     class KazukiLogger(private val environment: SymbolProcessorEnvironment): KSPLogger by environment.logger {
 
