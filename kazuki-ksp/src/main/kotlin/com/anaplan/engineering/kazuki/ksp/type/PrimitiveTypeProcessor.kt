@@ -7,6 +7,7 @@ import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.KSTypeAlias
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.TypeAliasSpec
 import com.squareup.kotlinpoet.ksp.writeTo
@@ -25,7 +26,15 @@ class PrimitiveTypeProcessor(
         val baseQualifiedName = try {
             type.base.qualifiedName!!
         } catch (e: KSTypeNotPresentException) {
-            e.ksType.declaration.qualifiedName!!.asString()
+            // KSP 2 preserves type aliases in the symbol model rather than resolving them to
+            // the underlying class as KSP 1 did. Follow the alias chain until we reach the
+            // actual class so that names like "com.anaplan.engineering.kazuki.core.nat" are
+            // unwrapped to "kotlin.ULong" before the when-match below.
+            var declaration = e.ksType.declaration
+            while (declaration is KSTypeAlias) {
+                declaration = declaration.type.resolve().declaration
+            }
+            declaration.qualifiedName!!.asString()
         }
         val base = when (baseQualifiedName) {
             Int::class.qualifiedName -> Int::class
