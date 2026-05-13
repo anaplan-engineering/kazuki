@@ -3,6 +3,12 @@ plugins {
     id 'kazuki.common-conventions'
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of("11")
+    }
+}
+
 dependencies {
     implementation platform(libs.kotlin.bom)
     implementation libs.kotlin.reflect
