@@ -5,6 +5,7 @@ import com.anaplan.engineering.kazuki.core.internal.*
 import com.anaplan.engineering.kazuki.ksp.*
 import com.anaplan.engineering.kazuki.ksp.type.property.PropertyProcessor
 import com.anaplan.engineering.kazuki.ksp.type.property.addFunctionProviders
+import com.anaplan.engineering.kazuki.ksp.type.property.toClassNameStrict
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.squareup.kotlinpoet.*
@@ -85,7 +86,7 @@ private fun TypeSpec.Builder.addMappingType(
     logger.debug("Creating mapping=$interfaceName ${superInterface.simpleName} $domainTypeName->$rangeTypeName")
     val baseMapPropertyName = "baseMap"
     val baseSetPropertyName = "elements"
-    val superMappingTypeName = mappingType.toClassName().parameterizedBy(domainTypeName, rangeTypeName)
+    val superMappingTypeName = mappingType.toClassNameStrict().parameterizedBy(domainTypeName, rangeTypeName)
     val suffix = if (requiresNonEmpty) "Mapping1" else "Mapping"
     val implClassName = "${interfaceName}_$suffix"
     val mapType = Map::class.asClassName().parameterizedBy(domainTypeName, rangeTypeName)

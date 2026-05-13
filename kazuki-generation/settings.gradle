@@ -1,2 +1,9 @@
 includeBuild("../build-conventions")
 
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs {
+            from(files("../gradle/libs.versions.toml"))
+        }
+    }
+}

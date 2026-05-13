@@ -1,12 +1,12 @@
 plugins {
     id 'kazuki.kotlin-conventions'
-    id 'com.gradle.plugin-publish' version '1.2.0'
+    alias(libs.plugins.pluginPublish)
 }
 
 
 dependencies {
     implementation gradleApi()
-    implementation 'com.squareup:kotlinpoet:1.14.2'
+    implementation libs.kotlinPoet
 }
 
 gradlePlugin {

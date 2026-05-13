@@ -1,0 +1,28 @@
+# Tentative naming convention for libraries, subject to improvement:
+# - As a general rule, match the artifact name.
+# - Use camel case to avoid subgroup accessors where it’s clear that the `-` in the artifact name
+#   stands for a space instead of a “specialisation”:
+# -- for example: kotlin-gradlePlugin <-> kotlin-gradle-plugin.
+
+[versions]
+kotlin = "2.3.20"
+ksp = "2.3.6"
+kotlinPoet = "2.3.0"
+
+[libraries]
+kotlin-bom = { group = "org.jetbrains.kotlin", name = "kotlin-bom", version.ref = "kotlin" }
+kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect" }
+kotlin-test-junit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit" }
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+
+slf4j-api = { group = "org.slf4j", name = "slf4j-api", version = "2.0.17" }
+
+ksp-symbolProcessingApi = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
+ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
+
+kotlinPoet = { group = "com.squareup", name = "kotlinpoet", version.ref = "kotlinPoet" }
+kotlinPoet-ksp = { group = "com.squareup", name = "kotlinpoet-ksp", version.ref = "kotlinPoet" }
+
+[plugins]
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+pluginPublish = { id = "com.gradle.plugin-publish", version = "1.2.0" }
