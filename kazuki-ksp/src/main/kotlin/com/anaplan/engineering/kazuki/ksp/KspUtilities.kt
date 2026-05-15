@@ -9,6 +9,7 @@ import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.symbol.*
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeVariableName
+import com.squareup.kotlinpoet.ksp.toTypeName
 
 // TODO -- extract KSP utilities to separate project and test independently!
 
@@ -124,3 +125,16 @@ internal fun getClassDeclaration(declaration: KSDeclaration): KSClassDeclaration
         is KSTypeAlias -> getClassDeclaration(declaration.type)
         else -> throw IllegalStateException("Unexpected declaration: $declaration")
     }
+
+internal fun KSType.runtimeCheckTypeName(): TypeName =
+    resolveTypeAliases().starProjection().toTypeName()
+
+private fun KSType.resolveTypeAliases(): KSType {
+    val declaration = declaration as? KSTypeAlias ?: return this
+    val type = declaration.type.resolve().resolveTypeAliases()
+    return if (isMarkedNullable) {
+        type.makeNullable()
+    } else {
+        type
+    }
+}
