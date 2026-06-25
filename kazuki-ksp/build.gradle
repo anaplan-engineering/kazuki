@@ -1,5 +1,5 @@
 plugins {
-    id 'kazuki.kotlin-conventions-junit4'
+    id 'kazuki.kotlin-junit4-conventions'
     id 'kazuki.jar-publishing-conventions'
 }
 
