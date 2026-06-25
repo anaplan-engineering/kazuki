@@ -564,101 +564,6 @@ internal fun TypeSpec.Builder.addRecordType(
         }
 
         addFunction(
-            FunSpec.builder(InbuiltNames.transform).apply {
-                val t =
-                    TypeVariableName(findUnusedGenericName(interfaceTypeArguments), bounds = listOf(interfaceTypeName))
-                addTypeVariables(interfaceTypeArguments + t)
-                receiver(t)
-                variableTupleComponents.forEach { tc ->
-                    addParameter(ParameterSpec.builder(tc.name, tc.typeName).apply {
-                        defaultValue("this.%N", tc.name)
-                    }.build())
-                }
-                returns(t)
-                addAnnotation(uncheckedCastAnnotation())
-                addCode(CodeBlock.builder().apply {
-                    val constructableClassName = ClassName(
-                        coreInternalPackage,
-                        "_Constructable${allTupleComponents.size}"
-                    )
-                    val constructableTypeName =
-                        constructableClassName.parameterizedBy(allTupleComponents.map { it.typeName } + t)
-                    val erasedConstructableTypeName =
-                        constructableClassName.parameterizedBy(allTupleComponents.map { STAR } + STAR)
-
-                    beginControlFlow(
-                        "${InbuiltNames.pre}(%P)",
-                        "Cannot set on instance of $interfaceName created outside Kazuki [\${this::class}]"
-                    )
-                    addStatement("this·is·%T", erasedConstructableTypeName)
-                    endControlFlow()
-
-                    addStatement(
-                        "return (this·as·%T).$constructFunctionName(${allTupleComponents.joinToString { "%N" }}, true)",
-                        constructableTypeName,
-                        *allTupleComponents.map { it.name }.toTypedArray()
-                    )
-                }.build())
-            }.build()
-        )
-        addFunction(
-            FunSpec.builder(InbuiltNames.conditionalTransform).apply {
-                val t = TypeVariableName(
-                    findUnusedGenericName(interfaceTypeArguments),
-                    bounds = listOf(interfaceTypeName)
-                )
-                val o = TypeVariableName(findUnusedGenericName(interfaceTypeArguments + t))
-                addTypeVariables(interfaceTypeArguments + t + o)
-                receiver(t)
-                val postTransformType = Function1::class.asTypeName().parameterizedBy(t, o)
-                val onSuccessParamName = findNonRecordName("onSuccess")
-                val onFailureParamName = findNonRecordName("onFailure")
-                variableTupleComponents.forEach { tc ->
-                    addParameter(ParameterSpec.builder(tc.name, tc.typeName).apply {
-                        defaultValue("this.%N", tc.name)
-                    }.build())
-                }
-                addParameter(onSuccessParamName, postTransformType)
-                addParameter(onFailureParamName, postTransformType)
-                returns(o)
-                addAnnotation(uncheckedCastAnnotation())
-                addCode(CodeBlock.builder().apply {
-                    val constructableClassName = ClassName(
-                        coreInternalPackage,
-                        "_Constructable${allTupleComponents.size}"
-                    )
-                    val constructableTypeName =
-                        constructableClassName.parameterizedBy(allTupleComponents.map { it.typeName } + t)
-                    val erasedConstructableTypeName =
-                        constructableClassName.parameterizedBy(allTupleComponents.map { STAR } + STAR)
-
-                    beginControlFlow(
-                        "${InbuiltNames.pre}(%P)",
-                        "Cannot set on instance of $interfaceName created outside Kazuki [\${this::class}]"
-                    )
-                    addStatement("this·is·%T", erasedConstructableTypeName)
-                    endControlFlow()
-
-                    val constructableValName = findNonRecordName("constructable")
-                    val candidateValName = findNonRecordName("candidate")
-                    addStatement("val $constructableValName = (this·as·%T)", constructableTypeName)
-                    addStatement(
-                        "val $candidateValName = $constructableValName.$constructFunctionName(${allTupleComponents.joinToString { "%N" }}, false)",
-                        *allTupleComponents.map { it.name }.toTypedArray()
-                    )
-                    addStatement("require(${candidateValName}·is·%T)", _Constructable::class.asTypeName())
-                    beginControlFlow("if ($candidateValName.$validityFunctionName())")
-                    addStatement(
-                        "return $onSuccessParamName($constructableValName.$constructFunctionName(${allTupleComponents.joinToString { "%N" }}, true))",
-                        *allTupleComponents.map { it.name }.toTypedArray()
-                    )
-                    nextControlFlow("else")
-                    addStatement("return $onFailureParamName(this)")
-                    endControlFlow()
-                }.build())
-            }.build()
-        )
-        addFunction(
             FunSpec.builder("mk_$interfaceName").apply {
                 if (interfaceTypeArguments.isNotEmpty()) {
                     addTypeVariables(interfaceTypeArguments)
@@ -673,6 +578,103 @@ internal fun TypeSpec.Builder.addRecordType(
             }.build()
         )
     }
+    // To call transform/conditional transform, one needs a concrete instance therefore they can be provided
+    // even for non-makeable types
+    addFunction(
+        FunSpec.builder(InbuiltNames.transform).apply {
+            val t =
+                TypeVariableName(findUnusedGenericName(interfaceTypeArguments), bounds = listOf(interfaceTypeName))
+            addTypeVariables(interfaceTypeArguments + t)
+            receiver(t)
+            variableTupleComponents.forEach { tc ->
+                addParameter(ParameterSpec.builder(tc.name, tc.typeName).apply {
+                    defaultValue("this.%N", tc.name)
+                }.build())
+            }
+            returns(t)
+            addAnnotation(uncheckedCastAnnotation())
+            addCode(CodeBlock.builder().apply {
+                val constructableClassName = ClassName(
+                    coreInternalPackage,
+                    "_Constructable${allTupleComponents.size}"
+                )
+                val constructableTypeName =
+                    constructableClassName.parameterizedBy(allTupleComponents.map { it.typeName } + t)
+                val erasedConstructableTypeName =
+                    constructableClassName.parameterizedBy(allTupleComponents.map { STAR } + STAR)
+
+                beginControlFlow(
+                    "${InbuiltNames.pre}(%P)",
+                    "Cannot set on instance of $interfaceName created outside Kazuki [\${this::class}]"
+                )
+                addStatement("this·is·%T", erasedConstructableTypeName)
+                endControlFlow()
+
+                addStatement(
+                    "return (this·as·%T).$constructFunctionName(${allTupleComponents.joinToString { "%N" }}, true)",
+                    constructableTypeName,
+                    *allTupleComponents.map { it.name }.toTypedArray()
+                )
+            }.build())
+        }.build()
+    )
+    addFunction(
+        FunSpec.builder(InbuiltNames.conditionalTransform).apply {
+            val t = TypeVariableName(
+                findUnusedGenericName(interfaceTypeArguments),
+                bounds = listOf(interfaceTypeName)
+            )
+            val o = TypeVariableName(findUnusedGenericName(interfaceTypeArguments + t))
+            addTypeVariables(interfaceTypeArguments + t + o)
+            receiver(t)
+            val postTransformType = Function1::class.asTypeName().parameterizedBy(t, o)
+            val onSuccessParamName = findNonRecordName("onSuccess")
+            val onFailureParamName = findNonRecordName("onFailure")
+            variableTupleComponents.forEach { tc ->
+                addParameter(ParameterSpec.builder(tc.name, tc.typeName).apply {
+                    defaultValue("this.%N", tc.name)
+                }.build())
+            }
+            addParameter(onSuccessParamName, postTransformType)
+            addParameter(onFailureParamName, postTransformType)
+            returns(o)
+            addAnnotation(uncheckedCastAnnotation())
+            addCode(CodeBlock.builder().apply {
+                val constructableClassName = ClassName(
+                    coreInternalPackage,
+                    "_Constructable${allTupleComponents.size}"
+                )
+                val constructableTypeName =
+                    constructableClassName.parameterizedBy(allTupleComponents.map { it.typeName } + t)
+                val erasedConstructableTypeName =
+                    constructableClassName.parameterizedBy(allTupleComponents.map { STAR } + STAR)
+
+                beginControlFlow(
+                    "${InbuiltNames.pre}(%P)",
+                    "Cannot set on instance of $interfaceName created outside Kazuki [\${this::class}]"
+                )
+                addStatement("this·is·%T", erasedConstructableTypeName)
+                endControlFlow()
+
+                val constructableValName = findNonRecordName("constructable")
+                val candidateValName = findNonRecordName("candidate")
+                addStatement("val $constructableValName = (this·as·%T)", constructableTypeName)
+                addStatement(
+                    "val $candidateValName = $constructableValName.$constructFunctionName(${allTupleComponents.joinToString { "%N" }}, false)",
+                    *allTupleComponents.map { it.name }.toTypedArray()
+                )
+                addStatement("require(${candidateValName}·is·%T)", _Constructable::class.asTypeName())
+                beginControlFlow("if ($candidateValName.$validityFunctionName())")
+                addStatement(
+                    "return $onSuccessParamName($constructableValName.$constructFunctionName(${allTupleComponents.joinToString { "%N" }}, true))",
+                    *allTupleComponents.map { it.name }.toTypedArray()
+                )
+                nextControlFlow("else")
+                addStatement("return $onFailureParamName(this)")
+                endControlFlow()
+            }.build())
+        }.build()
+    )
 }
 
 

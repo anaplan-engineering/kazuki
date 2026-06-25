@@ -22,8 +22,6 @@ object Kazuki {
 }
 
 
-annotation class RecordType
-
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Module(
