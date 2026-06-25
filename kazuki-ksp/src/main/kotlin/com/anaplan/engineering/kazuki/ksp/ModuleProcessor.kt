@@ -56,6 +56,8 @@ internal class ModuleProcessor(
         }
     }
 
+
+
     @OptIn(KspExperimental::class)
     private fun processModuleClass(clazz: KSClassDeclaration) {
         typeGenerationContext.logger.debug("Processing module: ${clazz.qualifiedName!!.asString()}")
