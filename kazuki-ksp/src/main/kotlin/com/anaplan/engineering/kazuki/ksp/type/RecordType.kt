@@ -16,7 +16,6 @@ import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
-import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.toTypeParameterResolver
 import com.squareup.kotlinpoet.ksp.toTypeVariableName
 
@@ -412,7 +411,7 @@ internal fun TypeSpec.Builder.addRecordType(
                         beginControlFlow(
                             "if (%N._${tc.index}·!is·%T)",
                             otherParameterName,
-                            type.starProjection().toTypeName()
+                            type.runtimeCheckTypeName()
                         )
                         addStatement("return false")
                         endControlFlow()

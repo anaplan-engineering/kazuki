@@ -1,6 +1,6 @@
 plugins {
     id 'kazuki.kotlin-conventions-junit4'
-    id 'com.google.devtools.ksp' version("1.9.10-1.0.13")
+    alias(libs.plugins.ksp)
     id 'com.anaplan.engineering.kazuki-generation'
 }
 
@@ -9,13 +9,9 @@ dependencies {
     ksp project(":kazuki-ksp")
 }
 
-compileTestKotlin {
-    dependsOn generateRecordTests
-}
-
 // TODO - figure out how to do this from the plugin ?!
 sourceSets {
-    test.kotlin.srcDirs "$buildDir/generated/kazuki/test/kotlin"
+    test.kotlin.srcDir(generateRecordTests)
 }
 
 ksp {

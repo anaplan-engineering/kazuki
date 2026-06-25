@@ -14,7 +14,6 @@ import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.toTypeParameterResolver
 
@@ -47,7 +46,7 @@ internal fun getFunctionProviderProperties(
         superFunctionProviderProperties.map {
             // TODO -- there are likely more complex instances here and we could do with a generic utility to resolve more generally
             val providerType = it.type.resolve()
-            val providerClassName = providerType.toClassName()
+            val providerClassName = providerType.toClassNameStrict()
             val resolvedProviderTypeArgs = providerType.arguments.map { typeArg ->
                 val typeArgType = typeArg.type!!.resolve().declaration
                 if (typeArgType is KSTypeParameter) {

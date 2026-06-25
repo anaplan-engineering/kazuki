@@ -34,8 +34,10 @@ internal class PropertyProcessor(
         val functionProviderProperties = getFunctionProviderProperties(classDcl, typeGenerationContext)
         val recordProperties = (properties - comparableProperty - functionProviderProperties.map { it.property }.toSet()).filterNotNull()
 
-        val allInterfaceProperties = classDcl.getAllProperties().toList()
-        val propertyBuilders = classDcl.superModules.reversed().map { type ->
+        val allInterfacePropertiesByName = classDcl.getAllProperties()
+            .groupBy { it.simpleName.asString() }
+        // keep base modules before derived modules so same-name properties are overridden by the most specific branch
+        val propertyBuilders = classDcl.superModules.sortedBy { it.inheritedModuleDepth() }.map { type ->
             val superClassDcl = getClassDeclaration(type)
             val superProperties = if (superClassDcl.containingFile == null && allowFields) {
                 // Properties in class file have arbitrary order so identify correct order from generated record
@@ -54,17 +56,17 @@ internal class PropertyProcessor(
             val superFunctionComparableProperties =
                 superProperties.filter { it.isAnnotationPresent(ComparableProperty::class) }
             val superRecordProperties = (superProperties - superFunctionProviderProperties - superFunctionComparableProperties).toList()
-            superRecordProperties.map { superProperty -> allInterfaceProperties.find { interfaceProperty -> superProperty.simpleName == interfaceProperty.simpleName }!! }
-                .associate { property ->
-                    property.type.resolve()
-                    val name = property.simpleName.asString()
-                    name to PropertyBuilder(
-                        name,
-                        !property.isAbstract(),
-                        property.type,
-                        property.type.toTypeName(typeParameterResolver)
-                    )
-                }
+            superRecordProperties.associate { superProperty ->
+                val property = allInterfacePropertiesByName.getValue(superProperty.simpleName.asString()).last()
+                property.type.resolve()
+                val name = property.simpleName.asString()
+                name to PropertyBuilder(
+                    name,
+                    !superProperty.isAbstract(),
+                    property.type,
+                    property.type.toTypeName(typeParameterResolver)
+                )
+            }
         } + recordProperties.associate { property ->
             val name = property.simpleName.asString()
             name to PropertyBuilder(
@@ -83,6 +85,11 @@ internal class PropertyProcessor(
             typeGenerationContext.errors.add("Type $classDcl may not have fields: $propertyNames")
         }
         return Properties(functionProviderProperties, tupleComponents)
+    }
+
+    private fun KSTypeReference.inheritedModuleDepth(): Int {
+        val superClassDcl = getClassDeclaration(this)
+        return superClassDcl.superModules.maxOfOrNull { it.inheritedModuleDepth() + 1 } ?: 0
     }
 
     private data class PropertyBuilder(
