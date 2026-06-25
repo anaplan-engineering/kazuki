@@ -1,13 +1,4 @@
 plugins {
     id 'kazuki.example-conventions'
-    id 'kazuki.kotlin-conventions-junit5'
-}
-
-dependencies {
-    api project(":kazuki-core")
-    ksp project(":kazuki-ksp")
-}
-
-test {
-    useJUnitPlatform()
+    id 'kazuki.kotlin-junit5-conventions'
 }

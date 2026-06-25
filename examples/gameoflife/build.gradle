@@ -1,6 +1,6 @@
 plugins {
     id 'kazuki.example-conventions'
-    id 'kazuki.kotlin-conventions-junit4'
+    id 'kazuki.kotlin-junit4-conventions'
 }
 
 
