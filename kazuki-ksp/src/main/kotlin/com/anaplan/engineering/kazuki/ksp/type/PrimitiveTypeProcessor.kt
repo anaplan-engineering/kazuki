@@ -32,6 +32,7 @@ class PrimitiveTypeProcessor(
             UInt::class.qualifiedName -> UInt::class
             Long::class.qualifiedName -> Long::class
             ULong::class.qualifiedName -> ULong::class
+            Double::class.qualifiedName -> Double::class
             else -> throw IllegalArgumentException("Non-primitive type in primitive invariant ${type.base.qualifiedName}")
         }
         val typeAliasSpec = TypeAliasSpec.builder(type.name, base).build()
