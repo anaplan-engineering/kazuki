@@ -44,6 +44,7 @@ internal fun TypeSpec.Builder.addInvariantFrom(
     interfaceClassDcl: KSClassDeclaration,
     typeGenerationContext: TypeGenerationContext,
     additionalInvariantParts: List<InvariantClause> = emptyList(),
+    validityRequiresOverride: Boolean = true,
 ): Boolean {
     val invariantClauses = mutableListOf<InvariantClause>().apply {
         interfaceClassDcl.getAllFunctions()
@@ -93,7 +94,9 @@ internal fun TypeSpec.Builder.addInvariantFrom(
             endControlFlow()
         }.build())
         addFunction(FunSpec.builder(validityFunctionName).apply {
-            addModifiers(KModifier.OVERRIDE)
+            if (validityRequiresOverride) {
+                addModifiers(KModifier.OVERRIDE)
+            }
             returns(Boolean::class)
             addStatement("return $invariantClausesPropertyName.all·{ it.holds }")
         }.build())

@@ -19,7 +19,7 @@ sourceSets {
 }
 
 ksp {
-    arg("com.anaplan.engineering.kazuki.compile.debug.level", "INFO")
+    arg("com.anaplan.engineering.kazuki.compile.debug.level", "WARN")
 }
 
 test {

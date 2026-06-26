@@ -27,7 +27,8 @@ internal data class ComparableWith(
 internal fun TypeSpec.Builder.addComparableWith(
     classDcl: KSClassDeclaration,
     default: ClassName,
-    typeGenerationContext: TypeGenerationContext
+    typeGenerationContext: TypeGenerationContext,
+    requiresOverride: Boolean = true
 ): ComparableWith {
     val comparableProperty = getComparableProperty(classDcl, typeGenerationContext)
     val comparableTypeLimit = if (comparableProperty == null) {
@@ -46,8 +47,12 @@ internal fun TypeSpec.Builder.addComparableWith(
         comparableTypeLimit.toClassName().parameterizedBy(params.typeArguments)
     }
     addProperty(
-        PropertySpec.builder(comparableWithPropertyName, comparableWithTypeName, KModifier.OVERRIDE)
-            .initializer(CodeBlock.of("$comparableTypeLimitClassName::class")).build()
+        PropertySpec.builder(comparableWithPropertyName, comparableWithTypeName).apply {
+            if (requiresOverride) {
+                addModifiers(KModifier.OVERRIDE)
+            }
+            initializer(CodeBlock.of("$comparableTypeLimitClassName::class"))
+        }.build()
     )
     return ComparableWith(comparableProperty, comparableTypeLimitClassName, comparableTypeLimitTypeName)
 }
