@@ -78,6 +78,9 @@ internal val KSClassDeclaration.moduleName
 internal val KSClassDeclaration.qualifiedModuleName
     get() = "${this.packageName.asString()}.${moduleName}"
 
+internal val KSClassDeclaration.abstractionName
+    get() = "${simpleName.asString()}_Abstraction"
+
 internal fun TypeVariableName.stripVariance() = TypeVariableName.invoke(name, bounds, variance = null)
 
 internal fun KSClassDeclaration.resolveTypeNameOfAncestorGenericParameter(

@@ -1,5 +1,6 @@
 package com.anaplan.engineering.kazuki.ksp
 
+import com.anaplan.engineering.kazuki.core.Abstraction
 import com.anaplan.engineering.kazuki.core.Module
 import com.anaplan.engineering.kazuki.core.PrimitiveInvariant
 import com.anaplan.engineering.kazuki.ksp.KazukiSymbolProcessor.KazukiLogger
@@ -12,6 +13,7 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSNode
 import com.google.devtools.ksp.validate
+import kotlin.reflect.KClass
 
 @OptIn(KspExperimental::class)
 class KazukiSymbolProcessor(private val environment: SymbolProcessorEnvironment) : SymbolProcessor {
@@ -20,16 +22,17 @@ class KazukiSymbolProcessor(private val environment: SymbolProcessorEnvironment)
     private val processingState = KazukiProcessingState(environment)
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        val allModules =
-            resolver.getSymbolsWithAnnotation(Module::class.qualifiedName.orEmpty())
-                .filterIsInstance<KSClassDeclaration>().groupBy { it.validate() }
+        val allModules = getAnnotatedClassesByValidity(resolver, Module::class)
+        val allAbstractions = getAnnotatedClassesByValidity(resolver, Abstraction::class)
 
         val typeGenerationContext = TypeGenerationContext(processingState, resolver)
         val primitiveTypeProcessor = PrimitiveTypeProcessor(typeGenerationContext, environment.codeGenerator)
         initializePrimitiveInvariants(resolver, primitiveTypeProcessor)
 
         val moduleProcessor = ModuleProcessor(typeGenerationContext, environment.codeGenerator)
-        allModules[true]?.forEach { moduleProcessor.generateImplementation(it) }
+        val unprocessedModules = allModules[true]?.filter { !moduleProcessor.generateImplementation(it) } ?: emptyList()
+        val abstractionProcessor = AbstractionProcessor(typeGenerationContext, environment.codeGenerator)
+        val unprocessedAbstractions = allAbstractions[true]?.filter { !abstractionProcessor.generateImplementation(it) } ?: emptyList()
 
         if (processingState.hasErrors()) {
             processingState.errors.forEach {
@@ -37,8 +40,26 @@ class KazukiSymbolProcessor(private val environment: SymbolProcessorEnvironment)
             }
             return emptyList()
         }
-        return allModules[false] ?: emptyList()
+
+        return mutableListOf<KSClassDeclaration>().apply {
+            addAll(unprocessedModules)
+            addAll(unprocessedAbstractions)
+            val modules = allModules[false]
+            if (modules != null) {
+                addAll(modules)
+            }
+            val abstractions = allAbstractions[false]
+            if (abstractions != null) {
+                addAll(abstractions)
+            }
+        }
     }
+
+    private fun getAnnotatedClassesByValidity(
+        resolver: Resolver,
+        klass: KClass<*>
+    ): Map<Boolean, List<KSClassDeclaration>> = resolver.getSymbolsWithAnnotation(klass.qualifiedName.orEmpty())
+        .filterIsInstance<KSClassDeclaration>().groupBy { it.validate() }
 
     class KazukiLogger(private val environment: SymbolProcessorEnvironment): KSPLogger by environment.logger {
 

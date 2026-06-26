@@ -25,7 +25,6 @@ internal fun TypeSpec.Builder.addRecordType(
     makeable: Boolean,
     typeGenerationContext: TypeGenerationContext,
 ) {
-    // TODO -- fail if class·is·not interface
     val interfaceType = interfaceClassDcl.asType(emptyList())
     val interfaceTypeArguments =
         interfaceClassDcl.typeParameters.map { it.toTypeVariableName(interfaceClassDcl.typeParameters.toTypeParameterResolver()) }
@@ -41,7 +40,8 @@ internal fun TypeSpec.Builder.addRecordType(
     val variableTupleComponents = properties.tupleComponents.filter { !it.fixed }
     typeGenerationContext.logger.debug("tuple components: $allTupleComponents")
     if (allTupleComponents.isEmpty()) {
-        throw IllegalStateException("Record $interfaceTypeName must have fields")
+        typeGenerationContext.processingState.errors.add("Record ${interfaceClassDcl.qualifiedName?.asString()} must have fields")
+        return
     }
     val tupleClassName = ClassName(corePackage, "Tuple${allTupleComponents.size}")
     val tupleType = tupleClassName.parameterizedBy(

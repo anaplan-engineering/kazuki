@@ -31,6 +31,12 @@ annotation class Module(
     val makeable: Boolean = true
 )
 
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class Abstraction(
+    val of: KClass<*>
+)
+
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Invariant

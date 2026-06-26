@@ -6,26 +6,25 @@ import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.getVisibility
 import com.google.devtools.ksp.processing.CodeGenerator
-import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.Visibility
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.ksp.writeTo
 
 internal class ModuleProcessor(
-    private val typeGenerationContext: TypeGenerationContext,
-    private val codeGenerator: CodeGenerator
-) {
+    typeGenerationContext: TypeGenerationContext,
+    codeGenerator: CodeGenerator
+) : ConstructProcessor(typeGenerationContext, codeGenerator) {
 
-    fun generateImplementation(clazz: KSClassDeclaration) {
+    override fun generateImplementation(clazz: KSClassDeclaration): Boolean {
         if (clazz.classKind == ClassKind.OBJECT) {
             processModuleObject(clazz)
+        } else if (clazz.classKind != ClassKind.INTERFACE) {
+            typeGenerationContext.processingState.errors.add("Module ${clazz.qualifiedName} must be an interface or an object")
         } else {
             processModuleClass(clazz)
         }
+        return true
     }
 
     private fun KSClassDeclaration.kazukiType(): KazukiType {
@@ -57,7 +56,6 @@ internal class ModuleProcessor(
     }
 
 
-
     @OptIn(KspExperimental::class)
     private fun processModuleClass(clazz: KSClassDeclaration) {
         typeGenerationContext.logger.debug("Processing module: ${clazz.qualifiedName!!.asString()}")
@@ -79,13 +77,14 @@ internal class ModuleProcessor(
             }
         }.build()
 
-        writeModule(clazz, clazz.moduleName, moduleTypeSpec)
+        writeToFile(clazz, clazz.moduleName, moduleTypeSpec)
     }
 
     private fun processModuleObject(clazz: KSClassDeclaration) {
         // TODO - type extension
         val types =
-            clazz.declarations.filterIsInstance<KSClassDeclaration>().filter { it.getVisibility() == Visibility.PUBLIC }
+            clazz.declarations.filterIsInstance<KSClassDeclaration>()
+                .filter { it.getVisibility() == Visibility.PUBLIC }
                 .groupBy { it.kazukiType() }
 
         val seq1Types = types[KazukiType.Sequence1Type] ?: emptyList()
@@ -101,7 +100,7 @@ internal class ModuleProcessor(
         val mappingType = types[KazukiType.MappingType] ?: emptyList()
         val mapping1Type = types[KazukiType.Mapping1Type] ?: emptyList()
 
-        val moduleClassName = "${clazz.simpleName.asString()}_Module"
+        val moduleClassName = clazz.moduleName
         val moduleTypeSpec = TypeSpec.objectBuilder(moduleClassName).apply {
             seq1Types.forEach { addSeq1Type(it, true, typeGenerationContext) }
             seqTypes.forEach { addSeqType(it, true, typeGenerationContext) }
@@ -117,23 +116,8 @@ internal class ModuleProcessor(
             mapping1Type.forEach { addMapping1Type(it, true, typeGenerationContext) }
         }.build()
 
-        writeModule(clazz, moduleClassName, moduleTypeSpec)
+        writeToFile(clazz, moduleClassName, moduleTypeSpec)
     }
 
-    private fun writeModule(
-        clazz: KSClassDeclaration,
-        moduleClassName: String,
-        moduleTypeSpec: TypeSpec
-    ) {
-        val clazzName =
-            ClassName(packageName = clazz.packageName.asString(), clazz.simpleName.asString())
-        val imports =
-            clazz.declarations.filterIsInstance<KSClassDeclaration>().filter { it.getVisibility() == Visibility.PUBLIC }
-                .map { it.simpleName.asString() }.toList()
-        FileSpec.builder(clazz.packageName.asString(), moduleClassName)
-            .addImport(clazzName, imports)
-            .addImport(InbuiltNames.corePackage, InbuiltNames.prettyOrDefault)
-            .addType(moduleTypeSpec).build()
-            .writeTo(codeGenerator, Dependencies(true, clazz.containingFile!!))
-    }
+
 }
