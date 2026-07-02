@@ -4,7 +4,7 @@ import com.anaplan.engineering.kazuki.core.FunctionProvider
 import com.anaplan.engineering.kazuki.core.Mapping
 import com.anaplan.engineering.kazuki.core.Module
 import com.anaplan.engineering.kazuki.core.Relation
-import com.anaplan.engineering.kazuki.core.Tuple2
+import com.anaplan.engineering.kazuki.core.as_Relation
 import com.anaplan.engineering.kazuki.core.as_Set
 import com.anaplan.engineering.kazuki.core.card
 import com.anaplan.engineering.kazuki.core.dunion
@@ -20,7 +20,6 @@ import com.anaplan.engineering.kazuki.core.subset
 import com.anaplan.engineering.kazuki.core.union
 import com.anaplan.engineering.kazuki.toolkit.RelationZ_Module.as_RelationZ
 import com.anaplan.engineering.kazuki.toolkit.RelationZ_Module.mk_RelationZ
-import java.util.HashSet
 
 // Suggested extensions to core Relation based on VDM_Toolkit Relations.vdmsl.
 // Core Relation keeps basic set-of-pairs operations; RelationZ adds the Z/Eves relation toolkit.
@@ -49,7 +48,7 @@ class RelationZFunctions<D, R>(private val relation: RelationZ<D, R>) {
             val qRng = relation.rng
             val rRng = other.rng
             val qrRd = qRng union other.dom
-            mkRel(
+            as_RelationZ(as_Relation(
                 set(qDom, rRng,
                     filter = { x, z ->
                         exists(qrRd) { y ->
@@ -57,7 +56,7 @@ class RelationZFunctions<D, R>(private val relation: RelationZ<D, R>) {
                         }
                     }
                 ) { x, z -> mk_(x, z) }
-            )
+            ))
         },
         post = { other: Relation<R, Z>, result: RelationZ<D, Z> ->
             result.dom subset relation.dom && result.rng subset other.rng
@@ -74,32 +73,33 @@ class RelationZFunctions<D, R>(private val relation: RelationZ<D, R>) {
 
     val inv = function(
         command = { ->
-            mkRel(set(relation) { mk_(it._2, it._1) })
+            //TODO is this right? Sounds redundant but kazuki RelationExtension does the same
+            as_RelationZ(as_Relation(set(relation) { mk_(it._2, it._1) }))
         },
         post = { result: RelationZ<R, D> -> relation.card == result.card }
     )
 
     val dres = function(
         command = { s: Set<D> ->
-            mkRel(set(relation, filter = { (k, _) -> k in s }) { mk_(it._1, it._2) })
+            as_RelationZ(as_Relation(set(relation, filter = { (k, _) -> k in s }) { mk_(it._1, it._2) }))
         }
     )
 
     val rres = function(
         command = { s: Set<R> ->
-            mkRel(set(relation, filter = { (_, v) -> v in s }) { mk_(it._1, it._2) })
+            as_RelationZ(as_Relation(set(relation, filter = { (_, v) -> v in s }) { mk_(it._1, it._2) }))
         }
     )
 
     val ndres = function(
         command = { s: Set<D> ->
-            mkRel(set(relation, filter = { (k, _) -> k !in s }) { mk_(it._1, it._2) })
+            as_RelationZ(as_Relation(set(relation, filter = { (k, _) -> k !in s }) { mk_(it._1, it._2) }))
         }
     )
 
     val nrres = function(
         command = { s: Set<R> ->
-            mkRel(set(relation, filter = { (_, v) -> v !in s }) { mk_(it._1, it._2) })
+            as_RelationZ(as_Relation(set(relation, filter = { (_, v) -> v !in s }) { mk_(it._1, it._2) }))
         }
     )
 
@@ -112,10 +112,10 @@ class RelationZFunctions<D, R>(private val relation: RelationZ<D, R>) {
 
     fun <Z> dagger() = function(
         command = { other: Relation<D, R> ->
-            mkRel(
+            as_RelationZ(as_Relation(
                 set(other, filter = { (k, _) -> k !in relation.dom }) { mk_(it._1, it._2) }
                     union as_Set(relation)
-            )
+            ))
         }
     )
 
@@ -132,11 +132,9 @@ class RelationZFunctions<D, R>(private val relation: RelationZ<D, R>) {
             val hom = relation as RelationZ<D, D>
             val card = hom.card
             if (card == 0uL) {
-                mkRel<D, R>(emptySet())
+                mk_RelationZ(emptySet())
             } else {
-                mkRel(
-                    dunion(set(1uL..card) { n -> as_Set(hom.functions.iter(n)) })
-                ) as RelationZ<D, R>
+                as_RelationZ(as_Relation(dunion(set(1uL..card) { n -> as_Set(hom.functions.iter(n)) }))) as RelationZ<D, R>
             }
         },
         post = { result: RelationZ<D, R> -> relation subset result }
@@ -146,9 +144,9 @@ class RelationZFunctions<D, R>(private val relation: RelationZ<D, R>) {
         command = { ->
             @Suppress("UNCHECKED_CAST")
             val hom = relation as RelationZ<D, D>
-            mkRel(
-                as_Set(hom.functions.tclosure()) union as_Set(Relation2Ops.idRel<D>()(hom))
-            ) as RelationZ<D, R>
+            as_RelationZ(as_Relation(
+                as_Set(hom.functions.tclosure()) union as_Set(RelationZOps.idRel<D>()(hom))
+            )) as RelationZ<D, R>
         },
         post = { result: RelationZ<D, R> -> relation subset result }
     )
@@ -191,11 +189,11 @@ class RelationZFunctions<D, R>(private val relation: RelationZ<D, R>) {
     )
 }
 
-object Relation2Ops {
+object RelationZOps {
 
     fun <D> id() = function(
         command = { s: Set<D> ->
-            mkRel(set(s) { x -> mk_(x, x) })
+            as_RelationZ(as_Relation(set(s) { x -> mk_(x, x) }))
         },
         post = { s: Set<D>, result: RelationZ<D, D> -> s.size.toULong() == result.card }
     )
@@ -209,7 +207,7 @@ object Relation2Ops {
 
     fun <D, R> makeRelFromSet() = function(
         command = { ls: Set<D>, rs: Set<R> ->
-            mkRel(set(ls, rs) { l, r -> mk_(l, r) })
+            as_RelationZ(as_Relation(set(ls, rs) { l, r -> mk_(l, r) }))
         },
         post = { ls: Set<D>, rs: Set<R>, result: RelationZ<D, R> ->
             result.dom subset ls && result.rng subset rs
@@ -218,7 +216,7 @@ object Relation2Ops {
 
     fun <D, R> mapAsRel() = function(
         command = { m: Mapping<D, R> ->
-            mkRel(set(m.dom) { x -> mk_(x, m[x]) })
+            as_RelationZ(as_Relation(set(m.dom) { x -> mk_(x, m[x]) }))
         },
         post = { m: Mapping<D, R>, result: RelationZ<D, R> ->
             result.dom == m.dom &&
@@ -240,12 +238,7 @@ fun <T> power(s: Set<T>): Set<Set<T>> {
 @Suppress("UNCHECKED_CAST")
 private fun <D> homogeneousIter(relation: RelationZ<D, D>, n: nat): RelationZ<D, D> =
     when (n) {
-        0uL -> Relation2Ops.idRel<D>()(relation)
+        0uL -> RelationZOps.idRel<D>()(relation)
         1uL -> relation
         else -> relation.functions.comp<D>()(homogeneousIter(relation, n - 1uL))
     }
-
-private fun <D, R> mkRel(elements: Iterable<Tuple2<D, R>>): RelationZ<D, R> =
-    mk_RelationZ(HashSet(elements.toList()))
-
-fun <D, R> mkRel2(elements: Iterable<Tuple2<D, R>>): RelationZ<D, R> = mkRel(elements)

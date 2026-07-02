@@ -1,6 +1,7 @@
 package com.anaplan.engineering.kazuki.toolkit
 
 import com.anaplan.engineering.kazuki.core.Tuple2
+import com.anaplan.engineering.kazuki.core.as_Relation
 import com.anaplan.engineering.kazuki.core.as_Set
 import com.anaplan.engineering.kazuki.core.card
 import com.anaplan.engineering.kazuki.core.dunion
@@ -12,6 +13,7 @@ import com.anaplan.engineering.kazuki.core.mk_Set
 import com.anaplan.engineering.kazuki.core.set
 import com.anaplan.engineering.kazuki.core.subset
 import com.anaplan.engineering.kazuki.core.union
+import com.anaplan.engineering.kazuki.toolkit.RelationZ_Module.as_RelationZ
 import com.anaplan.engineering.kazuki.toolkit.RelationZ_Module.mk_RelationZ
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -28,12 +30,12 @@ class TestRelation {
         val TYPE_RANGE2 = as_Set((MAX_TEST / 2..MAX_TEST).toSet())
         val TYPE_RANGE = TYPE_RANGE1 union TYPE_RANGE2
 
-        fun fR1() = Relation2Ops.makeRelFromSet<Int, Int>()(TYPE_RANGE1, TYPE_RANGE1)
-        fun fR2() = Relation2Ops.makeRelFromSet<Int, Int>()(TYPE_RANGE2, TYPE_RANGE2)
-        fun fR10() = Relation2Ops.mapAsRel<Int, Int>()(
+        fun fR1() = RelationZOps.makeRelFromSet<Int, Int>()(TYPE_RANGE1, TYPE_RANGE1)
+        fun fR2() = RelationZOps.makeRelFromSet<Int, Int>()(TYPE_RANGE2, TYPE_RANGE2)
+        fun fR10() = RelationZOps.mapAsRel<Int, Int>()(
             mk_Mapping(*TYPE_RANGE1.map { mk_(it, 0) }.toTypedArray())
         )
-        fun fR2i() = Relation2Ops.mapAsRel<Int, Int>()(
+        fun fR2i() = RelationZOps.mapAsRel<Int, Int>()(
             mk_Mapping(*TYPE_RANGE2.map { mk_(it, it + 1) }.toTypedArray())
         )
 
@@ -48,7 +50,9 @@ class TestRelation {
         val F2 = fR2i()
 
         fun relUnion(vararg rels: RelationZ<Int, Int>): RelationZ<Int, Int> =
-            mkRel2(rels.fold(mk_Set<Tuple2<Int, Int>>()) { acc, r -> kUnion(acc, as_Set(r)) })
+            as_RelationZ(as_Relation(rels.fold(mk_Set<Tuple2<Int, Int>>()) { acc, r ->
+                kUnion(acc, as_Set(r))
+            }))
     }
 
     @Test
@@ -57,9 +61,11 @@ class TestRelation {
             val tr1 = as_Set((1..max / 2 + 1).toSet())
             val tr2 = as_Set((max / 2..max).toSet())
             assertEquals(
-                Relation2Ops.id<Int>()(tr1 union tr2),
-                mkRel2(
-                    as_Set(Relation2Ops.id<Int>()(tr1)) union as_Set(Relation2Ops.id<Int>()(tr2))
+                RelationZOps.id<Int>()(tr1 union tr2),
+                as_RelationZ(
+                    as_Relation(
+                        as_Set(RelationZOps.id<Int>()(tr1)) union as_Set(RelationZOps.id<Int>()(tr2))
+                    )
                 )
             )
         }
@@ -70,8 +76,8 @@ class TestRelation {
         for (m in 2..MAX_TEST) {
             val tr1 = as_Set((1..m / 2 + 1).toSet())
             val tr2 = as_Set((m / 2..m).toSet())
-            val id1 = as_Set(Relation2Ops.id<Int>()(tr1))
-            val id2 = as_Set(Relation2Ops.id<Int>()(tr2))
+            val id1 = as_Set(RelationZOps.id<Int>()(tr1))
+            val id2 = as_Set(RelationZOps.id<Int>()(tr2))
             assertEquals(id1 subset id2, tr1 subset tr2)
         }
     }
@@ -92,8 +98,8 @@ class TestRelation {
         for (m in 1..MAX_TEST) {
             val tr1 = as_Set((1..m / 2 + 1).toSet())
             val tr2 = as_Set((m / 2..m).toSet())
-            val r1 = Relation2Ops.makeRelFromSet<Int, Int>()(tr1, tr2)
-            val s1 = Relation2Ops.makeRelFromSet<Int, Int>()(tr2, tr1)
+            val r1 = RelationZOps.makeRelFromSet<Int, Int>()(tr1, tr2)
+            val s1 = RelationZOps.makeRelFromSet<Int, Int>()(tr2, tr1)
             val u = relUnion(r1, s1)
             assertEquals(u.functions.dom(), r1.functions.dom() union s1.functions.dom())
             assertEquals(u.functions.rng(), r1.functions.rng() union s1.functions.rng())
@@ -115,7 +121,7 @@ class TestRelation {
     @Test
     fun tDomRngSubset() {
         assertTrue(forall(power(as_Set(R1))) { t ->
-            val sub = mkRel2(t)
+            val sub = as_RelationZ(as_Relation(t))
             sub.functions.dom() subset R1.functions.dom() &&
                     sub.functions.rng() subset R1.functions.rng()
         })
@@ -123,7 +129,7 @@ class TestRelation {
 
     @Test
     fun tDomRngId() {
-        val id = Relation2Ops.id<Int>()(TYPE_RANGE)
+        val id = RelationZOps.id<Int>()(TYPE_RANGE)
         assertEquals(TYPE_RANGE, id.functions.dom())
         assertEquals(TYPE_RANGE, id.functions.rng())
     }
@@ -208,11 +214,11 @@ class TestRelation {
     @Test
     fun tIdCompRes() {
         assertEquals(
-            Relation2Ops.id<Int>()(X1).functions.comp<Int>()(R1),
+            RelationZOps.id<Int>()(X1).functions.comp<Int>()(R1),
             R1.functions.dres(X1)
         )
         assertEquals(
-            R1.functions.comp<Int>()(Relation2Ops.id<Int>()(X1)),
+            R1.functions.comp<Int>()(RelationZOps.id<Int>()(X1)),
             R1.functions.rres(X1)
         )
     }
@@ -220,24 +226,24 @@ class TestRelation {
     @Test
     fun tIdResId() {
         assertEquals(
-            Relation2Ops.id<Int>()(Y1).functions.dres(X1),
-            Relation2Ops.id<Int>()(kInter(X1, Y1))
+            RelationZOps.id<Int>()(Y1).functions.dres(X1),
+            RelationZOps.id<Int>()(kInter(X1, Y1))
         )
         assertEquals(
-            Relation2Ops.id<Int>()(X1).functions.rres(Y1),
-            Relation2Ops.id<Int>()(kInter(X1, Y1))
+            RelationZOps.id<Int>()(X1).functions.rres(Y1),
+            RelationZOps.id<Int>()(kInter(X1, Y1))
         )
     }
 
     @Test
     fun tIdNresId() {
         assertEquals(
-            Relation2Ops.id<Int>()(Y1).functions.ndres(X1),
-            Relation2Ops.id<Int>()(Y1 - X1)
+            RelationZOps.id<Int>()(Y1).functions.ndres(X1),
+            RelationZOps.id<Int>()(Y1 - X1)
         )
         assertEquals(
-            Relation2Ops.id<Int>()(X1).functions.nrres(Y1),
-            Relation2Ops.id<Int>()(X1 - Y1)
+            RelationZOps.id<Int>()(X1).functions.nrres(Y1),
+            RelationZOps.id<Int>()(X1 - Y1)
         )
     }
 
@@ -362,19 +368,19 @@ class TestRelation {
     @Test
     fun tRelInvSetops() {
         val u = relUnion(R1, S1)
-        val i = mkRel2(kInter(as_Set(R1), as_Set(S1)))
-        val d = mkRel2(as_Set(R1) - as_Set(S1))
+        val i = as_RelationZ(as_Relation(kInter(as_Set(R1), as_Set(S1))))
+        val d = as_RelationZ(as_Relation(as_Set(R1) - as_Set(S1)))
         assertEquals(
             u.functions.inv(),
             relUnion(R1.functions.inv(), S1.functions.inv())
         )
         assertEquals(
             i.functions.inv(),
-            mkRel2(kInter(as_Set(R1.functions.inv()), as_Set(S1.functions.inv())))
+            as_RelationZ(as_Relation(kInter(as_Set(R1.functions.inv()), as_Set(S1.functions.inv()))))
         )
         assertEquals(
             d.functions.inv(),
-            mkRel2(as_Set(R1.functions.inv()) - as_Set(S1.functions.inv()))
+            as_RelationZ(as_Relation(as_Set(R1.functions.inv()) - as_Set(S1.functions.inv())))
         )
     }
 
@@ -460,7 +466,7 @@ class TestRelation {
 
     @Test
     fun tRelImgIdMap() {
-        val id = Relation2Ops.id<Int>()(TYPE_RANGE)
+        val id = RelationZOps.id<Int>()(TYPE_RANGE)
         assertTrue(forall(TYPE_RANGE) { x ->
             id.functions.img(mk_Set(x)) == mk_Set(x)
         })
@@ -502,8 +508,8 @@ class TestRelation {
     @Test
     fun tRtrclIteration() {
         val rt = R1.functions.rtclosure()
-        val expected = mkRel2(
-            dunion(set(0uL..R1.card) { n -> as_Set(R1.functions.iter(n)) })
+        val expected = as_RelationZ(
+            as_Relation(dunion(set(0uL..R1.card) { n -> as_Set(R1.functions.iter(n)) }))
         )
         assertEquals(expected, rt)
     }
