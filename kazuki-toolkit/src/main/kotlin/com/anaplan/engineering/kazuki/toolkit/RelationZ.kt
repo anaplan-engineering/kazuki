@@ -1,22 +1,34 @@
 package com.anaplan.engineering.kazuki.toolkit
 
 import com.anaplan.engineering.kazuki.core.FunctionProvider
+import com.anaplan.engineering.kazuki.core.InjectiveMapping
 import com.anaplan.engineering.kazuki.core.Mapping
 import com.anaplan.engineering.kazuki.core.Module
 import com.anaplan.engineering.kazuki.core.Relation
+import com.anaplan.engineering.kazuki.core.Tuple2
+import com.anaplan.engineering.kazuki.core.as_InjectiveMapping
+import com.anaplan.engineering.kazuki.core.as_Mapping
 import com.anaplan.engineering.kazuki.core.as_Relation
 import com.anaplan.engineering.kazuki.core.as_Set
+import com.anaplan.engineering.kazuki.core.arbitrary
 import com.anaplan.engineering.kazuki.core.card
 import com.anaplan.engineering.kazuki.core.dunion
 import com.anaplan.engineering.kazuki.core.exists
 import com.anaplan.engineering.kazuki.core.forall
 import com.anaplan.engineering.kazuki.core.function
+import com.anaplan.engineering.kazuki.core.inter
+import com.anaplan.engineering.kazuki.core.integer
 import com.anaplan.engineering.kazuki.core.iota
 import com.anaplan.engineering.kazuki.core.implies
 import com.anaplan.engineering.kazuki.core.mk_
+import com.anaplan.engineering.kazuki.core.mk_Mapping
+import com.anaplan.engineering.kazuki.core.mk_Set
 import com.anaplan.engineering.kazuki.core.nat
+import com.anaplan.engineering.kazuki.core.nat1
 import com.anaplan.engineering.kazuki.core.set
 import com.anaplan.engineering.kazuki.core.subset
+import com.anaplan.engineering.kazuki.core.toNat
+import com.anaplan.engineering.kazuki.core.times
 import com.anaplan.engineering.kazuki.core.union
 import com.anaplan.engineering.kazuki.toolkit.RelationZ_Module.as_RelationZ
 import com.anaplan.engineering.kazuki.toolkit.RelationZ_Module.mk_RelationZ
@@ -110,11 +122,11 @@ class RelationZFunctions<D, R>(private val relation: RelationZ<D, R>) {
         }
     )
 
-    fun <Z> dagger() = function(
+    val dagger = function(
         command = { other: Relation<D, R> ->
             as_RelationZ(as_Relation(
-                set(other, filter = { (k, _) -> k !in relation.dom }) { mk_(it._1, it._2) }
-                    union as_Set(relation)
+                set(relation, filter = { (k, _) -> k !in other.dom }) { mk_(it._1, it._2) }
+                    union as_Set(other)
             ))
         }
     )
@@ -138,6 +150,31 @@ class RelationZFunctions<D, R>(private val relation: RelationZ<D, R>) {
             }
         },
         post = { result: RelationZ<D, R> -> relation subset result }
+    )
+
+    val tclosure2 = function(
+        command = { ->
+            @Suppress("UNCHECKED_CAST")
+            val hom = relation as RelationZ<D, D>
+            val rel = as_Set(hom)
+            val closed = as_Set(power(rel).filter { q ->
+                rel subset q && as_Set(hom.functions.comp<D>()(as_RelationZ(as_Relation(q)))) subset q
+            })
+            if (closed.isEmpty()) {
+                mk_RelationZ(emptySet())
+            } else {
+                as_RelationZ(as_Relation(dinter(closed))) as RelationZ<D, R>
+            }
+        }
+    )
+
+    val niter = function(
+        command = { n: integer ->
+            @Suppress("UNCHECKED_CAST")
+            val hom = relation as RelationZ<D, D>
+            homogeneousIter(hom.functions.inv() as RelationZ<D, D>, (-n).toNat()) as RelationZ<D, R>
+        },
+        pre = { n -> n < 0 }
     )
 
     val rtclosure = function(
@@ -178,6 +215,45 @@ class RelationZFunctions<D, R>(private val relation: RelationZ<D, R>) {
         command = { -> relation.functions.isInmapOn(relation.functions.dom()) }
     )
 
+    val isTotalOn = function(
+        command = { s: Set<D> -> relation.functions.dom() == s }
+    )
+
+    val isMapSimple = function(
+        command = { -> relation.dom.card == relation.card }
+    )
+
+    val isInmapSimple = function(
+        command = { -> relation.rng.card == relation.card }
+    )
+
+    val isSurjOn = function(
+        command = { s: Set<R> -> relation.functions.isMap() && relation.functions.rng() == s }
+    )
+
+    val isBijOn = function(
+        command = { s: Set<R> -> relation.functions.isInmap() && relation.functions.isSurjOn(s) }
+    )
+
+    val asMapOn = function(
+        command = { s: Set<D> ->
+            as_Mapping(set(relation, filter = { (k, _) -> k in s }) { mk_(it._1, it._2) })
+        },
+        pre = { s -> relation.functions.isMapOn(s) },
+        post = { s: Set<D>, result: Mapping<D, R> ->
+            kInter(s, relation.functions.dom()) == result.dom &&
+                    relation.functions.img(s) == result.rng
+        }
+    )
+
+    val asMap = function(
+        command = { -> relation.functions.asMapOn(relation.functions.dom()) },
+        pre = { -> relation.functions.isMap() },
+        post = { result: Mapping<D, R> ->
+            relation.functions.dom() == result.dom && relation.functions.rng() == result.rng
+        }
+    )
+
     val apply = function(
         command = { x: D ->
             iota(relation.functions.rng()) { y ->
@@ -207,10 +283,76 @@ object RelationZOps {
 
     fun <D, R> makeRelFromSet() = function(
         command = { ls: Set<D>, rs: Set<R> ->
+            zip<D, R>()(ls, rs)
+        },
+        post = { ls: Set<D>, rs: Set<R>, result: RelationZ<D, R> ->
+            result.dom subset ls && result.rng subset rs
+        }
+    )
+
+    fun <D, R> zip() = function(
+        command = { ls: Set<D>, rs: Set<R> ->
             as_RelationZ(as_Relation(set(ls, rs) { l, r -> mk_(l, r) }))
         },
         post = { ls: Set<D>, rs: Set<R>, result: RelationZ<D, R> ->
             result.dom subset ls && result.rng subset rs
+        }
+    )
+
+    fun <D> makeRelTrclFromSet() = function(
+        command = { s: Set<D> ->
+            val rel = zip<D, D>()(s, s)
+            rel.functions.tclosure()
+        }
+    )
+
+    fun <D, R> makeRelSubset() = function(
+        command = { r: Relation<D, R>, n: nat1 ->
+            as_RelationZ(as_Relation(makeRelSubset0(as_Set(r), mk_Set(), n)))
+        },
+        pre = { r, n -> n < r.card },
+        post = { r: Relation<D, R>, n: nat1, result: RelationZ<D, R> ->
+            result.card == n && as_Set(result) subset as_Set(r)
+        }
+    )
+
+    fun <D, R> makeRelMap() = function(
+        command = { r: Relation<D, R> ->
+            makeRelMap0(as_Set(r), mk_Mapping(), injective = false)
+        },
+        post = { r: Relation<D, R>, result: Mapping<D, R> ->
+            mapAsRel<D, R>()(result).let { as_Set(it) subset as_Set(r) }
+        }
+    )
+
+    fun <D, R> makeRelInmap() = function(
+        command = { r: Relation<D, R> ->
+            as_InjectiveMapping(makeRelMap0(as_Set(r), mk_Mapping(), injective = true))
+        },
+        post = { r: Relation<D, R>, result: InjectiveMapping<D, R> ->
+            mapAsRel<D, R>()(result).let { as_Set(it) subset as_Set(r) }
+        }
+    )
+
+    fun <D, R> forceRelAsMap() = function(
+        command = { r: Relation<D, R> ->
+            forceRelAsMap0(as_Set(r), mk_Mapping())
+        },
+        post = { r: Relation<D, R>, result: Mapping<D, Set<R>> ->
+            if (as_RelationZ(r).functions.isMap()) {
+                result.dom == as_RelationZ(r).functions.dom()
+            } else {
+                val counts = mk_Mapping(*result.dom.map { d -> mk_(d, result[d].card) }.toTypedArray())
+                h(counts) == r.card
+            }
+        }
+    )
+
+    fun <D, R> subsetIsMapSubset() = function(
+        command = { r: Relation<D, R>, f: Relation<D, R> ->
+            val rZ = as_RelationZ(as_Relation(r))
+            val fZ = as_RelationZ(as_Relation(f))
+            (rZ.functions.isMap() && as_Set(f) subset as_Set(r)) implies fZ.functions.isMap()
         }
     )
 
@@ -234,6 +376,77 @@ fun <T> power(s: Set<T>): Set<Set<T>> {
         as_Set(elems.filterIndexed { i, _ -> mask and (1 shl i) != 0 })
     })
 }
+
+fun <T> dinter(sets: Set<Set<T>>): Set<T> {
+    val iterator = sets.iterator()
+    var result = iterator.next()
+    while (iterator.hasNext()) {
+        result = result inter iterator.next()
+    }
+    return result
+}
+
+private fun <D> kInter(a: Set<D>, b: Set<D>): Set<D> = as_Set(a.filter { it in b })
+
+private fun <D, R> removePair(r: Set<Tuple2<D, R>>, pair: Tuple2<D, R>): Set<Tuple2<D, R>> =
+    as_Set(r.filter { it != pair })
+
+private fun <D, R> makeRelSubset0(
+    r: Set<Tuple2<D, R>>,
+    s: Set<Tuple2<D, R>>,
+    n: nat1
+): Set<Tuple2<D, R>> =
+    if (r.card > n && n > 0uL) {
+        val pair = r.arbitrary()
+        makeRelSubset0(removePair(r, pair), s + pair, n - 1uL)
+    } else {
+        s
+    }
+
+private fun <D, R> makeRelMap0(
+    r: Set<Tuple2<D, R>>,
+    m: Mapping<D, R>,
+    injective: Boolean
+): Mapping<D, R> =
+    if (r.isEmpty()) {
+        m
+    } else {
+        val pair = r.arbitrary()
+        val rest = removePair(r, pair)
+        val extended = if (!injective || pair._2 !in m.rng) {
+            m * pair
+        } else {
+            m
+        }
+        makeRelMap0(rest, extended, injective)
+    }
+
+private fun <D, R> forceRelAsMap0(
+    r: Set<Tuple2<D, R>>,
+    m: Mapping<D, Set<R>>
+): Mapping<D, Set<R>> =
+    if (r.isEmpty()) {
+        m
+    } else {
+        val pair = r.arbitrary()
+        val rest = removePair(r, pair)
+        val nextValue = if (pair._1 in m.dom) {
+            m[pair._1] union mk_Set(pair._2)
+        } else {
+            mk_Set(pair._2)
+        }
+        forceRelAsMap0(rest, m * mk_(pair._1, nextValue))
+    }
+
+private fun <D> h(s: Mapping<D, nat>): nat =
+    if (s.dom.isEmpty()) {
+        0uL
+    } else {
+        val x = s.dom.arbitrary()
+        val restDom = as_Set(s.dom.filter { it != x })
+        val rest = mk_Mapping(*restDom.map { d -> mk_(d, s[d]) }.toTypedArray())
+        s[x] + h(rest)
+    }
 
 @Suppress("UNCHECKED_CAST")
 private fun <D> homogeneousIter(relation: RelationZ<D, D>, n: nat): RelationZ<D, D> =

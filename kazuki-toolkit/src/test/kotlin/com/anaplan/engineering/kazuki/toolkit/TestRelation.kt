@@ -549,6 +549,138 @@ class TestRelation {
     fun tRelIsInmap() {
         assertTrue(F2.functions.isInmap())
     }
+
+    @Test
+    fun tRelDagger() {
+        assertEquals(
+            R1.functions.dagger(S1),
+            as_RelationZ(as_Relation(
+                kUnion(
+                    as_Set(R1.functions.ndres(S1.functions.dom())),
+                    as_Set(S1)
+                )
+            ))
+        )
+    }
+
+    @Test
+    fun tRelNiter() {
+        assertEquals(R1.functions.niter(-1), R1.functions.inv())
+        assertEquals(R1.functions.niter(-2), R1.functions.iter(2uL).functions.inv())
+    }
+
+    @Test
+    fun tRelTclosure2() {
+        val tc2 = R1.functions.tclosure2()
+        assertTrue(as_Set(R1) subset as_Set(tc2))
+        assertTrue(
+            as_Set(tc2.functions.comp<Int>()(tc2)) subset as_Set(tc2)
+        )
+        assertTrue(as_Set(tc2) subset as_Set(R1.functions.tclosure()))
+    }
+
+    @Test
+    fun tRelIsTotalOn() {
+        assertTrue(R1.functions.isTotalOn(R1.functions.dom()))
+        assertTrue(!R1.functions.isTotalOn(TYPE_RANGE))
+    }
+
+    @Test
+    fun tRelIsMapSimple() {
+        assertTrue(F1.functions.isMapSimple())
+        assertTrue(!R1.functions.isMapSimple())
+    }
+
+    @Test
+    fun tRelIsInmapSimple() {
+        assertTrue(F2.functions.isInmapSimple())
+        assertTrue(!R1.functions.isInmapSimple())
+    }
+
+    @Test
+    fun tRelIsSurjOn() {
+        assertTrue(F1.functions.isSurjOn(F1.functions.rng()))
+        assertTrue(!F1.functions.isSurjOn(TYPE_RANGE))
+    }
+
+    @Test
+    fun tRelIsBijOn() {
+        assertTrue(F2.functions.isBijOn(F2.functions.rng()))
+    }
+
+    @Test
+    fun tRelSubsetIsMapSubset() {
+        assertTrue(RelationZOps.subsetIsMapSubset<Int, Int>()(F1, F1))
+        assertTrue(RelationZOps.subsetIsMapSubset<Int, Int>()(R1, R1Prime))
+        assertTrue(!R1Prime.functions.isMap())
+    }
+
+    @Test
+    fun tRelAsMap() {
+        val m = F1.functions.asMap()
+        assertEquals(F1.functions.dom(), m.dom)
+        assertEquals(F1.functions.rng(), m.rng)
+        assertTrue(forall(F1.functions.dom()) { x ->
+            F1.functions.apply(x) == m[x]
+        })
+    }
+
+    @Test
+    fun tRelAsMapOn() {
+        val s = F1.functions.dom()
+        val m = F1.functions.asMapOn(s)
+        assertEquals(kInter(s, F1.functions.dom()), m.dom)
+        assertEquals(F1.functions.img(s), m.rng)
+    }
+
+    @Test
+    fun tZip() {
+        assertEquals(
+            RelationZOps.makeRelFromSet<Int, Int>()(TYPE_RANGE1, TYPE_RANGE2),
+            RelationZOps.zip<Int, Int>()(TYPE_RANGE1, TYPE_RANGE2)
+        )
+    }
+
+    @Test
+    fun tMakeRelTrclFromSet() {
+        val trcl = RelationZOps.makeRelTrclFromSet<Int>()(TYPE_RANGE1)
+        assertTrue(as_Set(trcl) subset as_Set(trcl.functions.tclosure()))
+        assertTrue(forall(TYPE_RANGE1) { x ->
+            mk_(x, x) in trcl.functions.rtclosure()
+        })
+    }
+
+    @Test
+    fun tMakeRelSubset() {
+        val n = R1.card - 2uL
+        val sub = RelationZOps.makeRelSubset<Int, Int>()(R1, n)
+        assertEquals(n, sub.card)
+        assertTrue(as_Set(sub) subset as_Set(R1))
+    }
+
+    @Test
+    fun tMakeRelMap() {
+        val m = RelationZOps.makeRelMap<Int, Int>()(R1)
+        assertTrue(as_Set(RelationZOps.mapAsRel<Int, Int>()(m)) subset as_Set(R1))
+    }
+
+    @Test
+    fun tMakeRelInmap() {
+        val m = RelationZOps.makeRelInmap<Int, Int>()(R1)
+        assertTrue(as_Set(RelationZOps.mapAsRel<Int, Int>()(m)) subset as_Set(R1))
+        assertTrue(m.dom.card == m.rng.card)
+    }
+
+    @Test
+    fun tForceRelAsMap() {
+        val m = RelationZOps.forceRelAsMap<Int, Int>()(R1)
+        assertEquals(R1.functions.dom(), m.dom)
+        assertTrue(forall(m.dom) { x ->
+            m[x] subset R1.functions.img(mk_Set(x))
+        })
+        val totalPairs = m.dom.fold(0uL) { acc, x -> acc + m[x].card }
+        assertEquals(R1.card, totalPairs)
+    }
 }
 
 private infix fun Boolean.implies(other: Boolean) = if (this) other else true
