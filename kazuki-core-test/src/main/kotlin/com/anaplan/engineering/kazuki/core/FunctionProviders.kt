@@ -21,6 +21,7 @@ import com.anaplan.engineering.kazuki.core.GE3_Module.transform
 import com.anaplan.engineering.kazuki.core.GE4_Module.as_GE4
 import com.anaplan.engineering.kazuki.core.GE4_Module.is_GE4
 import com.anaplan.engineering.kazuki.core.GE4_Module.transform
+import com.anaplan.engineering.kazuki.core.times
 
 @Module
 interface A {
@@ -97,6 +98,15 @@ open class EFunctions(val e: E) : CFunctions(e) {
 
 }
 
+class OpenGAFunctions<P> {
+
+    val increment = function(
+        command = { ga: GA<P>, p: P -> ga.transform(map = ga.map * mk_(p, ga.map[p] + 1)) },
+        pre = { ga, p -> p in ga.map.dom },
+        post = { ga, p, result -> result.map[p] == ga.map[p] + 1 }
+    )
+
+}
 
 @Module
 interface GA<P> {
@@ -107,11 +117,10 @@ interface GA<P> {
 }
 
 open class GAFunctions<P>(val ga: GA<P>) {
-    open val increment = function(
-        command = { p: P -> ga.transform(map = ga.map * mk_(p, ga.map[p] + 1)) },
-        pre = { p -> p in ga.map.dom },
-        post = { p, result -> result.map[p] == ga.map[p] + 1 }
-    )
+
+    private val openGAFunctions = OpenGAFunctions<P>()
+
+    open val increment = openGAFunctions.increment.close(ga)
 }
 
 @Module
