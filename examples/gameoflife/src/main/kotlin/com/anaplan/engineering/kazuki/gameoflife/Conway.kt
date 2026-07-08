@@ -30,14 +30,14 @@ object Conway {
                 set(A) { x: integer -> set(A) { y: integer -> mk_Point(p.x + x, p.y + y) } }
             ).minus(p))
         },
-        post = { _, result -> result.card <= MaxNeighbours }
+        postCommand = { _, result -> result.card <= MaxNeighbours }
     )
 
     val neighbourCount: (Population, Point) -> nat = function(
         command = { pop: Population, p: Point ->
             (around(p) inter pop).card
         },
-        post = { _, _, result -> result <= MaxNeighbours },
+        postCommand = { _, _, result -> result <= MaxNeighbours },
     )
 
     val newCells: (Population) -> Population = function(
@@ -51,7 +51,7 @@ object Conway {
                 }
             ))
         },
-        post = { pop, result -> (result inter pop).isEmpty() }
+        postCommand = { pop, result -> (result inter pop).isEmpty() }
     )
 
     val deadCells: (Population) -> Population = function(
@@ -60,7 +60,7 @@ object Conway {
                 set(pop, filter = { neighbourCount(pop, it) !in Survive }) { it }
             )
         },
-        post = { pop, result -> (result inter pop) == result }
+        postCommand = { pop, result -> (result inter pop) == result }
     )
 
     internal val generation: (Population) -> Population = function(

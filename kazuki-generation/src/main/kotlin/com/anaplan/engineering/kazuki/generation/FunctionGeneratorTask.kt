@@ -40,6 +40,7 @@ private const val KotlinFunctionPackage = "kotlin"
 private const val CommandPropertyName = "command"
 private const val PrePropertyName = "pre"
 private const val PostPropertyName = "post"
+private const val PostCommandPropertyName = "postCommand"
 private const val MeasurePropertyName = "measure"
 private const val InvocationsPropertyName = "Invocations"
 private const val CachePropertyName = "cache"
@@ -60,6 +61,8 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
         .parameterizedBy(inputTypeNames + outputTypeName)
     val preTypeName = ClassName(KotlinFunctionPackage, "Function$argCount")
         .parameterizedBy(inputTypeNames + booleanName)
+    val postCommandTypeName = ClassName(KotlinFunctionPackage, "Function${argCount + 1}")
+        .parameterizedBy(inputTypeNames + outputTypeName + booleanName)
     val postTypeName = ClassName(KotlinFunctionPackage, "Function${argCount + 1}")
         .parameterizedBy(inputTypeNames + outputTypeName + booleanName)
     val measureTypeName = ClassName(KotlinFunctionPackage, "Function$argCount")
@@ -68,6 +71,7 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
         addParameter(CommandPropertyName, superInterfaceName)
         addParameter(PrePropertyName, preTypeName)
         addParameter(PostPropertyName, postTypeName)
+        addParameter(PostCommandPropertyName, postCommandTypeName)
         addParameter(MeasurePropertyName, measureTypeName)
         addParameter(CachePropertyName, booleanName)
         addParameter(LogAsPropertyName, nullableStringName)
@@ -86,6 +90,11 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
         )
         addProperty(
             PropertySpec.builder(PostPropertyName, postTypeName).initializer(PostPropertyName)
+                .build()
+        )
+        addProperty(
+            PropertySpec.builder(PostCommandPropertyName, postCommandTypeName).initializer(PostCommandPropertyName)
+                .addKdoc("It is not always possible or desirable to specify a total post condition, but we may still want to make some assertions about the result of the command on animation. The 'postCommand' function enables the specifier to provide these checks, whilst indicating that they have not intended to provide a total post condition.")
                 .build()
         )
         addProperty(
@@ -247,6 +256,12 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
 //                }
 
                 val postInputs = ((1..argCount).map { "i$it" } + resultValName).joinToString(", ")
+                beginControlFlow("if (!$PostCommandPropertyName($postInputs))")
+                addStatement("val name = %N ?: %N", LogAsPropertyName, FunctionIdPropertyName)
+                addStatement("val msg = \"In \$name\${mk_($inputs).pretty()}=\${%N.prettyOrDefault()}\"", resultValName)
+                addStatement("throw AnimationConditionFailure(msg)")
+                endControlFlow()
+
                 beginControlFlow("if (!$PostPropertyName($postInputs))")
                 addStatement("val name = %N ?: %N", LogAsPropertyName, FunctionIdPropertyName)
                 addStatement("val msg = \"In \$name\${mk_($inputs).pretty()}=\${%N.prettyOrDefault()}\"", resultValName)
@@ -295,6 +310,10 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
             val inputs = (1..argCount + 1).joinToString(", ") { "_" }
             defaultValue("{ $inputs -> true }")
         }.build())
+        addParameter(ParameterSpec.builder(PostCommandPropertyName, postCommandTypeName).apply {
+            val inputs = (1..argCount + 1).joinToString(", ") { "_" }
+            defaultValue("{ $inputs -> true }")
+        }.build())
         addParameter(ParameterSpec.builder(MeasurePropertyName, measureTypeName).apply {
             defaultValue("null")
         }.build())
@@ -304,7 +323,7 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
         addParameter(ParameterSpec.builder(LogAsPropertyName, nullableStringName).apply {
             defaultValue("null")
         }.build())
-        addCode("return $className($CommandPropertyName, $PrePropertyName, $PostPropertyName, $MeasurePropertyName, $CachePropertyName, $LogAsPropertyName)")
+        addCode("return $className($CommandPropertyName, $PrePropertyName, $PostPropertyName, $PostCommandPropertyName, $MeasurePropertyName, $CachePropertyName, $LogAsPropertyName)")
         returns(ClassName(RootPackageName, className).parameterizedBy(inputTypeNames + outputTypeName))
     }.build())
 }
