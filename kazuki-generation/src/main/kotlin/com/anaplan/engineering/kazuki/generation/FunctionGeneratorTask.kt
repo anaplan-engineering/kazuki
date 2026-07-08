@@ -122,7 +122,10 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
         addInitializerBlock(
             CodeBlock.builder().apply {
                 addStatement("val frame = StackWalker.getInstance(setOf(StackWalker.Option.SHOW_HIDDEN_FRAMES), 6).walk·{ it.limit(4).reduce·{ _, r -> r }.get() }")
-                addStatement("%N = \"\${frame.className}(\${frame.fileName}:\${frame.lineNumber})\"", FunctionIdPropertyName)
+                addStatement(
+                    "%N = \"\${frame.className}(\${frame.fileName}:\${frame.lineNumber})\"",
+                    FunctionIdPropertyName
+                )
                 addStatement("%T.createInstance(%N)", EvaluationProfilerName, FunctionIdPropertyName)
             }.build()
         )
@@ -234,7 +237,12 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
                 endControlFlow()
 
                 beginControlFlow("try")
-                addStatement("%T.startInvocation(%N, this, %N)", EvaluationProfilerName, FunctionIdPropertyName, invocationIdVariableName)
+                addStatement(
+                    "%T.startInvocation(%N, this, %N)",
+                    EvaluationProfilerName,
+                    FunctionIdPropertyName,
+                    invocationIdVariableName
+                )
 
                 addComment("TODO -- validate primitive args and result")
 //              val validParams = validatePrimitive(i2) && validatePrimitive(i2)
@@ -293,10 +301,48 @@ fun FileSpec.Builder.addNArgFunction(argCount: Int) {
                 beginControlFlow("if (%N)", initialRecursionValName)
                 addStatement("%N.remove(this)", InvocationsPropertyName)
                 endControlFlow()
-                addStatement("%T.endInvocation(%N, this, %N)", EvaluationProfilerName, FunctionIdPropertyName, invocationIdVariableName)
+                addStatement(
+                    "%T.endInvocation(%N, this, %N)",
+                    EvaluationProfilerName,
+                    FunctionIdPropertyName,
+                    invocationIdVariableName
+                )
                 endControlFlow()
             }.build())
         }.build())
+
+        val closureClassName = "VFunction${argCount - 1}"
+        val allInputs = (1..argCount).joinToString(", ") { "i$it" }
+        (1..argCount).forEach { i ->
+            val closedParamName = "i$i"
+            val closedTypeVarName = TypeVariableName("I$i")
+            val closureTypeName = ClassName(RootPackageName, closureClassName)
+                .parameterizedBy((inputTypeNames - closedTypeVarName) + outputTypeName)
+            addFunction(FunSpec.builder("close$i").apply {
+                val otherInputs = ((1..argCount) - i ).joinToString(", ") { "i$it" }
+                val postInputs = if (argCount == 1) "r" else "$otherInputs, r"
+                addParameter(ParameterSpec.builder(closedParamName, closedTypeVarName).build())
+                addCode("""
+                    return $closureClassName(
+                    $CommandPropertyName = { $otherInputs -> this.$CommandPropertyName($allInputs) }, 
+                    $PrePropertyName = { $otherInputs -> this.$PrePropertyName($allInputs) }, 
+                    $PostPropertyName = { $postInputs -> this.$PostPropertyName($allInputs, r) }, 
+                    $PostCommandPropertyName = { $postInputs -> this.$PostCommandPropertyName($allInputs, r) }, 
+                    $MeasurePropertyName = if (this.$MeasurePropertyName == null) null else { { $otherInputs -> this.$MeasurePropertyName!!($allInputs) } }, 
+                    $CachePropertyName = this.$CachePropertyName, 
+                    $LogAsPropertyName = this.$LogAsPropertyName
+                )""")
+                returns(closureTypeName)
+            }.build())
+
+            if (i == 1) {
+                addFunction(FunSpec.builder("close").apply {
+                    addParameter(ParameterSpec.builder(closedParamName, closedTypeVarName).build())
+                    addCode("return close1(i$i)")
+                    returns(closureTypeName)
+                }.build())
+            }
+        }
     }.build())
 
     addFunction(FunSpec.builder("function").apply {
