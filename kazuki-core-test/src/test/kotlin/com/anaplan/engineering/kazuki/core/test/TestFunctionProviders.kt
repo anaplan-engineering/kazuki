@@ -4,6 +4,7 @@ import com.anaplan.engineering.kazuki.core.A_Module.mk_A
 import com.anaplan.engineering.kazuki.core.B_Module.mk_B
 import com.anaplan.engineering.kazuki.core.C_Module.mk_C
 import com.anaplan.engineering.kazuki.core.D_Module.mk_D
+import com.anaplan.engineering.kazuki.core.DefaultFP_Module.mk_DefaultFP
 import com.anaplan.engineering.kazuki.core.E_Module.mk_E
 import com.anaplan.engineering.kazuki.core.GA_Module.mk_GA
 import com.anaplan.engineering.kazuki.core.GB1_Module.mk_GB1
@@ -100,4 +101,10 @@ class TestFunctionProviders {
         assertEquals(mk_GE4(mk_Mapping(mk_(p, 2)), 2, 3, 6), mk_GE4(mk_Mapping(mk_(p, 1)), 2, 3, 6).functions.increment(p))
         assertEquals(mk_GE4(mk_Mapping(mk_(p, 1)), 1, 3, 5), mk_GE4(mk_Mapping(mk_(p, 1)), 2, 3, 6).functions.decrement())
     }
+
+    @Test
+    fun defaultFpName() {
+        assertEquals(mk_DefaultFP(7), mk_DefaultFP(3).functions.add(4))
+    }
+
 }

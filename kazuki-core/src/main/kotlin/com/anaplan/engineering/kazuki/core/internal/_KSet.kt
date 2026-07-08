@@ -69,6 +69,8 @@ internal class __KSet1<T>(override val elements: Set<T>) :
         return elements.hashCode()
     }
 
+    override fun pretty() = "{${elements.joinToString(", ") { it.prettyOrDefault() }}}"
+
     override fun toString() = "set1$elements"
 }
 

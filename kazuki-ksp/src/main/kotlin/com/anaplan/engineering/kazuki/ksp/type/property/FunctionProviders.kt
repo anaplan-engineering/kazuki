@@ -17,6 +17,8 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.toTypeParameterResolver
+import kotlin.collections.filter
+import kotlin.collections.single
 
 internal data class FunctionProviderProperty(
     val property: KSPropertyDeclaration,
@@ -32,14 +34,14 @@ internal fun getFunctionProviderProperties(
     typeGenerationContext.logger.debug("Getting function providers for $classDcl", classDcl)
     val properties = classDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
     val localTypeParameterResolver = classDcl.typeParameters.toTypeParameterResolver()
-    val localFunctionProviderProperties = properties.filter { it.isAnnotationPresent(FunctionProvider::class) }.map {
+    val localFunctionProviderProperties = properties.filter { isFunctionProvider(it) }.map {
         FunctionProviderProperty(it, it.type.toTypeName(localTypeParameterResolver))
     }
     val superFunctionProviderProperties = classDcl.superModules.flatMap { type ->
         val superClassDcl = getClassDeclaration(type)
         val superTypeParameterResolver = superClassDcl.typeParameters.toTypeParameterResolver()
         val superProperties = superClassDcl.declarations.filterIsInstance<KSPropertyDeclaration>()
-        val superFunctionProviderProperties = superProperties.filter { it.isAnnotationPresent(FunctionProvider::class) }
+        val superFunctionProviderProperties = superProperties.filter { isFunctionProvider(it) }
 
         val ancestorTypeParameters =
             classDcl.resolveAncestorTypeArguments(superClassDcl.qualifiedName!!.asString())
@@ -71,6 +73,14 @@ internal fun getFunctionProviderProperties(
             .map { (name, fpProperties) -> resolveFunctionProviderProperty(name, fpProperties, typeGenerationContext) }
     return resolvedFunctionProviderProperties.toList()
 }
+
+// TODO -- make this configurable
+private val DefaultFunctionProviders = setOf("functions", "properties")
+
+@OptIn(KspExperimental::class)
+private fun isFunctionProvider(declaration: KSPropertyDeclaration): Boolean =
+    declaration.simpleName.asString() in DefaultFunctionProviders ||
+            declaration.isAnnotationPresent(FunctionProvider::class)
 
 private fun resolveFunctionProviderProperty(
     name: String,
@@ -104,13 +114,7 @@ internal fun TypeSpec.Builder.addFunctionProviders(
     val logger = typeGenerationContext.logger
     functionProviderProperties.forEach { property ->
         logger.debug("Adding function provider ${property.typeName}.${property.name}")
-        val functionProvider = property.property.getAnnotationsByType(FunctionProvider::class).single()
-        val providerQualifiedName = try {
-            functionProvider.provider
-            throw IllegalStateException("Expected to get a KSTypeNotPresentException")
-        } catch (e: KSTypeNotPresentException) {
-            e.ksType.declaration.qualifiedName!!.asString()
-        }
+        val providerQualifiedName = getQualifiedNameOfFunctionProvider(property)
         addProperty(
             PropertySpec.builder(
                 property.name,
@@ -133,4 +137,20 @@ internal fun TypeSpec.Builder.addFunctionProviders(
             }.build()
         )
     }
+}
+
+@OptIn(KspExperimental::class)
+private fun getQualifiedNameOfFunctionProvider(property: FunctionProviderProperty): String {
+    val functionProvider = property.property.getAnnotationsByType(FunctionProvider::class).singleOrNull()
+    val providerQualifiedName = try {
+        if (functionProvider == null) {
+            property.property.type.resolve().declaration.qualifiedName!!.asString()
+        } else {
+            functionProvider.provider
+            throw IllegalStateException("Expected to get a KSTypeNotPresentException")
+        }
+    } catch (e: KSTypeNotPresentException) {
+        e.ksType.declaration.qualifiedName!!.asString()
+    }
+    return providerQualifiedName
 }
