@@ -150,6 +150,16 @@ internal class __KSequence1<T>(override val elements: List<T>) : Sequence1<T>, _
     }
 
     override fun toString() = "seq1$elements"
+
+    override fun pretty() = "<${
+        elements.joinToString(", ") {
+            if (it is PrettyPrintable) {
+                it.pretty()
+            } else {
+                it.toString()
+            }
+        }
+    }>"
 }
 
 

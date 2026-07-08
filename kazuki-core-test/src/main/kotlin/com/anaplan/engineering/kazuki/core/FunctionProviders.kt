@@ -2,6 +2,7 @@ package com.anaplan.engineering.kazuki.core
 
 import com.anaplan.engineering.kazuki.core.A_Module.transform
 import com.anaplan.engineering.kazuki.core.C_Module.transform
+import com.anaplan.engineering.kazuki.core.DefaultFP_Module.transform
 import com.anaplan.engineering.kazuki.core.E_Module.as_E
 import com.anaplan.engineering.kazuki.core.E_Module.is_E
 import com.anaplan.engineering.kazuki.core.E_Module.transform
@@ -20,7 +21,6 @@ import com.anaplan.engineering.kazuki.core.GE3_Module.transform
 import com.anaplan.engineering.kazuki.core.GE4_Module.as_GE4
 import com.anaplan.engineering.kazuki.core.GE4_Module.is_GE4
 import com.anaplan.engineering.kazuki.core.GE4_Module.transform
-
 
 @Module
 interface A {
@@ -288,3 +288,15 @@ open class GE4Functions(val e: GE4) : GC2Functions(e) {
     )
 
 }
+
+@Module
+interface DefaultFP {
+    val a: Int
+
+    val functions: DefaultFPFunctions
+}
+
+class DefaultFPFunctions(val d: DefaultFP) {
+    val add = function(command = { n: Int -> d.transform(a = d.a + n) })
+}
+
