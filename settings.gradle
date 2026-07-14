@@ -6,10 +6,11 @@ include(
         "kazuki-toolkit",
         "kazuki-toolkit-examples",
         "examples:abstractpacemaker",
-        "examples:gameoflife",
-        "examples:tictactoe",
         "examples:alarmv1",
         "examples:alarmv2",
+        "examples:gameoflife",
+        "examples:tictactoe",
+        "examples:usingz",
 )
 includeBuild("kazuki-generation")
 includeBuild("build-conventions")
