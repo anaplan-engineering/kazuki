@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger
 abstract class FunctionGeneratorTask : DefaultTask() {
 
     companion object {
-        private const val MaxInputCount = 10
+        private const val MaxInputCount = 15
     }
 
     val generationSrcDir: File
