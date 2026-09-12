@@ -21,6 +21,11 @@ package com.anaplan.engineering.kazuki.core
  * - ADTs are instantiated via `mk_ADT`, which delegates construction to its implementation (i.e. internal `mk_Impl`)
  * - `@Module object X` cannot have an `@ImplementedBy(Impl::cls)` annotation.
  *
+ * Cases created manually:
+ * - P1; F1-F4, F7 (was M3), F9 (was M4), F13 (was M5); M1, M2
+ * Cases suggested by Cursor that survived:
+ * - F5-6, F8, F10-12 (already catered for, but with poor error messages)
+ *
  * TODO add a construction annotation for `mk_ADT`, such that it tells what to expect? leave for now
  * TODO might ADTs have multiple implementations? This will complicate the `mk_ADT`, leave for now
  */
@@ -34,6 +39,17 @@ interface Foo
 @Module
 internal interface Bar : Foo {
     val bar: nat
+}
+
+// Case P2: parametric ADT, MUST PASS
+//          why? Stack<T>-style opaque container
+@Module(makeable = false)
+@ImplementedBy(BoxImpl::class)
+interface Box<T>
+
+@Module
+internal interface BoxImpl<T> : Box<T> {
+    val payload: T
 }
 
 // Case F1: unmakeable empty fields ADT with no implementation, MUST FAIL
@@ -75,17 +91,59 @@ interface LeakyFooAgain {
 @Module
 internal interface EmptyBarLeakyFoo : LeakyFooAgain
 
-//// Case M1: unmakeable empty fields ADT and bad (empty fields) implementation, MIGHT FAIL? [or MUST FAIL? ALREADY FAILS]
-////          why? empty ADT has internal implementation without representation (empty fields); harmless but useless?
+// Case F5: object module with @ImplementedBy, MUST FAIL
+//          why? objects are singletons; ADT construction model does not apply
+@Module
+@ImplementedBy(BarObj::class)
+object FooObj
+
+@Module
+internal interface BarObj {
+    val bar: nat
+}
+
+//// Case F6: @ImplementedBy target is not a @Module interface, [MUST FAIL, already failing, needs better error msg]
+////          why? Kazuki cannot generate mk_/tuple for non-modules
 //@Module(makeable = false)
-//@ImplementedBy(EmptyBar::class)
-//interface EmptyFoo
+//@ImplementedBy(PlainBar::class)
+//interface FooPlain
+//
+//internal interface PlainBar : FooPlain {
+//    val bar: nat
+//}
+
+//// Case F7: @ImplementedBy target does not extend the abstract ADT, [MUST FAIL, already failing, needs better error msg]
+////          why? mk_ADT would delegate to unrelated module; currently may crash KSP
+//@Module(makeable = false)
+//@ImplementedBy(WrongBar::class)
+//interface UnextendedFoo
+//
+//@Module(makeable = false)
+//interface WrongOther {
+//    val x: nat
+//}
 //
 //@Module
-//internal interface EmptyBar : EmptyFoo
+//internal interface WrongBar : WrongOther {
+//    val bar: nat
+//}
+
+//// Case F8: abstract ADT declares @ComparableProperty / fixed record field, [MUST FAIL, already fail, needs better error msg]
+////          why? fixed fields are part of tuple representation and leak structure
+//@Module(makeable = false)
+//@ImplementedBy(FixedImpl::class)
+//interface FixedADT {
+//    @ComparableProperty
+//    val id: nat
+//}
 //
-//// Case M2: makeable ADT doesn't make sense, MIGHT FAIL? [or MUST FAIL? ALREADY FAILS]
-////          why? making empty record is harmless/useless yet mistaken if an implementation expects more fields
+//@Module
+//internal interface FixedImpl : FixedADT {
+//    val secret: nat
+//}
+
+//// Case F9: @ImplementedBy on makeable module, [MUST FAIL, already fails, needs better error msg]
+////          why? public mk_/transform on abstract defeats encapsulation
 //@Module
 //@ImplementedBy(BarMakeableFoo::class)
 //interface FooMakeable
@@ -94,18 +152,64 @@ internal interface EmptyBarLeakyFoo : LeakyFooAgain
 //internal interface BarMakeableFoo : FooMakeable {
 //    val bar: nat
 //}
-//
-//// Case M3: unmakeable empty fields ADT not linked to implementation, MIGHT FAIL? [or MUST FAIL? ALREADY FAILS]
+
+//// Case F10: @ImplementedBy with internal abstract + public concrete, [MUST FAIL, already fails, needs better error msg]
+////          why? public mk_Concrete bypasses internal abstract ADT barrier (inverse of F2)
 //@Module(makeable = false)
-//@ImplementedBy(WrongBar::class)
-//interface UnextendedFoo
+//@ImplementedBy(PublicImpl::class)
+//internal interface InternalADT
 //
 //@Module
-//internal interface WrongBar : Other {
+//interface PublicImpl : InternalADT {
 //    val bar: nat
 //}
 
-// Case M4: unmakeable empty fields ADT with mixed interface inheritance, MIGHT FAIL? [or MUST FAIL? WORKS WITH MIXED mk_]
+// Case F11: ADT abstract is internal, MUST FAIL
+//          why? ADT abstract must be public; internal abstract breaks intended opaque export surface
+@Module(makeable = false)
+@ImplementedBy(LocalImpl::class)
+internal interface LocalADT
+
+@Module
+internal interface LocalImpl : LocalADT {
+    val state: nat
+}
+
+// Case F12: @ImplementedBy on sequence/set/map module (non-record), MUST FAIL
+//          why? ImplementedBy wiring currently lives in RecordType only
+@Module(makeable = false)
+@ImplementedBy(SeqImpl::class)
+interface OpaqueSeq<T> : Sequence<T>
+
+@Module
+internal interface SeqImpl<T> : OpaqueSeq<T>
+
+//// Case F13: @ImplementedBy points at intermediate abstract module, not internal concrete, [MUST FAIL, already failing, needs better error msg]
+////          why? mk_ chain must target the internal concrete record directly, not a layered abstract module
+//@Module(makeable = false)
+//@ImplementedBy(Middle::class)
+//interface ADT12
+//
+//@Module(makeable = false)
+//interface Middle : ADT12 {
+//    val mid: nat
+//}
+//
+//@Module
+//internal interface MiddleImpl : Middle {
+//    val rep: nat
+//}
+
+//// Case M1: unmakeable empty fields ADT and bad (empty fields) implementation, MIGHT FAIL? [or MUST FAIL? ALREADY FAILS]
+////          why? empty ADT has internal implementation without representation (empty fields); harmless but useless?
+//@Module(makeable = false)
+//@ImplementedBy(EmptyBar::class)
+//interface EmptyFoo
+//
+//@Module
+//internal interface EmptyBar : EmptyFoo
+
+// Case M2: unmakeable empty fields ADT with mixed interface inheritance, MIGHT FAIL? [or MUST FAIL? WORKS WITH MIXED mk_]
 @Module(makeable = false)
 @ImplementedBy(MixedBar::class)
 interface MixedFoo
