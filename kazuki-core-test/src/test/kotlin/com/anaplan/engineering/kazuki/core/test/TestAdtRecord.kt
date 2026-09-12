@@ -11,8 +11,8 @@ class TestAdtRecord {
 
     @Test
     fun mkEmptyAdtDelegatesToInternalConcrete() {
-        val adt = mk_EmptyAdt(42)
+        val adt = mk_EmptyAdt(42uL)
         assertTrue(is_EmptyAdt(adt))
-        assertEquals(42, (adt as EmptyAdtConcrete).value)
+        assertEquals(42uL, (adt as EmptyAdtConcrete).value)
     }
 }
