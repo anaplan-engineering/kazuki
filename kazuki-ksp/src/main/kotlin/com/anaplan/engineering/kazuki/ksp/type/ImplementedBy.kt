@@ -6,6 +6,7 @@ import com.anaplan.engineering.kazuki.core.ImplementedBy
 import com.anaplan.engineering.kazuki.core.Module
 import com.anaplan.engineering.kazuki.ksp.applyApiModifier
 import com.anaplan.engineering.kazuki.ksp.getClassDeclaration
+import com.anaplan.engineering.kazuki.ksp.hasSuperType
 import com.anaplan.engineering.kazuki.ksp.qualifiedModuleName
 import com.anaplan.engineering.kazuki.ksp.stripVariance
 import com.anaplan.engineering.kazuki.ksp.resolveAncestorTypeArguments
@@ -58,9 +59,21 @@ internal fun validateAndResolveImplementedBy(
         e.ksType.declaration
     }
     val concreteModule = getClassDeclaration(concreteDeclaration)
+    if (abstractModule.getVisibility() != Visibility.PUBLIC) {
+        typeGenerationContext.processingState.errors.add(
+            "ADT interface '${abstractModule.qualifiedName?.asString()}' must be public; ADT @ImplementedBy ${concreteModule.simpleName.asString()} must be internal"
+        )
+        return null
+    }
     if (!concreteModule.isAnnotationPresent(Module::class)) {
         typeGenerationContext.processingState.errors.add(
             "@ImplementedBy target ${concreteModule.qualifiedName?.asString()} must be a @Module"
+        )
+        return null
+    }
+    if (!concreteModule.hasSuperType(abstractModule.qualifiedName!!.asString())) {
+        typeGenerationContext.processingState.errors.add(
+            "@ImplementedBy target ${concreteModule.qualifiedName?.asString()} must extend ${abstractModule.qualifiedName?.asString()}"
         )
         return null
     }

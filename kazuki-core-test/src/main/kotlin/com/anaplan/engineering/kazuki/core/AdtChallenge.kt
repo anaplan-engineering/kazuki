@@ -22,7 +22,7 @@ package com.anaplan.engineering.kazuki.core
  * - `@Module object X` cannot have an `@ImplementedBy(Impl::cls)` annotation.
  *
  * Cases created manually:
- * - P1; F1-F4, F7 (was M3), F9 (was M4), F13 (was M5); M1, M2
+ * - P1; F1-F4, F7 (was M3, similar to M2), F9 (was M4), F13 (was M5); M1, M2
  * Cases suggested by Cursor that survived:
  * - F5-6, F8, F10-12 (already catered for, but with poor error messages)
  *
@@ -62,45 +62,45 @@ internal interface BoxImpl<T> : Box<T> {
 //@Module(makeable = false)
 //@ImplementedBy(BarNotInternal::class)
 //interface FooBarNotInternal
+//
+//@Module
+//interface BarNotInternal : FooBarNotInternal {
+//    val bar: nat
+//}
 
-@Module
-interface BarNotInternal : FooBarNotInternal {
-    val bar: nat
-}
+//// Case F3: unmakeable ADT with leaky fields and good (non-empty fields) implementation, MUST FAIL
+////          why? ADT has internal implementation but leaks information
+//@Module(makeable = false)
+//@ImplementedBy(BarLeakyFoo::class)
+//interface LeakyFoo {
+//    val foo: nat
+//}
+//
+//@Module
+//internal interface BarLeakyFoo : LeakyFoo {
+//    val bar: nat
+//}
 
-// Case F3: unmakeable ADT with leaky fields and good (non-empty fields) implementation, MUST FAIL
-//          why? ADT has internal implementation but leaks information
-@Module(makeable = false)
-@ImplementedBy(BarLeakyFoo::class)
-interface LeakyFoo {
-    val foo: nat
-}
+//// Case F4: unmakeable ADT with leaky fields and bad (empty fields) implementation, MUST FAIL
+////          why? ADT has internal implementation without representation (empty fields), also with leaky fields
+//@Module(makeable = false)
+//@ImplementedBy(EmptyBarLeakyFoo::class)
+//interface LeakyFooAgain {
+//    val foo: nat
+//}
+//@Module
+//internal interface EmptyBarLeakyFoo : LeakyFooAgain
 
-@Module
-internal interface BarLeakyFoo : LeakyFoo {
-    val bar: nat
-}
-
-// Case F4: unmakeable ADT with leaky fields and bad (empty fields) implementation, MUST FAIL
-//          why? ADT has internal implementation without representation (empty fields), also with leaky fields
-@Module(makeable = false)
-@ImplementedBy(EmptyBarLeakyFoo::class)
-interface LeakyFooAgain {
-    val foo: nat
-}
-@Module
-internal interface EmptyBarLeakyFoo : LeakyFooAgain
-
-// Case F5: object module with @ImplementedBy, MUST FAIL
-//          why? objects are singletons; ADT construction model does not apply
-@Module
-@ImplementedBy(BarObj::class)
-object FooObj
-
-@Module
-internal interface BarObj {
-    val bar: nat
-}
+//// Case F5: object module with @ImplementedBy, MUST FAIL
+////          why? objects are singletons; ADT construction model does not apply
+//@Module
+//@ImplementedBy(BarObj::class)
+//object FooObj
+//
+//@Module
+//internal interface BarObj {
+//    val bar: nat
+//}
 
 //// Case F6: @ImplementedBy target is not a @Module interface, [MUST FAIL, already failing, needs better error msg]
 ////          why? Kazuki cannot generate mk_/tuple for non-modules
@@ -164,25 +164,25 @@ internal interface BarObj {
 //    val bar: nat
 //}
 
-// Case F11: ADT abstract is internal, MUST FAIL
-//          why? ADT abstract must be public; internal abstract breaks intended opaque export surface
-@Module(makeable = false)
-@ImplementedBy(LocalImpl::class)
-internal interface LocalADT
+//// Case F11: ADT abstract is internal, MUST FAIL
+////          why? ADT abstract must be public; internal abstract breaks intended opaque export surface
+//@Module(makeable = false)
+//@ImplementedBy(LocalImpl::class)
+//internal interface LocalADT
+//
+//@Module
+//internal interface LocalImpl : LocalADT {
+//    val state: nat
+//}
 
-@Module
-internal interface LocalImpl : LocalADT {
-    val state: nat
-}
-
-// Case F12: @ImplementedBy on sequence/set/map module (non-record), MUST FAIL
-//          why? ImplementedBy wiring currently lives in RecordType only
-@Module(makeable = false)
-@ImplementedBy(SeqImpl::class)
-interface OpaqueSeq<T> : Sequence<T>
-
-@Module
-internal interface SeqImpl<T> : OpaqueSeq<T>
+//// Case F12: @ImplementedBy on sequence/set/map module (non-record), MUST FAIL
+////          why? ImplementedBy wiring currently lives in RecordType only
+//@Module(makeable = false)
+//@ImplementedBy(SeqImpl::class)
+//interface OpaqueSeq<T> : Sequence<T>
+//
+//@Module
+//internal interface SeqImpl<T> : OpaqueSeq<T>
 
 //// Case F13: @ImplementedBy points at intermediate abstract module, not internal concrete, [MUST FAIL, already failing, needs better error msg]
 ////          why? mk_ chain must target the internal concrete record directly, not a layered abstract module

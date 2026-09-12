@@ -10,6 +10,7 @@ import com.anaplan.engineering.kazuki.ksp.applyApiModifier
 import com.anaplan.engineering.kazuki.ksp.InbuiltNames.corePackage
 import com.anaplan.engineering.kazuki.ksp.type.property.PropertyProcessor
 import com.anaplan.engineering.kazuki.ksp.type.property.addFunctionProviders
+import com.anaplan.engineering.kazuki.ksp.type.property.getLocalNonFunctionProviderProperties
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.isAnnotationPresent
@@ -43,12 +44,15 @@ internal fun TypeSpec.Builder.addRecordType(
     val allTupleComponents = properties.tupleComponents
     val variableTupleComponents = properties.tupleComponents.filter { !it.fixed }
     typeGenerationContext.logger.debug("tuple components: $allTupleComponents")
-    if (!makeable && interfaceClassDcl.isAnnotationPresent(ImplementedBy::class) && allTupleComponents.isNotEmpty()) {
-        val fieldNames = allTupleComponents.joinToString(", ") { "'${it.name}'" }
-        typeGenerationContext.processingState.errors.add(
-            "ADT '${interfaceClassDcl.simpleName.asString()}' must not declare record fields (found $fieldNames); use @FunctionProvider for exported behaviour only"
-        )
-        return
+    if (!makeable && interfaceClassDcl.isAnnotationPresent(ImplementedBy::class)) {
+        val leakedLocalProperties = getLocalNonFunctionProviderProperties(interfaceClassDcl)
+        if (leakedLocalProperties.isNotEmpty()) {
+            val fieldNames = leakedLocalProperties.joinToString(", ") { "'${it.simpleName.asString()}'" }
+            typeGenerationContext.processingState.errors.add(
+                "ADT '${interfaceClassDcl.simpleName.asString()}' must not declare record fields (found $fieldNames); use @FunctionProvider for exported behaviour only"
+            )
+            return
+        }
     }
     if (allTupleComponents.isEmpty()) {
         if (makeable) {

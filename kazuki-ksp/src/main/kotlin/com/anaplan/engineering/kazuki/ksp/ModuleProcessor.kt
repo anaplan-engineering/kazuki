@@ -5,6 +5,7 @@ import com.anaplan.engineering.kazuki.ksp.type.*
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.getVisibility
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -16,8 +17,15 @@ internal class ModuleProcessor(
     codeGenerator: CodeGenerator
 ) : ConstructProcessor(typeGenerationContext, codeGenerator) {
 
+    @OptIn(KspExperimental::class)
     override fun generateImplementation(clazz: KSClassDeclaration): Boolean {
         if (clazz.classKind == ClassKind.OBJECT) {
+            if (clazz.isAnnotationPresent(ImplementedBy::class)) {
+                typeGenerationContext.processingState.errors.add(
+                    "@Module object '${clazz.qualifiedName?.asString()}' cannot carry @ImplementedBy; ADT construction requires an unmakeable Record interface"
+                )
+                return true
+            }
             processModuleObject(clazz)
         } else if (clazz.classKind != ClassKind.INTERFACE) {
             typeGenerationContext.processingState.errors.add("Module ${clazz.qualifiedName} must be an interface or an object")
@@ -59,6 +67,22 @@ internal class ModuleProcessor(
     @OptIn(KspExperimental::class)
     private fun processModuleClass(clazz: KSClassDeclaration) {
         typeGenerationContext.logger.debug("Processing module: ${clazz.qualifiedName!!.asString()}")
+        if (clazz.isAnnotationPresent(ImplementedBy::class)) {
+            val kazukiType = clazz.kazukiType()
+            if (kazukiType != KazukiType.RecordType) {
+                val implementedBy = clazz.getAnnotationsByType(ImplementedBy::class).single()
+                val targetName = try {
+                    implementedBy.value
+                    "???"
+                } catch (e: com.google.devtools.ksp.KSTypeNotPresentException) {
+                    getClassDeclaration(e.ksType.declaration).simpleName.asString()
+                }
+                typeGenerationContext.processingState.errors.add(
+                    "@ImplementedBy on ${kazukiType.toModuleKindLabel()} module '${clazz.qualifiedName?.asString()}' is not supported; ADT @ImplementedBy $targetName requires a record module"
+                )
+                return
+            }
+        }
         val makeable = clazz.getAnnotationsByType(Module::class).single().makeable
         val apiModifier = clazz.generatedApiModifier()
         val moduleTypeSpec = TypeSpec.objectBuilder(clazz.moduleName).apply {
@@ -121,5 +145,14 @@ internal class ModuleProcessor(
         writeToFile(clazz, moduleClassName, moduleTypeSpec)
     }
 
+    private fun KazukiType.toModuleKindLabel(): String = when (this) {
+        KazukiType.SequenceType, KazukiType.Sequence1Type -> "sequence"
+        KazukiType.SetType, KazukiType.Set1Type -> "set"
+        KazukiType.MappingType, KazukiType.Mapping1Type -> "mapping"
+        KazukiType.InjectiveMappingType, KazukiType.InjectiveMapping1Type -> "injective mapping"
+        KazukiType.RelationType, KazukiType.Relation1Type -> "relation"
+        KazukiType.QuoteType -> "quote"
+        KazukiType.RecordType -> "record"
+    }
 
 }
