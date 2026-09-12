@@ -1,8 +1,8 @@
-package com.anaplan.engineering.kazuki.tictactoe
+package com.anaplan.engineering.kazuki.adt
 
 import com.anaplan.engineering.kazuki.core.*
-import com.anaplan.engineering.kazuki.tictactoe.StackADT_Module.transform
-import com.anaplan.engineering.kazuki.tictactoe.Stack_Module.mk_Stack
+import com.anaplan.engineering.kazuki.adt.StackADT_Module.transform
+import com.anaplan.engineering.kazuki.adt.Stack_Module.mk_Stack
 
 /**
  * A Kazuki specification inspired by https://github.com/leouk/VDM_Toolkit/blob/main/vdmlib/src/main/resources/Stack.vdmsl,
@@ -57,8 +57,8 @@ internal class StackADTFunctions<T>(private val stack: StackADT<T>) : StackFunct
     )
 
     override val pop = function(
-        command = { -> stack.transform(value = stack.value.tail()) },
-        pre = { -> stack.properties.isEmpty },
+        command = { -> stack.transform(value = stack.value.take(stack.properties.size - 1u)) },
+        pre = { -> !stack.properties.isEmpty },
         post = { result ->
             (stack.properties.size == result.properties.size + 1uL) and {
                 //ideally, we would want? result.value subseq result.value
@@ -68,9 +68,9 @@ internal class StackADTFunctions<T>(private val stack: StackADT<T>) : StackFunct
     )
 
     override val push = function(
-        command = { item: T -> stack.transform(value = stack.value + item ) },
+        command = { item: T -> stack.transform(value = stack.value + item) },
         post = { item, result ->
-            (stack.properties.size == result.properties.size + 1uL) and {
+            (stack.properties.size + 1uL == result.properties.size) and {
                 item in result.properties.elems
             }
         }
