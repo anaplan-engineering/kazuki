@@ -53,6 +53,31 @@ annotation class ImplementedBy(
     val publicMk: Boolean = false,
 )
 
+/**
+ * Declares a public ADT constructor alternative to the canonical implementation-field [mk_].
+ * Requires [ImplementedBy] on the same type. KSP generates the public overload on the abstract module;
+ * the canonical [mk_] stays internal when [hideCanonical] is true (default).
+ */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class ConstructedBy(
+    val style: ConstructorStyle = ConstructorStyle.DIRECT,
+    /** Name of a function in [com.anaplan.engineering.kazuki.core] (e.g. `"as_Seq"`) wrapping alt args into the impl rep field type. */
+    val adapter: String = "",
+    /** Impl representation field fed by [adapter]. Default: sole variable field on the implementation. */
+    val field: String = "",
+    val hideCanonical: Boolean = true,
+)
+
+enum class ConstructorStyle {
+    /** Canonical [mk_] matches impl fields; no alternative is generated. */
+    DIRECT,
+    /** e.g. mk_Stack(1, 2, 3) via adapter into Sequence rep field. */
+    VARARG_ELEMENTS,
+    /** e.g. mk_Stack(listOf(1, 2, 3)). */
+    ITERABLE,
+}
+
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Invariant
