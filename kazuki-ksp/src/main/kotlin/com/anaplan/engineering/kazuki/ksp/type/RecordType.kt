@@ -30,12 +30,6 @@ internal fun TypeSpec.Builder.addRecordType(
     apiModifier: KModifier? = null,
 ) {
     val resolvedImplementedBy = validateAndResolveImplementedBy(interfaceClassDcl, makeable, typeGenerationContext)
-    if (interfaceClassDcl.isAnnotationPresent(ConstructedBy::class) && resolvedImplementedBy == null) {
-        typeGenerationContext.processingState.errors.add(
-            "@ConstructedBy on '${interfaceClassDcl.simpleName.asString()}' requires @ImplementedBy"
-        )
-        return
-    }
     val interfaceType = interfaceClassDcl.asType(emptyList())
     val interfaceTypeArguments =
         interfaceClassDcl.typeParameters.map { it.toTypeVariableName(interfaceClassDcl.typeParameters.toTypeParameterResolver()) }
@@ -637,15 +631,6 @@ internal fun TypeSpec.Builder.addRecordType(
                 it,
                 apiModifier,
             )
-            addConstructedByMkFunctions(
-                interfaceClassDcl,
-                interfaceName,
-                interfaceTypeName,
-                interfaceTypeArguments,
-                it,
-                apiModifier,
-                typeGenerationContext,
-            )
         }
     }
     if (makeable) {
@@ -802,15 +787,6 @@ private fun TypeSpec.Builder.addEmptyUnmakeableRecordType(
             interfaceTypeArguments,
             it,
             apiModifier,
-        )
-        addConstructedByMkFunctions(
-            interfaceClassDcl,
-            interfaceName,
-            interfaceTypeName,
-            interfaceTypeArguments,
-            it,
-            apiModifier,
-            typeGenerationContext,
         )
     }
 }

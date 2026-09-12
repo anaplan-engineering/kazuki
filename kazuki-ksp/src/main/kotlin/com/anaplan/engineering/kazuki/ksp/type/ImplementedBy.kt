@@ -151,10 +151,10 @@ internal fun TypeSpec.Builder.addImplementedByMkFunction(
     }
     addFunction(
         FunSpec.builder("mk_$abstractInterfaceName").apply {
-            if (canonicalMkIsInternal(abstractModule, resolvedImplementedBy.publicMk)) {
-                addModifiers(KModifier.INTERNAL)
-            } else {
+            if (resolvedImplementedBy.publicMk) {
                 applyApiModifier(apiModifier)
+            } else {
+                addModifiers(KModifier.INTERNAL)
             }
             if (abstractInterfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(abstractInterfaceTypeArguments.map { it.stripVariance() })
