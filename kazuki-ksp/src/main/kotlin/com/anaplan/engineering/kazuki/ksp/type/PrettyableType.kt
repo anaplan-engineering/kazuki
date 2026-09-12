@@ -2,9 +2,11 @@ package com.anaplan.engineering.kazuki.ksp.type
 
 import com.anaplan.engineering.kazuki.core.PrettyPrintable
 import com.anaplan.engineering.kazuki.core.internal._KazukiObject
+import com.anaplan.engineering.kazuki.ksp.applyApiModifier
 import com.anaplan.engineering.kazuki.ksp.stripVariance
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.TypeVariableName
@@ -17,9 +19,11 @@ const val PrettyFunctionName = "pretty"
 internal fun TypeSpec.Builder.addStaticPrettyFunction(
     interfaceTypeName: TypeName,
     interfaceTypeArguments: List<TypeVariableName>,
+    apiModifier: KModifier? = null,
 ) {
     addFunction(
         FunSpec.builder(StaticPrettyFunctionName).apply {
+            applyApiModifier(apiModifier)
             if (interfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(interfaceTypeArguments.map { it.stripVariance() })
             }

@@ -10,6 +10,7 @@ include(
         "examples:tictactoe",
         "examples:alarmv1",
         "examples:alarmv2",
+        "examples:adt",
 )
 includeBuild("kazuki-generation")
 includeBuild("build-conventions")

@@ -37,6 +37,17 @@ annotation class Abstraction(
     val of: KClass<*>
 )
 
+/**
+ * Links an unmakeable abstract @Module to its concrete makeable implementation.
+ * Requires [Module.makeable] = false on the annotated type. KSP generates [mk_] on the abstract module
+ * that delegates to the concrete module constructor while keeping the concrete [mk_] internal.
+ */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class ImplementedBy(
+    val value: KClass<*>
+)
+
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Invariant

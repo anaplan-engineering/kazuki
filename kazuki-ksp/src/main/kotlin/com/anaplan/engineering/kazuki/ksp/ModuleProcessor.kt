@@ -60,20 +60,22 @@ internal class ModuleProcessor(
     private fun processModuleClass(clazz: KSClassDeclaration) {
         typeGenerationContext.logger.debug("Processing module: ${clazz.qualifiedName!!.asString()}")
         val makeable = clazz.getAnnotationsByType(Module::class).single().makeable
+        val apiModifier = clazz.generatedApiModifier()
         val moduleTypeSpec = TypeSpec.objectBuilder(clazz.moduleName).apply {
+            applyApiModifier(apiModifier)
             when (clazz.kazukiType()) {
-                KazukiType.Sequence1Type -> addSeq1Type(clazz, makeable, typeGenerationContext)
-                KazukiType.SequenceType -> addSeqType(clazz, makeable, typeGenerationContext)
-                KazukiType.Relation1Type -> addRelation1Type(clazz, makeable, typeGenerationContext)
-                KazukiType.RelationType -> addRelationType(clazz, makeable, typeGenerationContext)
-                KazukiType.Set1Type -> addSet1Type(clazz, makeable, typeGenerationContext)
-                KazukiType.SetType -> addSetType(clazz, makeable, typeGenerationContext)
-                KazukiType.QuoteType -> processQuoteType(clazz, makeable, typeGenerationContext)
-                KazukiType.RecordType -> addRecordType(clazz, makeable, typeGenerationContext)
-                KazukiType.InjectiveMappingType -> addInjectiveMappingType(clazz, makeable, typeGenerationContext)
-                KazukiType.InjectiveMapping1Type -> addInjectiveMapping1Type(clazz, makeable, typeGenerationContext)
-                KazukiType.MappingType -> addMappingType(clazz, makeable, typeGenerationContext)
-                KazukiType.Mapping1Type -> addMapping1Type(clazz, makeable, typeGenerationContext)
+                KazukiType.Sequence1Type -> addSeq1Type(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.SequenceType -> addSeqType(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.Relation1Type -> addRelation1Type(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.RelationType -> addRelationType(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.Set1Type -> addSet1Type(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.SetType -> addSetType(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.QuoteType -> processQuoteType(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.RecordType -> addRecordType(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.InjectiveMappingType -> addInjectiveMappingType(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.InjectiveMapping1Type -> addInjectiveMapping1Type(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.MappingType -> addMappingType(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.Mapping1Type -> addMapping1Type(clazz, makeable, typeGenerationContext, apiModifier)
             }
         }.build()
 
@@ -102,18 +104,18 @@ internal class ModuleProcessor(
 
         val moduleClassName = clazz.moduleName
         val moduleTypeSpec = TypeSpec.objectBuilder(moduleClassName).apply {
-            seq1Types.forEach { addSeq1Type(it, true, typeGenerationContext) }
-            seqTypes.forEach { addSeqType(it, true, typeGenerationContext) }
-            relation1Types.forEach { addRelation1Type(it, true, typeGenerationContext) }
-            relationTypes.forEach { addRelationType(it, true, typeGenerationContext) }
-            setTypes.forEach { addSetType(it, true, typeGenerationContext) }
-            set1Types.forEach { addSet1Type(it, true, typeGenerationContext) }
-            quoteTypes.forEach { processQuoteType(it, true, typeGenerationContext) }
-            recordTypes.forEach { addRecordType(it, true, typeGenerationContext) }
-            injectiveMappingType.forEach { addInjectiveMappingType(it, true, typeGenerationContext) }
-            injectiveMapping1Type.forEach { addInjectiveMapping1Type(it, true, typeGenerationContext) }
-            mappingType.forEach { addMappingType(it, true, typeGenerationContext) }
-            mapping1Type.forEach { addMapping1Type(it, true, typeGenerationContext) }
+            seq1Types.forEach { addSeq1Type(it, true, typeGenerationContext, null) }
+            seqTypes.forEach { addSeqType(it, true, typeGenerationContext, null) }
+            relation1Types.forEach { addRelation1Type(it, true, typeGenerationContext, null) }
+            relationTypes.forEach { addRelationType(it, true, typeGenerationContext, null) }
+            setTypes.forEach { addSetType(it, true, typeGenerationContext, null) }
+            set1Types.forEach { addSet1Type(it, true, typeGenerationContext, null) }
+            quoteTypes.forEach { processQuoteType(it, true, typeGenerationContext, null) }
+            recordTypes.forEach { addRecordType(it, true, typeGenerationContext, null) }
+            injectiveMappingType.forEach { addInjectiveMappingType(it, true, typeGenerationContext, null) }
+            injectiveMapping1Type.forEach { addInjectiveMapping1Type(it, true, typeGenerationContext, null) }
+            mappingType.forEach { addMappingType(it, true, typeGenerationContext, null) }
+            mapping1Type.forEach { addMapping1Type(it, true, typeGenerationContext, null) }
         }.build()
 
         writeToFile(clazz, moduleClassName, moduleTypeSpec)

@@ -20,6 +20,7 @@ internal fun TypeSpec.Builder.addRelationType(
     interfaceClassDcl: KSClassDeclaration,
     makeable: Boolean,
     typeGenerationContext: TypeGenerationContext,
+    apiModifier: KModifier? = null,
 ) =
     if (makeable) {
         addRelationType(interfaceClassDcl, typeGenerationContext, false)
@@ -31,6 +32,7 @@ internal fun TypeSpec.Builder.addRelation1Type(
     interfaceClassDcl: KSClassDeclaration,
     makeable: Boolean,
     typeGenerationContext: TypeGenerationContext,
+    apiModifier: KModifier? = null,
 ) =
     if (makeable) {
         addRelationType(interfaceClassDcl, typeGenerationContext, true)
