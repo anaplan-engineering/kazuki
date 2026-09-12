@@ -14,8 +14,10 @@ import com.anaplan.engineering.kazuki.ksp.type.property.TupleComponent
 import com.google.devtools.ksp.KSTypeNotPresentException
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
+import com.google.devtools.ksp.getVisibility
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.Visibility
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.TypeName
@@ -54,6 +56,12 @@ internal fun validateAndResolveImplementedBy(
     if (!concreteModule.isAnnotationPresent(Module::class)) {
         typeGenerationContext.processingState.errors.add(
             "@ImplementedBy target ${concreteModule.qualifiedName?.asString()} must be a @Module"
+        )
+        return null
+    }
+    if (concreteModule.getVisibility() != Visibility.INTERNAL) {
+        typeGenerationContext.processingState.errors.add(
+            "@ImplementedBy target ${concreteModule.qualifiedName?.asString()} must be internal; ADT implementations must not be publicly constructible"
         )
         return null
     }

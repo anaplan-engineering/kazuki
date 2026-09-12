@@ -52,16 +52,16 @@ internal interface BoxImpl<T> : Box<T> {
     val payload: T
 }
 
-// Case F1: unmakeable empty fields ADT with no implementation, MUST FAIL
-//          why? ADT only allowed if internal @ImplementedBy is present
-@Module(makeable = false)
-interface FooNoImplementation
+//// Case F1: unmakeable empty fields ADT with no implementation, MUST FAIL
+////          why? ADT only allowed if internal @ImplementedBy is present
+//@Module(makeable = false)
+//interface FooNoImplementation
 
-// Case F2: unmakeable empty fields ADT with non-internal implementation, MUST FAIL
-//          why? ADT @ImplementedBy must be internal
-@Module(makeable = false)
-@ImplementedBy(BarNotInternal::class)
-interface FooBarNotInternal
+//// Case F2: unmakeable empty fields ADT with non-internal implementation, MUST FAIL
+////          why? ADT @ImplementedBy must be internal
+//@Module(makeable = false)
+//@ImplementedBy(BarNotInternal::class)
+//interface FooBarNotInternal
 
 @Module
 interface BarNotInternal : FooBarNotInternal {

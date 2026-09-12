@@ -50,20 +50,20 @@ class TestAdtChallenge {
         assertEquals("payload", (adt as BoxImpl<String>).payload)
     }
 
-    // Case F1
-    @Test
-    fun f1FooNoImplementationRecognisesManualInstance() {
-        val adt = object : FooNoImplementation {}
-        assertTrue(is_FooNoImplementation(adt))
-    }
+//    // Case F1
+//    @Test
+//    fun f1FooNoImplementationRecognisesManualInstance() {
+//        val adt = object : FooNoImplementation {}
+//        assertTrue(is_FooNoImplementation(adt))
+//    }
 
-    // Case F2
-    @Test
-    fun f2MkFooBarNotInternalUsesPublicConcrete() {
-        val adt = mk_FooBarNotInternal(7uL)
-        assertTrue(is_FooBarNotInternal(adt))
-        assertEquals(7uL, (adt as BarNotInternal).bar)
-    }
+//    // Case F2
+//    @Test
+//    fun f2MkFooBarNotInternalUsesPublicConcrete() {
+//        val adt = mk_FooBarNotInternal(7uL)
+//        assertTrue(is_FooBarNotInternal(adt))
+//        assertEquals(7uL, (adt as BarNotInternal).bar)
+//    }
 
     // Case F3
     @Test

@@ -12,6 +12,7 @@ import com.anaplan.engineering.kazuki.ksp.type.property.PropertyProcessor
 import com.anaplan.engineering.kazuki.ksp.type.property.addFunctionProviders
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.squareup.kotlinpoet.*
@@ -47,6 +48,14 @@ internal fun TypeSpec.Builder.addRecordType(
             typeGenerationContext.processingState.errors.add(
                 "Record ${interfaceClassDcl.qualifiedName?.asString()} must have fields when makeable"
             )
+            return
+        }
+        if (resolvedImplementedBy == null) {
+            if (!interfaceClassDcl.isAnnotationPresent(ImplementedBy::class)) {
+                typeGenerationContext.processingState.errors.add(
+                    "Unmakeable empty Record '${interfaceClassDcl.qualifiedName?.asString()}' requires @ImplementedBy annotation"
+                )
+            }
             return
         }
         addEmptyUnmakeableRecordType(
