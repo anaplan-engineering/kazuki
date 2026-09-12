@@ -21,12 +21,16 @@ package com.anaplan.engineering.kazuki.core
  * - ADTs are instantiated via `mk_ADT`, which delegates construction to its implementation (i.e. internal `mk_Impl`)
  * - `@Module object X` cannot have an `@ImplementedBy(Impl::cls)` annotation.
  *
+ * Testing this requires positive and negative tests, to show that errors are caught as expected during code generation.
+ * For that we envisage various pass / fail and maybe scenarios, which were tackled one at a time. Given the (negative) test
+ * is a build failure, to show it, you have to uncomment the specific failing/maybe (Fn/Mn) case below and its corresponding test.
+ *
  * Cases created manually:
  * - P1; F1-F4, F7 (was M3, similar to M2), F9 (was M4), F13 (was M5); M1, M2
- * Cases suggested by Cursor that survived:
+ * Cases suggested by Cursor that survived (see [AdtCombinations.md](kazuki-core-test/AdtCombinations.md)):
  * - F5-6, F8, F10-12 (already catered for, but with poor error messages)
  *
- * TODO add a construction annotation for `mk_ADT`, such that it tells what to expect? leave for now
+ * TODO add a construction annotation for `mk_ADT`, such that it tells what to expect (e.g. mk_Stack(1,2,3) instead of `mk_Stack(as_Seq(listOf(1,2,3)))? leave for now
  * TODO might ADTs have multiple implementations? This will complicate the `mk_ADT`, leave for now
  */
 

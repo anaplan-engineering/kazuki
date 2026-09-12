@@ -37,6 +37,7 @@ internal data class ResolvedImplementedBy(
     val concreteVariableComponents: List<TupleComponent>,
     val concreteMkFunctionName: String,
     val concreteModuleName: String,
+    val publicMk: Boolean,
 )
 
 @OptIn(KspExperimental::class)
@@ -104,6 +105,7 @@ internal fun validateAndResolveImplementedBy(
         concreteVariableComponents = concreteVariableComponents,
         concreteMkFunctionName = "mk_$concreteName",
         concreteModuleName = concreteModule.qualifiedModuleName,
+        publicMk = implementedBy.publicMk,
     )
 }
 
@@ -149,7 +151,11 @@ internal fun TypeSpec.Builder.addImplementedByMkFunction(
     }
     addFunction(
         FunSpec.builder("mk_$abstractInterfaceName").apply {
-            applyApiModifier(apiModifier)
+            if (resolvedImplementedBy.publicMk) {
+                applyApiModifier(apiModifier)
+            } else {
+                addModifiers(KModifier.INTERNAL)
+            }
             if (abstractInterfaceTypeArguments.isNotEmpty()) {
                 addTypeVariables(abstractInterfaceTypeArguments.map { it.stripVariance() })
             }

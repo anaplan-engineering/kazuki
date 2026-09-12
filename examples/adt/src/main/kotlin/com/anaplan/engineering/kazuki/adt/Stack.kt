@@ -87,3 +87,46 @@ internal class StackADTProperties<T>(stack: StackADT<T>) : StackProperties<T> {
     override val size by property { stack.value.len }
     override val elems by property { stack.value.elems }
 }
+
+/**
+ * For now, KSP generates `mk_Stack = mk_StackADT()` as internal, this way, it is up to the user to expose the call.
+ * If user doesn't care and wants to expose exactly what `mk_StackADT` does, change the `publicMk` flag in `@ImplementedBy`.
+ *
+ */
+fun <T> mk_Stack(vararg args: T): Stack<T> = mk_Stack(as_Seq(args))
+
+// TODO Generalise constructor types to be KSP enforced? A sketch of what would be needed is below.
+/*
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.BINARY)
+annotation class ConstructedBy(
+    /** How alternative args are shaped. Default: infer direct 1:1 from impl fields (P1/P2). */
+    val style: ConstructorStyle = ConstructorStyle.DIRECT,
+
+    /** Core adapter: Iterable/E> -> rep field type. Required for VARARG_ELEMENTS / ITERABLE. */
+    val adapter: String = "",  // e.g. "as_Seq"
+
+    /** Impl rep field name. Default: sole variable field on impl. */
+    val field: String = "",
+
+    /** If true, canonical mk(impl types) is internal-only; public gets alternative only. */
+    val hideCanonical: Boolean = false,
+)
+
+enum class ConstructorStyle {
+    DIRECT,           // mk_ADT matches impl fields (P1, P2) — default, no adapter
+    VARARG_ELEMENTS,  // mk_Stack(1, 2, 3)
+    ITERABLE,         // mk_Stack(listOf(1, 2, 3))
+}
+@Module(makeable = false)
+@ImplementedBy(StackADT::class)
+@ConstructedBy(style = VARARG_ELEMENTS, adapter = "as_Seq", hideCanonical = true)
+interface Stack<out T> { ... }
+
+// Stack_Module — public
+fun <T> mk_Stack(vararg elements: T): Stack<T> =
+    StackADT_Module.mk_StackADT(as_Seq(elements))
+
+// StackADT_Module — internal (unchanged)
+internal fun <T> mk_StackADT(value: Sequence<T>): StackADT<T> =
+ */

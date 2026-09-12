@@ -33,5 +33,7 @@ class TestStack {
         assertEquals(500u, pushedS.functions.top())
         assertEquals(400u, pushedS.functions.pop().functions.top())
         assertEquals(stack, pushedS.functions.pop().functions.pop().functions.push(3u))
+        // Convenience extension constructor
+        assertEquals(mk_Stack<nat1>(as_Seq(seq)), mk_Stack<nat1>(1u, 2u, 3u))
     }
 }
