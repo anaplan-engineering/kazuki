@@ -5,6 +5,7 @@ import com.anaplan.engineering.kazuki.ksp.type.*
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.getVisibility
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -16,8 +17,15 @@ internal class ModuleProcessor(
     codeGenerator: CodeGenerator
 ) : ConstructProcessor(typeGenerationContext, codeGenerator) {
 
+    @OptIn(KspExperimental::class)
     override fun generateImplementation(clazz: KSClassDeclaration): Boolean {
         if (clazz.classKind == ClassKind.OBJECT) {
+            if (clazz.isAnnotationPresent(ImplementedBy::class)) {
+                typeGenerationContext.processingState.errors.add(
+                    "@Module object '${clazz.qualifiedName?.asString()}' cannot carry @ImplementedBy; ADT construction requires an unmakeable Record interface"
+                )
+                return true
+            }
             processModuleObject(clazz)
         } else if (clazz.classKind != ClassKind.INTERFACE) {
             typeGenerationContext.processingState.errors.add("Module ${clazz.qualifiedName} must be an interface or an object")
@@ -59,21 +67,39 @@ internal class ModuleProcessor(
     @OptIn(KspExperimental::class)
     private fun processModuleClass(clazz: KSClassDeclaration) {
         typeGenerationContext.logger.debug("Processing module: ${clazz.qualifiedName!!.asString()}")
+        if (clazz.isAnnotationPresent(ImplementedBy::class)) {
+            val kazukiType = clazz.kazukiType()
+            if (kazukiType != KazukiType.RecordType) {
+                val implementedBy = clazz.getAnnotationsByType(ImplementedBy::class).single()
+                val targetName = try {
+                    implementedBy.value
+                    "???"
+                } catch (e: com.google.devtools.ksp.KSTypeNotPresentException) {
+                    getClassDeclaration(e.ksType.declaration).simpleName.asString()
+                }
+                typeGenerationContext.processingState.errors.add(
+                    "@ImplementedBy on ${kazukiType.toModuleKindLabel()} module '${clazz.qualifiedName?.asString()}' is not supported; ADT @ImplementedBy $targetName requires a record module"
+                )
+                return
+            }
+        }
         val makeable = clazz.getAnnotationsByType(Module::class).single().makeable
+        val apiModifier = clazz.generatedApiModifier()
         val moduleTypeSpec = TypeSpec.objectBuilder(clazz.moduleName).apply {
+            applyApiModifier(apiModifier)
             when (clazz.kazukiType()) {
-                KazukiType.Sequence1Type -> addSeq1Type(clazz, makeable, typeGenerationContext)
-                KazukiType.SequenceType -> addSeqType(clazz, makeable, typeGenerationContext)
-                KazukiType.Relation1Type -> addRelation1Type(clazz, makeable, typeGenerationContext)
-                KazukiType.RelationType -> addRelationType(clazz, makeable, typeGenerationContext)
-                KazukiType.Set1Type -> addSet1Type(clazz, makeable, typeGenerationContext)
-                KazukiType.SetType -> addSetType(clazz, makeable, typeGenerationContext)
-                KazukiType.QuoteType -> processQuoteType(clazz, makeable, typeGenerationContext)
-                KazukiType.RecordType -> addRecordType(clazz, makeable, typeGenerationContext)
-                KazukiType.InjectiveMappingType -> addInjectiveMappingType(clazz, makeable, typeGenerationContext)
-                KazukiType.InjectiveMapping1Type -> addInjectiveMapping1Type(clazz, makeable, typeGenerationContext)
-                KazukiType.MappingType -> addMappingType(clazz, makeable, typeGenerationContext)
-                KazukiType.Mapping1Type -> addMapping1Type(clazz, makeable, typeGenerationContext)
+                KazukiType.Sequence1Type -> addSeq1Type(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.SequenceType -> addSeqType(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.Relation1Type -> addRelation1Type(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.RelationType -> addRelationType(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.Set1Type -> addSet1Type(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.SetType -> addSetType(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.QuoteType -> processQuoteType(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.RecordType -> addRecordType(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.InjectiveMappingType -> addInjectiveMappingType(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.InjectiveMapping1Type -> addInjectiveMapping1Type(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.MappingType -> addMappingType(clazz, makeable, typeGenerationContext, apiModifier)
+                KazukiType.Mapping1Type -> addMapping1Type(clazz, makeable, typeGenerationContext, apiModifier)
             }
         }.build()
 
@@ -102,22 +128,31 @@ internal class ModuleProcessor(
 
         val moduleClassName = clazz.moduleName
         val moduleTypeSpec = TypeSpec.objectBuilder(moduleClassName).apply {
-            seq1Types.forEach { addSeq1Type(it, true, typeGenerationContext) }
-            seqTypes.forEach { addSeqType(it, true, typeGenerationContext) }
-            relation1Types.forEach { addRelation1Type(it, true, typeGenerationContext) }
-            relationTypes.forEach { addRelationType(it, true, typeGenerationContext) }
-            setTypes.forEach { addSetType(it, true, typeGenerationContext) }
-            set1Types.forEach { addSet1Type(it, true, typeGenerationContext) }
-            quoteTypes.forEach { processQuoteType(it, true, typeGenerationContext) }
-            recordTypes.forEach { addRecordType(it, true, typeGenerationContext) }
-            injectiveMappingType.forEach { addInjectiveMappingType(it, true, typeGenerationContext) }
-            injectiveMapping1Type.forEach { addInjectiveMapping1Type(it, true, typeGenerationContext) }
-            mappingType.forEach { addMappingType(it, true, typeGenerationContext) }
-            mapping1Type.forEach { addMapping1Type(it, true, typeGenerationContext) }
+            seq1Types.forEach { addSeq1Type(it, true, typeGenerationContext, null) }
+            seqTypes.forEach { addSeqType(it, true, typeGenerationContext, null) }
+            relation1Types.forEach { addRelation1Type(it, true, typeGenerationContext, null) }
+            relationTypes.forEach { addRelationType(it, true, typeGenerationContext, null) }
+            setTypes.forEach { addSetType(it, true, typeGenerationContext, null) }
+            set1Types.forEach { addSet1Type(it, true, typeGenerationContext, null) }
+            quoteTypes.forEach { processQuoteType(it, true, typeGenerationContext, null) }
+            recordTypes.forEach { addRecordType(it, true, typeGenerationContext, null) }
+            injectiveMappingType.forEach { addInjectiveMappingType(it, true, typeGenerationContext, null) }
+            injectiveMapping1Type.forEach { addInjectiveMapping1Type(it, true, typeGenerationContext, null) }
+            mappingType.forEach { addMappingType(it, true, typeGenerationContext, null) }
+            mapping1Type.forEach { addMapping1Type(it, true, typeGenerationContext, null) }
         }.build()
 
         writeToFile(clazz, moduleClassName, moduleTypeSpec)
     }
 
+    private fun KazukiType.toModuleKindLabel(): String = when (this) {
+        KazukiType.SequenceType, KazukiType.Sequence1Type -> "sequence"
+        KazukiType.SetType, KazukiType.Set1Type -> "set"
+        KazukiType.MappingType, KazukiType.Mapping1Type -> "mapping"
+        KazukiType.InjectiveMappingType, KazukiType.InjectiveMapping1Type -> "injective mapping"
+        KazukiType.RelationType, KazukiType.Relation1Type -> "relation"
+        KazukiType.QuoteType -> "quote"
+        KazukiType.RecordType -> "record"
+    }
 
 }

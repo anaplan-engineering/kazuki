@@ -18,6 +18,7 @@ internal fun TypeSpec.Builder.addSetType(
     interfaceClassDcl: KSClassDeclaration,
     makeable: Boolean,
     typeGenerationContext: TypeGenerationContext,
+    apiModifier: KModifier? = null,
 ) =
     if (makeable) {
         addSetType(interfaceClassDcl, typeGenerationContext, false)
@@ -29,6 +30,7 @@ internal fun TypeSpec.Builder.addSet1Type(
     interfaceClassDcl: KSClassDeclaration,
     makeable: Boolean,
     typeGenerationContext: TypeGenerationContext,
+    apiModifier: KModifier? = null,
 ) =
     if (makeable) {
         addSetType(interfaceClassDcl, typeGenerationContext, true)

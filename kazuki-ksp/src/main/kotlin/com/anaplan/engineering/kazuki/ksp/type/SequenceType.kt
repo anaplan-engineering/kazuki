@@ -23,6 +23,7 @@ internal fun TypeSpec.Builder.addSeqType(
     interfaceClassDcl: KSClassDeclaration,
     makeable: Boolean,
     typeGenerationContext: TypeGenerationContext,
+    apiModifier: KModifier? = null,
 ) =
     if (makeable) {
         addSequenceType(interfaceClassDcl, typeGenerationContext, false)
@@ -34,6 +35,7 @@ internal fun TypeSpec.Builder.addSeq1Type(
     interfaceClassDcl: KSClassDeclaration,
     makeable: Boolean,
     typeGenerationContext: TypeGenerationContext,
+    apiModifier: KModifier? = null,
 ) =
     if (makeable) {
         addSequenceType(interfaceClassDcl, typeGenerationContext, true)
