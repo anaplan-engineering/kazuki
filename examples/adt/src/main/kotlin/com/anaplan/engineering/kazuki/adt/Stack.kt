@@ -12,6 +12,7 @@ import com.anaplan.engineering.kazuki.adt.Stack_Module.mk_Stack
  * It is stricter than the VDM in the sense of not allowing certain scenarios (e.g. popping empty stack, etc.)
  */
 @Module(makeable = false)
+// TODO --- this needs to be a list of implementations; or better each implementation says it will implemente the ADT?
 @ImplementedBy(StackADT::class)
 interface Stack<out T> {
     @FunctionProvider(StackFunctions::class)
