@@ -11,7 +11,7 @@ dependencies {
 
 tasks.named('compileKotlin', org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask.class) {
     compilerOptions {
-        freeCompilerArgs.add("-Xjvm-default=all")
+        jvmDefault.set(org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode.NO_COMPATIBILITY)
     }
 }
 

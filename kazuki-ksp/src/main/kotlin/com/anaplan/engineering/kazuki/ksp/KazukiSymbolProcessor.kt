@@ -6,7 +6,6 @@ import com.anaplan.engineering.kazuki.core.PrimitiveInvariant
 import com.anaplan.engineering.kazuki.ksp.KazukiSymbolProcessor.KazukiLogger
 import com.anaplan.engineering.kazuki.ksp.type.PrimitiveTypeProcessor
 import com.anaplan.engineering.kazuki.ksp.type.TypeGenerationContext
-import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getVisibility
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.ClassKind
@@ -18,7 +17,6 @@ import com.google.devtools.ksp.symbol.Visibility
 import com.google.devtools.ksp.validate
 import kotlin.reflect.KClass
 
-@OptIn(KspExperimental::class)
 class KazukiSymbolProcessor(private val environment: SymbolProcessorEnvironment) : SymbolProcessor {
 
     // TODO - auto generate tests for equals, hashcode, toString? -- maybe do with opt-in property
@@ -129,13 +127,11 @@ class KazukiSymbolProcessor(private val environment: SymbolProcessorEnvironment)
                 }
         )
 
-
 }
 
 class KazukiSymbolProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment) =
         KazukiSymbolProcessor(environment)
-
 }
 
 interface ProcessingState {
