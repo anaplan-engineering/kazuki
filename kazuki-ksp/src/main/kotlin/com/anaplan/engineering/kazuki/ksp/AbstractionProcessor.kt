@@ -50,7 +50,9 @@ internal class AbstractionProcessor(
             typeGenerationContext.logger.debug("Cannot identify record for concrete module ${concreteDeclaration.qualifiedName?.asString()} needed for abstraction ${clazz.qualifiedName?.asString()} in current processing round")
             return false
         }
+        val apiModifier = clazz.generatedApiModifier()
         val abstractionTypeSpec = TypeSpec.objectBuilder(clazz.abstractionName).apply {
+            applyApiModifier(apiModifier)
             addAbstractionType(clazz, concreteInterfaceClassDcl,  concreteRecordClassDcl, typeGenerationContext)
         }.build()
         writeToFile(clazz, clazz.abstractionName, abstractionTypeSpec)

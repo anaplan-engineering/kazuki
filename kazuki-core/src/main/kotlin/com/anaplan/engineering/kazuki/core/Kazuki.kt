@@ -37,6 +37,22 @@ annotation class Abstraction(
     val of: KClass<*>
 )
 
+/**
+ * Links an unmakeable abstract @Module to its concrete makeable implementation. This is used to represent and Abstract Data Type
+ * Requires [Module.makeable] = false on the annotated type. KSP generates [mk_] on the abstract module
+ * that delegates to the concrete module constructor while keeping the concrete [mk_] internal.
+ *
+ * By default [publicMk] is false: the abstract-module [mk_] is generated internal so the ADT author
+ * can expose a tailored public constructor (e.g. [mk_Stack] with varargs). Set [publicMk] to true when
+ * the generated canonical constructor (matching implementation representation fields) is the intended public API.
+ */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class ImplementedBy(
+    val value: KClass<*>,
+    val publicMk: Boolean = false,
+)
+
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Invariant

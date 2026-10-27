@@ -16,6 +16,7 @@ internal fun TypeSpec.Builder.addMappingType(
     interfaceClassDcl: KSClassDeclaration,
     makeable: Boolean,
     typeGenerationContext: TypeGenerationContext,
+    apiModifier: KModifier? = null,
 ) = if (makeable) {
     addMappingType(interfaceClassDcl, typeGenerationContext, false, false)
 } else {
@@ -26,6 +27,7 @@ internal fun TypeSpec.Builder.addMapping1Type(
     interfaceClassDcl: KSClassDeclaration,
     makeable: Boolean,
     typeGenerationContext: TypeGenerationContext,
+    apiModifier: KModifier? = null,
 ) = if (makeable) {
     addMappingType(interfaceClassDcl, typeGenerationContext, true, false)
 } else {
@@ -37,6 +39,7 @@ internal fun TypeSpec.Builder.addInjectiveMappingType(
     interfaceClassDcl: KSClassDeclaration,
     makeable: Boolean,
     typeGenerationContext: TypeGenerationContext,
+    apiModifier: KModifier? = null,
 ) = if (makeable) {
     addMappingType(interfaceClassDcl, typeGenerationContext, false, true)
 } else {
@@ -48,6 +51,7 @@ internal fun TypeSpec.Builder.addInjectiveMapping1Type(
     interfaceClassDcl: KSClassDeclaration,
     makeable: Boolean,
     typeGenerationContext: TypeGenerationContext,
+    apiModifier: KModifier? = null,
 ) = if (makeable) {
     addMappingType(interfaceClassDcl, typeGenerationContext, true, true)
 } else {

@@ -78,9 +78,17 @@ internal fun getFunctionProviderProperties(
 private val DefaultFunctionProviders = setOf("functions", "properties")
 
 @OptIn(KspExperimental::class)
-private fun isFunctionProvider(declaration: KSPropertyDeclaration): Boolean =
+internal fun isFunctionProvider(declaration: KSPropertyDeclaration): Boolean =
     declaration.simpleName.asString() in DefaultFunctionProviders ||
             declaration.isAnnotationPresent(FunctionProvider::class)
+
+internal fun getLocalNonFunctionProviderProperties(
+    classDcl: KSClassDeclaration,
+): List<KSPropertyDeclaration> =
+    classDcl.declarations
+        .filterIsInstance<KSPropertyDeclaration>()
+        .filter { !isFunctionProvider(it) }
+        .toList()
 
 private fun resolveFunctionProviderProperty(
     name: String,

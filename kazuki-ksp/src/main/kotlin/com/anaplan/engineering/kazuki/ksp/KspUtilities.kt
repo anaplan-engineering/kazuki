@@ -94,7 +94,19 @@ class AncestorTypeArguments(
 ) {
     fun getTypeName(index: Int) = typeArguments[index]
 
-    fun getTypeName(typeParam: KSTypeParameter) = typeArguments[typeParameters.indexOf(typeParam)]
+    fun getTypeName(typeParam: KSTypeParameter): TypeName {
+        val index = typeParameters.indexOf(typeParam)
+        if (index >= 0) {
+            return typeArguments[index]
+        }
+        // Concrete and ancestor declarations use distinct KSTypeParameter instances for the same
+        // logical type parameter (e.g. BoxImpl's T vs Box's T); fall back to name matching.
+        val nameIndex = typeParameters.indexOfFirst { it.name.asString() == typeParam.name.asString() }
+        require(nameIndex >= 0) {
+            "Type parameter ${typeParam.name.asString()} not found in ancestor type arguments $typeArguments"
+        }
+        return typeArguments[nameIndex]
+    }
 
     val resolvedTypeParameters by lazy {
         require(typeParameters.size == typeArguments.size)

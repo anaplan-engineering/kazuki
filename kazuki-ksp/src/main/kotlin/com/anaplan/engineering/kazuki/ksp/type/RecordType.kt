@@ -6,11 +6,14 @@ import com.anaplan.engineering.kazuki.core.*
 import com.anaplan.engineering.kazuki.core.internal.*
 import com.anaplan.engineering.kazuki.ksp.*
 import com.anaplan.engineering.kazuki.ksp.InbuiltNames.coreInternalPackage
+import com.anaplan.engineering.kazuki.ksp.applyApiModifier
 import com.anaplan.engineering.kazuki.ksp.InbuiltNames.corePackage
 import com.anaplan.engineering.kazuki.ksp.type.property.PropertyProcessor
 import com.anaplan.engineering.kazuki.ksp.type.property.addFunctionProviders
+import com.anaplan.engineering.kazuki.ksp.type.property.getLocalNonFunctionProviderProperties
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.squareup.kotlinpoet.*
@@ -24,7 +27,9 @@ internal fun TypeSpec.Builder.addRecordType(
     interfaceClassDcl: KSClassDeclaration,
     makeable: Boolean,
     typeGenerationContext: TypeGenerationContext,
+    apiModifier: KModifier? = null,
 ) {
+    val resolvedImplementedBy = validateAndResolveImplementedBy(interfaceClassDcl, makeable, typeGenerationContext)
     val interfaceType = interfaceClassDcl.asType(emptyList())
     val interfaceTypeArguments =
         interfaceClassDcl.typeParameters.map { it.toTypeVariableName(interfaceClassDcl.typeParameters.toTypeParameterResolver()) }
@@ -39,8 +44,40 @@ internal fun TypeSpec.Builder.addRecordType(
     val allTupleComponents = properties.tupleComponents
     val variableTupleComponents = properties.tupleComponents.filter { !it.fixed }
     typeGenerationContext.logger.debug("tuple components: $allTupleComponents")
+    if (!makeable && interfaceClassDcl.isAnnotationPresent(ImplementedBy::class)) {
+        val leakedLocalProperties = getLocalNonFunctionProviderProperties(interfaceClassDcl)
+        if (leakedLocalProperties.isNotEmpty()) {
+            val fieldNames = leakedLocalProperties.joinToString(", ") { "'${it.simpleName.asString()}'" }
+            typeGenerationContext.processingState.errors.add(
+                "ADT '${interfaceClassDcl.simpleName.asString()}' must not declare record fields (found $fieldNames); use @FunctionProvider for exported behaviour only"
+            )
+            return
+        }
+    }
     if (allTupleComponents.isEmpty()) {
-        typeGenerationContext.processingState.errors.add("Record ${interfaceClassDcl.qualifiedName?.asString()} must have fields")
+        if (makeable) {
+            typeGenerationContext.processingState.errors.add(
+                "Record ${interfaceClassDcl.qualifiedName?.asString()} must have fields when makeable"
+            )
+            return
+        }
+        if (resolvedImplementedBy == null) {
+            if (!interfaceClassDcl.isAnnotationPresent(ImplementedBy::class)) {
+                typeGenerationContext.processingState.errors.add(
+                    "Unmakeable empty Record '${interfaceClassDcl.qualifiedName?.asString()}' requires @ImplementedBy annotation"
+                )
+            }
+            return
+        }
+        addEmptyUnmakeableRecordType(
+            interfaceClassDcl,
+            interfaceTypeName,
+            interfaceTypeArguments,
+            interfaceClassDcl.simpleName.asString(),
+            typeGenerationContext,
+            apiModifier,
+            resolvedImplementedBy,
+        )
         return
     }
     val tupleClassName = ClassName(corePackage, "Tuple${allTupleComponents.size}")
@@ -354,6 +391,7 @@ internal fun TypeSpec.Builder.addRecordType(
     addType(implTypeSpec)
 
     addFunction(FunSpec.builder(asTupleFunctionName).apply {
+        applyApiModifier(apiModifier)
         if (interfaceTypeArguments.isNotEmpty()) {
             addTypeVariables(interfaceTypeArguments)
         }
@@ -380,8 +418,9 @@ internal fun TypeSpec.Builder.addRecordType(
     }
     addFunction(
         FunSpec.builder("is_$interfaceName").apply {
+            applyApiModifier(apiModifier)
             if (interfaceTypeArguments.isNotEmpty()) {
-                addTypeVariables(interfaceTypeArguments)
+                addTypeVariables(interfaceTypeArguments.map { it.stripVariance() })
             }
             addParameter(otherParameterName, Any::class)
             addAnnotation(uncheckedCastAnnotation())
@@ -455,9 +494,10 @@ internal fun TypeSpec.Builder.addRecordType(
         }.build()
     )
 
-    addStaticPrettyFunction(interfaceTypeName, interfaceTypeArguments)
+    addStaticPrettyFunction(interfaceTypeName, interfaceTypeArguments, apiModifier)
     addFunction(
         FunSpec.builder(PrettyFunctionName).apply {
+            applyApiModifier(apiModifier)
             receiver(erasedInterfaceTypeName)
             returns(String::class)
             if (interfaceClassDcl.hasSuperType(PrettyPrintable::class.qualifiedName!!)) {
@@ -494,6 +534,7 @@ internal fun TypeSpec.Builder.addRecordType(
 
         addFunction(
             FunSpec.builder("as_$interfaceName").apply {
+                applyApiModifier(apiModifier)
                 if (interfaceTypeArguments.isNotEmpty()) {
                     addTypeVariables(interfaceTypeArguments)
                 }
@@ -524,6 +565,7 @@ internal fun TypeSpec.Builder.addRecordType(
 
         addFunction(
             FunSpec.builder("to_$interfaceName").apply {
+                applyApiModifier(apiModifier)
                 if (interfaceTypeArguments.isNotEmpty()) {
                     addTypeVariables(interfaceTypeArguments)
                 }
@@ -552,6 +594,7 @@ internal fun TypeSpec.Builder.addRecordType(
         allTupleComponents.forEach { tc ->
             addFunction(
                 FunSpec.builder("component${tc.index}").apply {
+                    applyApiModifier(apiModifier)
                     if (interfaceTypeArguments.isNotEmpty()) {
                         addTypeVariables(interfaceTypeArguments)
                     }
@@ -565,6 +608,7 @@ internal fun TypeSpec.Builder.addRecordType(
 
         addFunction(
             FunSpec.builder("mk_$interfaceName").apply {
+                applyApiModifier(apiModifier)
                 if (interfaceTypeArguments.isNotEmpty()) {
                     addTypeVariables(interfaceTypeArguments)
                 }
@@ -577,11 +621,22 @@ internal fun TypeSpec.Builder.addRecordType(
                 )
             }.build()
         )
+    } else {
+        resolvedImplementedBy?.let {
+            addImplementedByMkFunction(
+                interfaceClassDcl,
+                interfaceName,
+                interfaceTypeName,
+                interfaceTypeArguments,
+                it,
+                apiModifier,
+            )
+        }
     }
-    // To call transform/conditional transform, one needs a concrete instance therefore they can be provided
-    // even for non-makeable types
+    if (makeable) {
     addFunction(
         FunSpec.builder(InbuiltNames.transform).apply {
+            applyApiModifier(apiModifier)
             val t =
                 TypeVariableName(findUnusedGenericName(interfaceTypeArguments), bounds = listOf(interfaceTypeName))
             addTypeVariables(interfaceTypeArguments + t)
@@ -620,6 +675,7 @@ internal fun TypeSpec.Builder.addRecordType(
     )
     addFunction(
         FunSpec.builder(InbuiltNames.conditionalTransform).apply {
+            applyApiModifier(apiModifier)
             val t = TypeVariableName(
                 findUnusedGenericName(interfaceTypeArguments),
                 bounds = listOf(interfaceTypeName)
@@ -675,6 +731,64 @@ internal fun TypeSpec.Builder.addRecordType(
             }.build())
         }.build()
     )
+    }
+}
+
+private fun TypeSpec.Builder.addEmptyUnmakeableRecordType(
+    interfaceClassDcl: KSClassDeclaration,
+    interfaceTypeName: TypeName,
+    interfaceTypeArguments: List<TypeVariableName>,
+    interfaceName: String,
+    typeGenerationContext: TypeGenerationContext,
+    apiModifier: KModifier?,
+    resolvedImplementedBy: ResolvedImplementedBy?,
+) {
+    val erasedInterfaceTypeName = if (interfaceTypeArguments.isEmpty()) {
+        interfaceClassDcl.toClassName()
+    } else {
+        interfaceClassDcl.toClassName().parameterizedBy(interfaceTypeArguments.map { STAR })
+    }
+    val otherParameterName = "other"
+
+    addStaticPrettyFunction(interfaceTypeName, interfaceTypeArguments, apiModifier)
+    addFunction(
+        FunSpec.builder(PrettyFunctionName).apply {
+            applyApiModifier(apiModifier)
+            receiver(erasedInterfaceTypeName)
+            returns(String::class)
+            if (interfaceClassDcl.hasSuperType(PrettyPrintable::class.qualifiedName!!)) {
+                addStatement("return this.pretty()")
+            } else {
+                beginControlFlow("if (this is %T)", PrettyPrintable::class)
+                addStatement("return this.pretty()")
+                nextControlFlow("else")
+                addStatement("return this.toString()")
+                endControlFlow()
+            }
+        }.build()
+    )
+    addFunction(
+        FunSpec.builder("is_$interfaceName").apply {
+            applyApiModifier(apiModifier)
+            if (interfaceTypeArguments.isNotEmpty()) {
+                addTypeVariables(interfaceTypeArguments.map { it.stripVariance() })
+            }
+            addParameter(otherParameterName, Any::class)
+            addAnnotation(uncheckedCastAnnotation())
+            returns(Boolean::class)
+            addStatement("return %N is %T", otherParameterName, erasedInterfaceTypeName)
+        }.build()
+    )
+    resolvedImplementedBy?.let {
+        addImplementedByMkFunction(
+            interfaceClassDcl,
+            interfaceName,
+            interfaceTypeName,
+            interfaceTypeArguments,
+            it,
+            apiModifier,
+        )
+    }
 }
 
 
